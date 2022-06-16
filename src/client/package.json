@@ -1,0 +1,21 @@
+{
+  "name": "resource-app-client",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "17.x",
+    "react-dom": "17.x"
+  },
+  "devDependencies": {
+    "@types/react": "17.x",
+    "@types/react-dom": "17.x",
+    "vite": "^2.9.0",
+    "vite-tsconfig-paths": "^3.4.1",
+    "@vitejs/plugin-react": "^1.0.7"
+  }
+}

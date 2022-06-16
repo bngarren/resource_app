@@ -1,0 +1,17 @@
+{
+   "compilerOptions": {
+     "target": "esnext",
+     "module": "commonjs",
+     "outDir": "dist",
+     "moduleResolution": "node",
+     "esModuleInterop": true,
+     "lib": ["esnext"],
+     "strict": true,
+   },
+   "exclude": [
+     "node_modules",
+     "public/*",
+     "src/client/*"
+   ],
+   "include": ["src/**/*"]
+ }
