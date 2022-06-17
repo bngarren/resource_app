@@ -1,5 +1,5 @@
 import { getResourceById } from "../data/db";
 
 export const handleScan = async () => {
-  return await getResourceById(2);
+  return await getResourceById(1);
 };
