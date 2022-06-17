@@ -13,5 +13,5 @@
      "public/*",
      "src/client/*"
    ],
-   "include": ["src/**/*"]
+   "include": ["src/**/*", "tests/**/*, jest.config.ts"]
  }

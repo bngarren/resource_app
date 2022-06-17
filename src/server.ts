@@ -33,6 +33,4 @@ app.get("/", (req, res) => res.send("Backend is working!"));
 
 app.use("/api", routes);
 
-// start the server listening for requests
-const port = process.env.PORT || 3001;
-app.listen(port, () => console.log(`Server is running on port ${port}...`));
+export default app;
