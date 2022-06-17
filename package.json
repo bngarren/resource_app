@@ -1,18 +1,19 @@
 {
    "name": "resource-app",
    "private": true,
-   "version": "0.0.1",
+   "version": "0.0.2",
    "engines": {
       "node": "16.x"
    },
    "scripts": {
       "dev": "ts-node-dev --respawn --transpile-only ./src/index.ts",
       "build": "tsc",
-      "heroku-postbuild": "",
+      "heroku-postbuild": "npm run migrate-latest",
       "deploy": "git push heroku master",
       "start": "node dist/index.js",
-      "migrate-latest": "knex migrate:latest --knexfile src/api/db/knexfile.js",
-      "migrate-rollback": "knex migrate:rollback --all --knexfile src/api/db/knexfile.js"
+      "migrate-latest": "knex migrate:latest --knexfile src/knexfile.js",
+      "migrate-rollback": "knex migrate:rollback --all --knexfile src/knexfile.js",
+      "seed": "knex seed:run --knexfile src/knexfile.js"
    },
    "dependencies": {
       "body-parser": "^1.20.0",
@@ -29,6 +30,7 @@
       "@types/dotenv": "^8.2.0",
       "@types/express": "^4.17.13",
       "@types/node": "^17.0.44",
+      "@types/pg": "^8.6.5",
       "@typescript-eslint/eslint-plugin": "^5.19.0",
       "@typescript-eslint/parser": "^5.19.0",
       "eslint": "^8.13.0",

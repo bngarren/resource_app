@@ -3,6 +3,7 @@ import bodyParser from "body-parser";
 import path from "path";
 import * as dotenv from "dotenv";
 import cors from "cors";
+import routes from "./routes";
 
 // To use the .env file, we use the dotenv module to load the values
 // Have to give the dotenv config the relative path to .env for it to work properly
@@ -28,11 +29,9 @@ app.use(
 );
 app.options("*", cors);
 
-//const routes = require("./routes");
-
 app.get("/", (req, res) => res.send("Backend is working!"));
 
-//app.use("/api", routes);
+app.use("/api", routes);
 
 // start the server listening for requests
 const port = process.env.PORT || 3001;
