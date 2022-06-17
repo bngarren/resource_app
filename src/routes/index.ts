@@ -1,8 +1,8 @@
 import express from "express";
-import { scan } from "../controllers";
+import { playerAction } from "../controllers";
 
 const router = express.Router();
 
-router.post("/scan", scan);
+router.post("/scan", playerAction.scan);
 
 export default router;

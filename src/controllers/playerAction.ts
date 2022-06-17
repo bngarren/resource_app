@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
+import { scanService } from "../services";
 
-export const scan = (req: Request, res: Response) => {
-  res.status(200).send("Hit scan");
+export const scan = async (req: Request, res: Response) => {
+  const result = await scanService.handleScan();
+  res.send(result);
 };
