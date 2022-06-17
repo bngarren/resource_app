@@ -6,9 +6,11 @@
       "node": "16.x"
    },
    "scripts": {
-      "tsc": "tsc",
       "dev": "ts-node-dev --respawn --transpile-only ./src/index.ts",
-      "heroku-postbuild": "npm run migrate-latest",
+      "build": "tsc",
+      "heroku-postbuild": "",
+      "deploy": "git push heroku master",
+      "start": "node dist/index.js",
       "migrate-latest": "knex migrate:latest --knexfile src/api/db/knexfile.js",
       "migrate-rollback": "knex migrate:rollback --all --knexfile src/api/db/knexfile.js"
    },
