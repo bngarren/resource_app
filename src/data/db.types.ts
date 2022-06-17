@@ -8,3 +8,22 @@ export interface Resource {
 export interface Resources {
   [key: number]: Resource;
 }
+
+export interface Region {
+  id: number;
+  h3Index: string;
+  created_at: string;
+  last_updated_at: string;
+  reset_date: string;
+}
+
+export interface Regions {
+  [key: number]: Region;
+}
+
+declare module "knex/types/tables" {
+  interface Tables {
+    resources: Resource;
+    regions: Region;
+  }
+}
