@@ -19,8 +19,8 @@ if (!process.env.DB_PORT) {
 
 const sharedConfig = {
   client: "pg",
-  migrations: { directory: "./data/migrations" },
-  seeds: { directory: "./data/seeds" },
+  migrations: { directory: __dirname + "/data/migrations" },
+  seeds: { directory: __dirname + "/data/seeds" },
 };
 
 const config: { [key: string]: Knex.Config } = {
@@ -31,7 +31,7 @@ const config: { [key: string]: Knex.Config } = {
       user: process.env.DB_USER,
       password: "",
       database: process.env.DB_NAME,
-      port: parseInt(process.env.DB_PORT),
+      port: parseInt(process.env.DB_PORT, 10),
     },
   },
 
@@ -45,6 +45,18 @@ const config: { [key: string]: Knex.Config } = {
     migrations: {
       ...sharedConfig.migrations,
       tableName: "knex_migrations",
+    },
+  },
+
+  // Local database used for testing (jest)
+  test: {
+    ...sharedConfig,
+    connection: {
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: "",
+      database: process.env.DB_TEST_NAME,
+      port: parseInt(process.env.DB_PORT, 10),
     },
   },
 };

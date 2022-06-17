@@ -1,16 +1,17 @@
 {
    "name": "resource-app",
    "private": true,
-   "version": "0.0.2",
+   "version": "0.0.3",
    "engines": {
       "node": "16.x"
    },
    "scripts": {
-      "dev": "ts-node-dev --respawn --transpile-only ./src/index.ts",
+      "dev": "ts-node-dev --respawn --transpile-only ./src/main.ts",
+      "test": "jest",
       "build": "tsc",
       "heroku-postbuild": "npm run migrate-latest",
       "deploy": "git push heroku master",
-      "start": "node dist/index.js",
+      "start": "node dist/main.js",
       "migrate-latest": "knex migrate:latest --knexfile src/knexfile.js",
       "migrate-rollback": "knex migrate:rollback --all --knexfile src/knexfile.js",
       "seed": "knex seed:run --knexfile src/knexfile.js"
@@ -29,8 +30,10 @@
       "@types/cors": "^2.8.12",
       "@types/dotenv": "^8.2.0",
       "@types/express": "^4.17.13",
+      "@types/jest": "^28.1.2",
       "@types/node": "^17.0.44",
       "@types/pg": "^8.6.5",
+      "@types/supertest": "^2.0.12",
       "@typescript-eslint/eslint-plugin": "^5.19.0",
       "@typescript-eslint/parser": "^5.19.0",
       "eslint": "^8.13.0",
@@ -39,7 +42,10 @@
       "eslint-plugin-prettier": "^4.0.0",
       "eslint-plugin-react": "^7.29.4",
       "eslint-plugin-react-hooks": "^4.4.0",
+      "jest": "^28.1.1",
       "prettier": "^2.6.2",
+      "supertest": "^6.2.3",
+      "ts-jest": "^28.0.5",
       "ts-node-dev": "^2.0.0",
       "typescript": "^4.5.4"
    }
