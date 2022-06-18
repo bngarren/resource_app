@@ -1,1 +1,6 @@
-export const handleCreateRegion = (h3Index: string) => {};
+import { createRegion } from "../data/db";
+
+export const handleCreateRegion = async (h3Index: string) => {
+  const result = await createRegion(h3Index);
+  return result;
+};

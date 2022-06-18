@@ -33,12 +33,19 @@ const createRegion = async (h3Index: string) => {
         return null;
       }
 
+      // Insert a new region
       const inserted: Region[] = await trx
         .insert({ h3Index: h3Index })
         .into("regions")
         .returning("*");
       console.log("Created new region in db:", inserted);
-      return inserted;
+
+      // Return a single Region object
+      if (inserted.length === 0) {
+        return null;
+      } else {
+        return inserted[0];
+      }
     });
   } catch (error: unknown) {
     if (error instanceof Error) {

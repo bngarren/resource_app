@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request } from "express";
 import bodyParser from "body-parser";
 import path from "path";
 import * as dotenv from "dotenv";
@@ -16,18 +16,18 @@ const CORS_ALLOWED_ORIGINS = [
   "https://master--h3-test.netlify.app",
 ];
 
+const CORS_OPTIONS = {
+  origin: CORS_ALLOWED_ORIGINS,
+  credentials: true,
+  preflightContinue: true,
+  allowedHeaders: ["Content-Type"],
+};
+
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use(
-  cors({
-    origin: CORS_ALLOWED_ORIGINS,
-    credentials: true,
-    preflightContinue: true,
-    allowedHeaders: ["Content-Type"],
-  })
-);
-app.options("*", cors);
+app.use(cors(CORS_OPTIONS));
+app.options("*", cors<Request>());
 
 app.get("/", (req, res) => res.send("Backend is working!"));
 

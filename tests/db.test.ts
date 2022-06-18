@@ -36,24 +36,26 @@ describe("regions", () => {
     expect(resultSingleInput[0].h3Index).toEqual("892a306409bffff");
   });
 
-  it("creates a new region with a given h3 index", async () => {
-    const result = await createRegion("992a306409bffff");
-    expect(result).not.toBeNull();
+  describe("createRegion", () => {
+    it("creates a new region with a given h3 index", async () => {
+      // This h3 index should NOT be already be present in the seeded test db
+      const result = await createRegion("992a306409bffff");
+      expect(result).not.toBeNull();
 
-    if (result) {
-      expect(result.length).toEqual(1);
-      expect(result[0].h3Index).toEqual("992a306409bffff");
+      if (result) {
+        expect(result.h3Index).toEqual("992a306409bffff");
 
-      const date = new Date(result[0].created_at);
-      expect(date).toBeTruthy();
-    }
-  });
+        const date = new Date(result.created_at);
+        expect(date).toBeTruthy();
+      }
+    });
 
-  it("does not create duplicate region with same h3 index", async () => {
-    const result = await createRegion("992a306409bffff");
-    if (result) {
-      const result2 = await createRegion("992a306409bffff");
-      expect(result2).toBeNull();
-    }
+    it("does not create duplicate region with same h3 index", async () => {
+      const result = await createRegion("992a306409bffff");
+      if (result) {
+        const result2 = await createRegion("992a306409bffff");
+        expect(result2).toBeNull();
+      }
+    });
   });
 });

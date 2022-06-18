@@ -1,5 +1,6 @@
 import * as h3 from "h3-js";
 import { getResourceById, getRegionsFromH3Array } from "../data/db";
+import { UserPosition } from "../types";
 import { handleCreateRegion } from "./regionService";
 
 //! TESTING ONLY
@@ -9,11 +10,12 @@ export const handleScan = async () => {
 
 export const handleScanByUserAtLocation = async (
   userId: number,
-  h3Index: string
+  userPosition: UserPosition
 ) => {
-  // Query the database, perform some logic
-  // Eventually return new data to the user
+  // Get the h3 index based on the user's position
+  const h3Index = h3.geoToH3(userPosition.latitude, userPosition.longitude, 9);
 
+  // Get the user's h3 + 6 neighbors
   const h3Group = h3.kRing(h3Index, 1);
 
   try {
@@ -27,7 +29,9 @@ export const handleScanByUserAtLocation = async (
         const exists = regionsQuery.find((el) => el.h3Index === i);
         if (!exists) {
           const newRegion = await handleCreateRegion(i);
-          return newRegion;
+          if (newRegion) {
+            return newRegion;
+          }
         } else {
           return exists;
         }
