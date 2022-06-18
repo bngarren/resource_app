@@ -12,5 +12,9 @@ export const scan = async (
     1,
     body.userPosition
   );
-  res.send(result);
+  if (result === -1) {
+    res.sendStatus(500);
+  } else {
+    res.send(result);
+  }
 };

@@ -1,3 +1,5 @@
+export * from "./scanService.types";
+
 export interface UserScanRequest {
   userPosition: UserPosition;
 }

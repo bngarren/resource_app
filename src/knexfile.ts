@@ -1,19 +1,12 @@
 import type { Knex } from "knex";
 import * as pg from "pg";
-import * as dotenv from "dotenv";
-import path from "path";
-
-// To use the .env file, we use the dotenv module to load the values
-// Have to give the dotenv config the relative path to .env for it to work properly
-dotenv.config({
-  path: path.resolve(__dirname, "../.env"),
-});
+import config from "./config";
 
 if (process.env.DATABASE_URL) {
   pg.defaults.ssl = { rejectUnauthorized: false };
 }
 
-if (!process.env.DB_PORT) {
+if (!config.db_port) {
   throw new Error("Could not establish database connection.");
 }
 
@@ -23,15 +16,15 @@ const sharedConfig = {
   seeds: { directory: __dirname + "/data/seeds" },
 };
 
-const config: { [key: string]: Knex.Config } = {
+const knexConfig: { [key: string]: Knex.Config } = {
   development: {
     ...sharedConfig,
     connection: {
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
+      host: config.db_host,
+      user: config.db_user,
       password: "",
-      database: process.env.DB_NAME,
-      port: parseInt(process.env.DB_PORT, 10),
+      database: config.db_name,
+      port: config.db_port,
     },
   },
 
@@ -52,13 +45,13 @@ const config: { [key: string]: Knex.Config } = {
   test: {
     ...sharedConfig,
     connection: {
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
+      host: config.db_host,
+      user: config.db_user,
       password: "",
-      database: process.env.DB_TEST_NAME,
-      port: parseInt(process.env.DB_PORT, 10),
+      database: config.db_test_name,
+      port: config.db_port,
     },
   },
 };
 
-export default config;
+export default knexConfig;

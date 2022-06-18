@@ -1,10 +1,10 @@
 import * as React from "react";
 import config from "./config";
 import "./styles/App.css";
-import { UserPosition } from "@backend/types";
+import { UserPosition, ScanResult } from "@backend/types";
 
 function App() {
-  const [result, setResult] = React.useState();
+  const [result, setResult] = React.useState<ScanResult | null>(null);
   const [status, setStatus] = React.useState<string | null>(null);
 
   const getLocation = (): Promise<UserPosition | undefined> => {
@@ -30,6 +30,7 @@ function App() {
 
   const scan = async () => {
     setStatus("Loading...");
+    setResult(null);
     const userPosition = await getLocation();
 
     if (!userPosition) {
@@ -53,7 +54,7 @@ function App() {
     if (!res.ok) {
       setStatus("Error");
     }
-    const json = await res.json();
+    const json: ScanResult = await res.json();
     setResult(json);
     setStatus(null);
   };
@@ -63,9 +64,16 @@ function App() {
       <h1>Resource App</h1>
       <button onClick={scan}>Scan</button>
       <p>{status && status}</p>
-      <pre>
-        <code>{result && JSON.stringify(result, null, 2)}</code>
-      </pre>
+      {result && (
+        <div>
+          <h2>Regions</h2>
+          <ul>
+            {result.regions.map((r) => {
+              return <li key={r.id}>{r.h3Index}</li>;
+            })}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

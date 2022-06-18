@@ -1,23 +1,11 @@
 import express, { Request } from "express";
 import bodyParser from "body-parser";
-import path from "path";
-import * as dotenv from "dotenv";
 import cors from "cors";
 import routes from "./routes";
-
-// To use the .env file, we use the dotenv module to load the values
-// Have to give the dotenv config the relative path to .env for it to work properly
-dotenv.config({
-  path: path.resolve(__dirname, "../.env"),
-});
-
-const CORS_ALLOWED_ORIGINS = [
-  "http://localhost:3000",
-  "https://resource-app-client.netlify.app",
-];
+import config from "./config";
 
 const CORS_OPTIONS = {
-  origin: CORS_ALLOWED_ORIGINS,
+  origin: config.cors_allowed_origins,
   credentials: true,
   preflightContinue: true,
   allowedHeaders: ["Content-Type"],
