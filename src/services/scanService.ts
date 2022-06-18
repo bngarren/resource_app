@@ -2,6 +2,7 @@ import * as h3 from "h3-js";
 import { getResourceById, getRegionsFromH3Array } from "../data/db";
 import { Region } from "../data/db.types";
 import { UserPosition } from "../types";
+import { ScanResult } from "../types/scanService.types";
 import { handleCreateRegion } from "./regionService";
 
 //! TESTING ONLY
@@ -27,21 +28,32 @@ export const handleScanByUserAtLocation = async (
       (h) => !existingRegions.some((r) => r.h3Index === h)
     );
 
-    const newRegions = await Promise.allSettled(
+    const results = await Promise.allSettled(
       missingRegions.map((m) => {
         return handleCreateRegion(m);
       })
     );
+    const newRegions = results
+      .filter(
+        (x): x is PromiseFulfilledResult<Region | null> =>
+          x.status === "fulfilled"
+      )
+      .map((x) => x.value)
+      .filter((x): x is Region => x != null);
 
     const regions = [...existingRegions, ...newRegions];
 
-    //console.log("regions:", regions);
     // Verify that number of h3Indices equal number of regions
     if (regions.length !== h3Group.length) {
       throw new Error("Did not match h3 indices with regions in the database");
     }
-    return regions;
+    // Return the scan result
+    const scanResult: ScanResult = {
+      regions: regions,
+    };
+    return scanResult;
   } catch (error) {
-    if (error instanceof Error) throw new Error(error.message);
+    if (error instanceof Error) console.log(error.message);
+    return -1;
   }
 };
