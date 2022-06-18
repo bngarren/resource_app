@@ -13,7 +13,7 @@ dotenv.config({
 
 const CORS_ALLOWED_ORIGINS = [
   "http://localhost:3000",
-  "https://master--h3-test.netlify.app",
+  "https://resource-app-client.netlify.app",
 ];
 
 const CORS_OPTIONS = {
