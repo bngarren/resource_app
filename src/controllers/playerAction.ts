@@ -8,9 +8,9 @@ export const scan = async (
 ) => {
   const { body } = req;
 
-  /* const result = await scanService.handleScanByUserAtLocation(
+  const result = await scanService.handleScanByUserAtLocation(
     1,
     body.userPosition
-  ); */
-  res.send(body);
+  );
+  res.send(result);
 };

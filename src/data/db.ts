@@ -23,7 +23,7 @@ const createRegion = async (h3Index: string) => {
   try {
     return await db.transaction(async (trx) => {
       // Ensure this region doesn't already exist
-      const select: Region[] = await trx
+      const select = await trx
         .select("h3Index")
         .from("regions")
         .where("h3Index", h3Index);

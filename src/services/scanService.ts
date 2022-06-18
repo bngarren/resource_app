@@ -1,5 +1,6 @@
 import * as h3 from "h3-js";
 import { getResourceById, getRegionsFromH3Array } from "../data/db";
+import { Region } from "../data/db.types";
 import { UserPosition } from "../types";
 import { handleCreateRegion } from "./regionService";
 
@@ -20,23 +21,19 @@ export const handleScanByUserAtLocation = async (
 
   try {
     // Query for regions associated with these h3 locations
-    const regionsQuery = await getRegionsFromH3Array(h3Group);
+    const existingRegions = await getRegionsFromH3Array(h3Group);
 
-    // For each of the h3Indices of this scan, check if a
-    // region exists, if not create it
-    const regions = await Promise.all(
-      h3Group.map(async (i) => {
-        const exists = regionsQuery.find((el) => el.h3Index === i);
-        if (!exists) {
-          const newRegion = await handleCreateRegion(i);
-          if (newRegion) {
-            return newRegion;
-          }
-        } else {
-          return exists;
-        }
+    const missingRegions = h3Group.filter(
+      (h) => !existingRegions.some((r) => r.h3Index === h)
+    );
+
+    const newRegions = await Promise.allSettled(
+      missingRegions.map((m) => {
+        return handleCreateRegion(m);
       })
     );
+
+    const regions = [...existingRegions, ...newRegions];
 
     console.log("regions:", regions);
     // Verify that number of h3Indices equal number of regions
