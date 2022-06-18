@@ -35,7 +35,7 @@ export const handleScanByUserAtLocation = async (
 
     const regions = [...existingRegions, ...newRegions];
 
-    console.log("regions:", regions);
+    //console.log("regions:", regions);
     // Verify that number of h3Indices equal number of regions
     if (regions.length !== h3Group.length) {
       throw new Error("Did not match h3 indices with regions in the database");
