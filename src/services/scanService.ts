@@ -3,7 +3,7 @@ import { getResourceById, getRegionsFromH3Array } from "../data/query";
 import type { RegionType } from "../models/Region";
 import { UserPosition } from "../types";
 import { ScanResult } from "../types/scanService.types";
-import { handleCreateRegion } from "./regionService";
+import { handleCreateRegion, updateRegion } from "./regionService";
 
 //! TESTING ONLY
 export const handleScan = async () => {
@@ -28,31 +28,47 @@ export const handleScanByUserAtLocation = async (
       (h) => !existingRegions.some((r) => r.h3Index === h)
     );
 
-    const results = await Promise.allSettled(
+    const promises_newRegions = await Promise.allSettled(
       missingRegions.map((m) => {
         return handleCreateRegion(m);
       })
     );
-    const newRegions = results
+    const newRegions = promises_newRegions
       .filter(
         (x): x is PromiseFulfilledResult<RegionType> => x.status === "fulfilled"
       )
       .map((x) => x.value)
       .filter((x): x is RegionType => x != null);
 
-    const regions = [...existingRegions, ...newRegions];
+    let regions = [...existingRegions, ...newRegions];
 
     // Verify that number of h3Indices equal number of regions
     if (regions.length !== h3Group.length) {
       throw new Error("Did not match h3 indices with regions in the database");
     }
+
+    // Update each region
+    const promises_updatedRegions = await Promise.allSettled(
+      regions.map((r) => updateRegion(r.id))
+    );
+    regions = promises_updatedRegions
+      .filter(
+        (x): x is PromiseFulfilledResult<RegionType> => x.status === "fulfilled"
+      )
+      .map((x) => x.value)
+      .filter((x): x is RegionType => x != null);
+
+    if (regions.length !== h3Group.length) {
+      throw new Error("Error attempting to update regions");
+    }
+
     // Return the scan result
     const scanResult: ScanResult = {
       regions: regions,
     };
     return scanResult;
   } catch (error) {
-    if (error instanceof Error) console.log(error.message);
+    if (error instanceof Error) console.error(error.message);
     return -1;
   }
 };

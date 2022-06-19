@@ -1,4 +1,5 @@
 import { logger } from "../logger";
+import Region from "../models/Region";
 import RegionModel, { RegionType } from "../models/Region";
 import ResourceModel, { ResourceType } from "../models/Resource";
 
@@ -41,6 +42,21 @@ const createRegion = async (h3Index: string) => {
   }
 };
 
+const updateUpdatedAtRegion = async (id: number, time: string) => {
+  try {
+    return ((await RegionModel.query()
+      .patch({ updated_at: time })
+      .where("id", id)
+      .returning("*")
+      .first()) || null) as RegionType | null;
+  } catch (error) {
+    if (error instanceof Error) {
+      logger.error(error.message);
+    }
+    return null;
+  }
+};
+
 /**
  *
  * @param h3Array Array of H3 index values for which to retrieve associated Regions
@@ -52,4 +68,9 @@ const getRegionsFromH3Array = async (h3Array: string[]) => {
     .whereIn("h3Index", h3Array)) as RegionType[];
 };
 
-export { getResourceById, createRegion, getRegionsFromH3Array };
+export {
+  getResourceById,
+  createRegion,
+  updateUpdatedAtRegion,
+  getRegionsFromH3Array,
+};

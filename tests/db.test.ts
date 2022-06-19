@@ -102,7 +102,8 @@ describe("Regions", () => {
       if (result) {
         const now = new Date();
         const created_at = new Date(result.created_at);
-        expect(now.getHours()).toEqual(created_at.getHours());
+        expect(now.getUTCDay()).toEqual(created_at.getUTCDay());
+        expect(now.getUTCMinutes()).toEqual(created_at.getUTCMinutes());
       }
     });
   });

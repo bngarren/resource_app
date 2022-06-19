@@ -56,6 +56,17 @@ describe("handleScanByUserAtLocation()", () => {
 
       expect(MOCK_DATA.h3Group.sort()).toEqual(regionsH3.sort());
     });
+    it("returns a result object that contains `regions`", async () => {
+      const result = await handleScanByUserAtLocation(
+        1,
+        MOCK_DATA.userPosition
+      );
+      expect(result).toHaveProperty("regions");
+
+      if (result !== -1) {
+        expect(result.regions[0]).toHaveProperty("h3Index");
+      }
+    });
   });
   describe("when some regions exist in the database", () => {
     it("creates only the non-existent regions", async () => {
@@ -69,6 +80,22 @@ describe("handleScanByUserAtLocation()", () => {
       const result = await db("regions").select("h3Index");
       expect(result).toHaveLength(7);
       expect(new Set(result).size).toBe(7); // no duplicates
+    });
+  });
+  describe("when the scan result is returned", () => {
+    it("includes `regions` with each region having an `updated_at` of now", async () => {
+      const result = await handleScanByUserAtLocation(
+        1,
+        MOCK_DATA.userPosition
+      );
+
+      if (result !== -1) {
+        const region1 = result.regions[0];
+        const now = new Date();
+        const updated_at = new Date(region1.updated_at);
+        expect(now.getUTCDay()).toEqual(updated_at.getUTCDay());
+        expect(now.getUTCMinutes()).toEqual(updated_at.getUTCMinutes());
+      }
     });
   });
 });
