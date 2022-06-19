@@ -3,6 +3,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import routes from "./routes";
 import config from "./config";
+import { logRequest } from "./middleware/logRequest";
 
 const CORS_OPTIONS = {
   origin: config.cors_allowed_origins,
@@ -16,6 +17,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors(CORS_OPTIONS));
 app.options("*", cors<Request>());
+app.use(logRequest);
 
 app.get("/", (req, res) => res.send("Backend is working!"));
 

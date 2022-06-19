@@ -7,11 +7,13 @@
      "esModuleInterop": true,
      "lib": ["esnext"],
      "strict": true,
+     "forceConsistentCasingInFileNames": true,
+     "baseUrl": "./"
    },
    "exclude": [
      "node_modules",
      "public/*",
      "src/client/*"
    ],
-   "include": ["src/**/*", "tests/**/*, jest.config.ts"]
+   "include": ["./src/**/*", "./tests/**/*", "jest.config.ts"]
  }

@@ -1,6 +1,9 @@
-import { db } from "../src/data/db";
 import { handleScanByUserAtLocation } from "../src/services/scanService";
 import { UserPosition } from "../src/types";
+import { setupDB } from "../src/data/db";
+import { Knex } from "knex";
+import config from "../src/config";
+import { getRegionsFromH3Array } from "../src/data/query";
 
 // externally validated h3Index's (resolution 9) with
 // kRing distance of 1 (first element is center)
@@ -21,60 +24,78 @@ const MOCK_DATA = {
   },
 };
 
+let db: Knex;
+
 beforeAll(async () => {
+  db = setupDB(config.node_env || "test", true) as Knex;
+  await db.migrate.rollback();
   await db.migrate.latest();
-  await db.seed.run();
 });
 
-afterAll(() => {
-  return db.migrate.rollback().then(() => db.destroy());
+afterAll(async () => {
+  await db.destroy();
+});
+
+afterEach(async () => {
+  await db("resources").del();
+  await db("regions").del();
 });
 
 describe("handleScanByUserAtLocation()", () => {
-  beforeEach(async () => {
-    await db("regions").del();
-  });
-
-  describe("when no regions exist in the database", () => {
+  describe("when no associated regions exist in the database", () => {
     it("creates 7 new regions with the correct h3Index's", async () => {
-      const select1 = await db("regions").select();
+      const q = await getRegionsFromH3Array(MOCK_DATA.h3Group);
+      expect(q).toHaveLength(0);
 
       await handleScanByUserAtLocation(1, MOCK_DATA.userPosition);
 
-      const select2 = await db("regions")
-        .select()
-        .whereIn("h3Index", MOCK_DATA.h3Group);
+      const regions = await getRegionsFromH3Array(MOCK_DATA.h3Group);
+      expect(regions).toHaveLength(7);
 
-      const h3GroupDb = select2.map((r) => r.h3Index);
+      const regionsH3 = regions.map((r) => r.h3Index);
 
-      expect(select1).toHaveLength(0);
-      expect(select2.length).toBe(MOCK_DATA.h3Group.length);
-      expect(MOCK_DATA.h3Group.sort()).toEqual(h3GroupDb.sort());
+      expect(MOCK_DATA.h3Group.sort()).toEqual(regionsH3.sort());
+    });
+    it("returns a result object that contains `regions`", async () => {
+      const result = await handleScanByUserAtLocation(
+        1,
+        MOCK_DATA.userPosition
+      );
+      expect(result).toHaveProperty("regions");
+
+      if (result !== -1) {
+        expect(result.regions[0]).toHaveProperty("h3Index");
+      }
     });
   });
   describe("when some regions exist in the database", () => {
     it("creates only the non-existent regions", async () => {
-      const select1 = await db("regions").select();
-
-      const inserted = await db("regions")
-        .insert([
-          { h3Index: MOCK_DATA.h3Group[0] },
-          { h3Index: MOCK_DATA.h3Group[1] },
-        ])
-        .returning("id");
-
+      await db("regions").insert([
+        { h3Index: MOCK_DATA.h3Group[0] },
+        { h3Index: MOCK_DATA.h3Group[1] },
+      ]);
+      const q = await db("regions").select("h3Index");
+      expect(q).toHaveLength(2);
       await handleScanByUserAtLocation(1, MOCK_DATA.userPosition);
+      const result = await db("regions").select("h3Index");
+      expect(result).toHaveLength(7);
+      expect(new Set(result).size).toBe(7); // no duplicates
+    });
+  });
+  describe("when the scan result is returned", () => {
+    it("includes `regions` with each region having an `updated_at` of now", async () => {
+      const result = await handleScanByUserAtLocation(
+        1,
+        MOCK_DATA.userPosition
+      );
 
-      const select2 = await db("regions")
-        .select()
-        .whereIn("h3Index", MOCK_DATA.h3Group);
-
-      const h3GroupDb = select2.map((r) => r.h3Index);
-
-      expect(select1).toHaveLength(0);
-      expect(inserted).toHaveLength(2);
-      expect(select2.length).toBe(MOCK_DATA.h3Group.length);
-      expect(MOCK_DATA.h3Group.sort()).toEqual(h3GroupDb.sort());
+      if (result !== -1) {
+        const region1 = result.regions[0];
+        const now = new Date();
+        const updated_at = new Date(region1.updated_at || 1);
+        expect(now.getUTCDay()).toEqual(updated_at.getUTCDay());
+        expect(now.getUTCMinutes()).toEqual(updated_at.getUTCMinutes());
+      }
     });
   });
 });
