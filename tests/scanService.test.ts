@@ -92,7 +92,7 @@ describe("handleScanByUserAtLocation()", () => {
       if (result !== -1) {
         const region1 = result.regions[0];
         const now = new Date();
-        const updated_at = new Date(region1.updated_at);
+        const updated_at = new Date(region1.updated_at || 1);
         expect(now.getUTCDay()).toEqual(updated_at.getUTCDay());
         expect(now.getUTCMinutes()).toEqual(updated_at.getUTCMinutes());
       }

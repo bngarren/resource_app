@@ -1,5 +1,5 @@
-import type { Region } from "../models/Region";
+import type { RegionType } from "../models/Region";
 
 export interface ScanResult {
-  regions: Region[];
+  regions: RegionType[];
 }
