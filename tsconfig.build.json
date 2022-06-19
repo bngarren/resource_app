@@ -1,0 +1,10 @@
+{
+   "extends": "./tsconfig.json",
+   "exclude": [
+      "node_modules",
+      "public/*",
+      "src/client/*",
+      "tests/**/*",
+      "jest.config.ts"
+    ],
+}

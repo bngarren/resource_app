@@ -1,23 +1,32 @@
+import { db } from "../src/data/db";
 import {
-  db,
   getResourceById,
   createRegion,
   getRegionsFromH3Array,
-} from "../src/data/db";
-import { Resource, Region } from "../src/data/db.types";
+} from "../src/data/query";
 
 beforeAll(async () => {
   await db.migrate.latest();
-  await db.seed.run();
 });
 
-afterAll(() => {
-  return db.migrate.rollback().then(() => db.destroy());
+afterAll(async () => {
+  await db.migrate.rollback().then(() => db.destroy());
 });
 
 describe("resources", () => {
-  it("gets a single resource by id", async () => {
-    const result: Resource[] = await getResourceById(1);
+  it.skip("gets a single resource by id", async () => {
+    const insert = await db("resources")
+      .insert({
+        name: "test",
+        quantity_initial: 100,
+        quantity_remaining: 100,
+      })
+      .returning("id")
+      .first();
+    if (insert != null) {
+      const result: Resource[] = await getResourceById(insert);
+    }
+
     expect(result.length).toEqual(1);
     expect(result[0].id).toEqual(1);
     expect(result[0].name).not.toBeFalsy();
@@ -48,6 +57,7 @@ describe("regions", () => {
         const date = new Date(result.created_at);
         expect(date).toBeTruthy();
       }
+      db("regions").del();
     });
 
     it("does not create duplicate region with same h3 index", async () => {
@@ -56,6 +66,7 @@ describe("regions", () => {
         const result2 = await createRegion("992a306409bffff");
         expect(result2).toBeNull();
       }
+      db("regions").del();
     });
   });
 });

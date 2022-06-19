@@ -1,3 +1,5 @@
+import { Knex } from "knex";
+
 export interface Resource {
   id: number;
   name: string;
@@ -24,6 +26,11 @@ export interface Regions {
 declare module "knex/types/tables" {
   interface Tables {
     resources: Resource;
+    resources_composite: Knex.CompositeTableType<
+      Resource,
+      Pick<Resource, "name" | "quantity_initial" | "quantity_remaining">,
+      Partial<Omit<Resource, "id">>
+    >;
     regions: Region;
   }
 }

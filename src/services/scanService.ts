@@ -1,5 +1,5 @@
 import * as h3 from "h3-js";
-import { getResourceById, getRegionsFromH3Array } from "../data/db";
+import { getResourceById, getRegionsFromH3Array } from "../data/query";
 import { Region } from "../data/db.types";
 import { UserPosition } from "../types";
 import { ScanResult } from "../types/scanService.types";
