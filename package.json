@@ -11,10 +11,10 @@
       "build": "tsc -p ./tsconfig.build.json",
       "heroku-postbuild": "npm run migrate-latest",
       "deploy": "git push heroku master",
-      "start": "node dist/main.js | npx pino-pretty",
-      "migrate-latest": "knex migrate:latest --knexfile src/knexfile.js",
-      "migrate-rollback": "knex migrate:rollback --all --knexfile src/knexfile.js",
-      "seed": "knex seed:run --knexfile src/knexfile.js"
+      "start": "rm -rf dist && npm run migrate-latest && npm run build && node dist/main.js | npx pino-pretty",
+      "migrate-latest": "knex migrate:latest --knexfile src/knexfile.ts",
+      "migrate-rollback": "knex migrate:rollback --all --knexfile src/knexfile.ts",
+      "seed": "knex seed:run --knexfile src/knexfile.ts"
    },
    "dependencies": {
       "body-parser": "^1.20.0",

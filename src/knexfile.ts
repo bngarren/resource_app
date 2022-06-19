@@ -16,7 +16,7 @@ const sharedConfig = {
   seeds: { directory: __dirname + "/data/seeds" },
 };
 
-export const knexConfig: { [key: string]: Knex.Config } = {
+const knexConfig: { [key: string]: Knex.Config } = {
   development: {
     ...sharedConfig,
     connection: {
@@ -53,3 +53,5 @@ export const knexConfig: { [key: string]: Knex.Config } = {
     },
   },
 };
+
+export default knexConfig;
