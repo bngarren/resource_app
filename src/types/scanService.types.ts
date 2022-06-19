@@ -1,4 +1,4 @@
-import { Region } from "../data/db.types";
+import type { Region } from "../models/Region";
 
 export interface ScanResult {
   regions: Region[];

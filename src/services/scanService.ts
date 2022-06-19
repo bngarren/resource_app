@@ -1,6 +1,6 @@
 import * as h3 from "h3-js";
 import { getResourceById, getRegionsFromH3Array } from "../data/query";
-import { Region } from "../data/db.types";
+import type { RegionType } from "../models/Region";
 import { UserPosition } from "../types";
 import { ScanResult } from "../types/scanService.types";
 import { handleCreateRegion } from "./regionService";
@@ -35,11 +35,10 @@ export const handleScanByUserAtLocation = async (
     );
     const newRegions = results
       .filter(
-        (x): x is PromiseFulfilledResult<Region | null> =>
-          x.status === "fulfilled"
+        (x): x is PromiseFulfilledResult<RegionType> => x.status === "fulfilled"
       )
       .map((x) => x.value)
-      .filter((x): x is Region => x != null);
+      .filter((x): x is RegionType => x != null);
 
     const regions = [...existingRegions, ...newRegions];
 

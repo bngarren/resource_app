@@ -7,7 +7,7 @@
    },
    "scripts": {
       "dev": "ts-node-dev --respawn --transpile-only ./src/main.ts | npx pino-pretty",
-      "test": "jest",
+      "test": "jest --runInBand",
       "build": "tsc -p ./tsconfig.build.json",
       "heroku-postbuild": "npm run migrate-latest",
       "deploy": "git push heroku master",
@@ -24,6 +24,7 @@
       "express-pino-logger": "^7.0.0",
       "h3-js": "^3.7.2",
       "knex": "^2.1.0",
+      "objection": "^3.0.1",
       "pg": "^8.7.3",
       "pino": "^8.0.0"
    },

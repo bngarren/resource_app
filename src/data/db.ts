@@ -1,6 +1,11 @@
 import knex from "knex";
 import knexConfig from "../knexfile";
-import config from "../config";
+import { Model } from "objection";
 
-//initialize knex
-export const db = knex(knexConfig[config.node_env || "development"]);
+export const setupDB = (env: string, returnInstance = false) => {
+  const db = knex(knexConfig[env]);
+  Model.knex(db);
+  if (returnInstance) {
+    return db;
+  }
+};

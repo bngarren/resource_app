@@ -1,18 +1,19 @@
-import { Resource, Region } from "./db.types";
 import { logger } from "../logger";
-import { db } from "./db";
+import RegionModel, { RegionType } from "../models/Region";
+import ResourceModel, { ResourceType } from "../models/Resource";
 
 // ----- RESOURCES -----
 const getResourceById = async (id: number) => {
-  return await db<Resource>("resources").select().where("id", id);
+  return ((await ResourceModel.query().select().where("id", id).first()) ||
+    null) as ResourceType | null;
 };
 
 // ----- REGIONS -----
 const createRegion = async (h3Index: string) => {
   try {
-    return await db.transaction(async (trx) => {
+    return await RegionModel.transaction(async (trx) => {
       // Ensure this region doesn't already exist
-      const select = await trx
+      const select = await RegionModel.query(trx)
         .select("h3Index")
         .from("regions")
         .where("h3Index", h3Index);
@@ -23,18 +24,14 @@ const createRegion = async (h3Index: string) => {
       }
 
       // Insert a new region
-      const inserted: Region[] = await trx
+      const inserted = await RegionModel.query(trx)
         .insert({ h3Index: h3Index })
         .into("regions")
         .returning("*");
       logger.info("Created new region in db:", inserted);
 
       // Return a single Region object
-      if (inserted.length === 0) {
-        return null;
-      } else {
-        return inserted[0];
-      }
+      return inserted as RegionType;
     });
   } catch (error: unknown) {
     if (error instanceof Error) {
@@ -50,7 +47,9 @@ const createRegion = async (h3Index: string) => {
  * @returns Array of Regions
  */
 const getRegionsFromH3Array = async (h3Array: string[]) => {
-  return await db("regions").select().whereIn("h3Index", h3Array);
+  return (await RegionModel.query()
+    .select()
+    .whereIn("h3Index", h3Array)) as RegionType[];
 };
 
 export { getResourceById, createRegion, getRegionsFromH3Array };
