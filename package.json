@@ -8,10 +8,10 @@
    "scripts": {
       "dev": "ts-node-dev --respawn --transpile-only ./src/main.ts | npx pino-pretty",
       "test": "jest --runInBand",
-      "build": "tsc -p ./tsconfig.build.json",
+      "build": "rm -rf dist && tsc -p ./tsconfig.build.json",
       "heroku-postbuild": "npm run migrate-latest",
       "deploy": "git push heroku master",
-      "start": "rm -rf dist && npm run migrate-latest && npm run build && node dist/main.js | npx pino-pretty",
+      "start": "npm run migrate-latest && npm run build && node dist/main.js | npx pino-pretty",
       "migrate-latest": "knex migrate:latest --knexfile src/knexfile.ts",
       "migrate-rollback": "knex migrate:rollback --all --knexfile src/knexfile.ts",
       "seed": "knex seed:run --knexfile src/knexfile.ts"
