@@ -37,3 +37,12 @@
 - Buildpacks run scripts to help transform the code into a "slug" that can then run on a Heroku dyno
 - **heroku/nodejs** buildpack - sets up a node environment, uses npm to install dependencies, runs npm scripts
 - **zidizei/typescript** - compiles our typescript
+
+# Logging
+## Pino
+- The base pino logger is instantiated in /logger and can be customized here
+- Through the code we can simply `import { logger }` and then use `logger.info` or `logger.warn` for example
+   - The default logging methods are trace, debug, info, warn, error, and fatal
+- To log objects, use string formatting (printf style) See [here](https://github.com/pinojs/pino/blob/HEAD/docs/api.md#message-string)
+- The **log level** (threshold at which logs are displayed) comes from config file, which tries to pull from .env variable. Thus log level can be set from environment or command line `LOGGER_LEVEL=debug`
+- For logging Express (i.e. requests/responses), we use express-pino-logger module. We create this middleware in /middleware and then apply it in server.ts with `app.use()`. We can customize the output and stuff as well

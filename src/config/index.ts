@@ -19,4 +19,5 @@ export default {
   db_port: parseInt(process.env.DB_PORT as string, 10),
   db_name: process.env.DB_NAME,
   db_test_name: process.env.DB_TEST_NAME,
+  logger_level: process.env.LOGGER_LEVEL || "info",
 };

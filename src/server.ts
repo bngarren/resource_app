@@ -19,7 +19,7 @@ app.use(cors(CORS_OPTIONS));
 app.options("*", cors<Request>());
 app.use(logRequest);
 
-app.get("/", (req, res) => res.send("Backend is working!"));
+app.get("/", (req, res) => res.send(`Backend is working!`));
 
 app.use("/api", routes);
 
