@@ -1,10 +1,14 @@
 import * as React from "react";
 import config from "./config";
 import "./styles/App.css";
-import { UserPosition, ScanResult } from "@backend/types";
+
+interface UserPosition {
+  latitude: number;
+  longitude: number;
+}
 
 function App() {
-  const [result, setResult] = React.useState<ScanResult | null>(null);
+  const [result, setResult] = React.useState<any>();
   const [status, setStatus] = React.useState<string | null>(null);
 
   const getLocation = (): Promise<UserPosition | undefined> => {
@@ -54,7 +58,7 @@ function App() {
     if (!res.ok) {
       setStatus("Error");
     }
-    const json: ScanResult = await res.json();
+    const json = await res.json();
     setResult(json);
     setStatus(null);
   };
@@ -68,7 +72,7 @@ function App() {
         <div>
           <h2>Regions</h2>
           <ul>
-            {result.regions.map((r) => {
+            {result.regions.map((r: any) => {
               return <li key={r.id}>{r.h3Index}</li>;
             })}
           </ul>

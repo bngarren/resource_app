@@ -18,7 +18,7 @@
     "baseUrl": ".",
     "paths": {
       "@backend/*": ["../*"]
-    }
+    },
   },
   "include": ["./src"],
   "exclude": ["./node_modules"],
