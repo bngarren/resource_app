@@ -49,6 +49,15 @@ describe("handleCreateResource()", () => {
     await db("regions").where("id", insertedRegion.id).del();
   });
 
+  it("should return a new resource", async () => {
+    const result = await handleCreateResource({
+      ...MOCK_DATA.resource,
+      region_id: insertedRegion.id,
+    });
+    expect(result).not.toBeNull();
+    expect(result?.region_id).toEqual(insertedRegion.id);
+  });
+
   describe("should return null if:", () => {
     it("the region_id doesn't reference a foreign key", async () => {
       const result = await handleCreateResource({

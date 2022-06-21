@@ -30,7 +30,7 @@ export const handleScanByUserAtLocation = async (
 
     const promises_newRegions = await Promise.allSettled(
       missingRegions.map((m) => {
-        return handleCreateRegion(m);
+        return handleCreateRegion({ h3Index: m });
       })
     );
     const newRegions = promises_newRegions

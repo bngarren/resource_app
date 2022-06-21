@@ -1,5 +1,7 @@
 import h3 from "h3-js";
 
-const h3Index = "abcd";
+const regionH3Index = "892830829cbffff";
 
-console.log(h3.h3IsValid(h3Index));
+const children = h3.h3ToChildren(regionH3Index, 11);
+
+console.log(children);

@@ -1,5 +1,4 @@
 import { logger } from "../logger";
-import Region from "../models/Region";
 import RegionModel, { RegionType } from "../models/Region";
 import ResourceModel, { ResourceType } from "../models/Resource";
 
@@ -9,10 +8,18 @@ const getResourceById = async (id: number) => {
     null) as ResourceType | null;
 };
 
-const createResource = async (model: ResourceModel) => {
-  let result: ResourceType | null = null;
+/**
+ * Adds a Resource row to the database. Note that the return type
+ * is ResourceModel and the caller should cast this to ResourceType
+ * for further use in the app.
+ *
+ * @param model The ResourceModel to insert
+ * @returns The inserted row (ResouceModel)
+ */
+const addResource = async (model: ResourceModel) => {
+  let result: ResourceModel | undefined;
   try {
-    result = (await ResourceModel.query().insert(model).returning("*")) || null;
+    result = await ResourceModel.query().insert(model).returning("*");
   } catch (error) {
     logger.error(error);
   }
@@ -20,36 +27,23 @@ const createResource = async (model: ResourceModel) => {
 };
 
 // ----- REGIONS -----
-const createRegion = async (h3Index: string) => {
+
+/**
+ * Adds a Region row to the database. Note that the return type
+ * is RegionModel and the caller should cast this to RegionType
+ * for further use in the app.
+ *
+ * @param model The RegionModel to insert
+ * @returns The inserted row (RegionModel)
+ */
+const addRegion = async (model: RegionModel) => {
+  let result: RegionModel | undefined;
   try {
-    return await RegionModel.transaction(async (trx) => {
-      // Ensure this region doesn't already exist
-      const select = await RegionModel.query(trx)
-        .select("h3Index")
-        .from("regions")
-        .where("h3Index", h3Index);
-
-      if (select.length !== 0) {
-        logger.info(`Could not createRegion (${h3Index}) - already exists`);
-        return null;
-      }
-
-      // Insert a new region
-      const inserted = await RegionModel.query(trx)
-        .insert({ h3Index: h3Index })
-        .into("regions")
-        .returning("*");
-      logger.info("Created new region in db:", inserted);
-
-      // Return a single Region object
-      return inserted as RegionType;
-    });
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      logger.error(error.message);
-    }
-    return null;
+    result = await RegionModel.query().insert(model).returning("*");
+  } catch (error) {
+    logger.error(error);
   }
+  return result;
 };
 
 const updateUpdatedAtRegion = async (id: number, time: string) => {
@@ -80,8 +74,8 @@ const getRegionsFromH3Array = async (h3Array: string[]) => {
 
 export {
   getResourceById,
-  createResource,
-  createRegion,
+  addResource,
+  addRegion,
   updateUpdatedAtRegion,
   getRegionsFromH3Array,
 };

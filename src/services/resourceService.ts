@@ -1,6 +1,6 @@
 import ResourceModel, { ResourceType } from "../models/Resource";
 import { logger } from "../logger";
-import { createResource } from "../data/query";
+import { addResource } from "../data/query";
 
 /**
  * Handles the creation of a new resource
@@ -12,19 +12,22 @@ import { createResource } from "../data/query";
  *
  *
  * @param resourceJson The new resource's data in json object
- * @returns Promise with the resource, or null if validation or database query failure
+ * @returns Promise with the ResourceType, or null if validation or database query failure
  */
 export const handleCreateResource = async (
-  resourceJson: Omit<ResourceType, "id">
+  resourceJson: Partial<ResourceModel>
 ) => {
-  let newResourceModel: ResourceModel;
-  let resultResource: ResourceType | null;
+  let inputResourceModel: ResourceModel;
+  let resultResource: ResourceModel | undefined;
   try {
-    newResourceModel = ResourceModel.fromJson(resourceJson);
-    resultResource = await createResource(newResourceModel);
+    inputResourceModel = ResourceModel.fromJson(resourceJson);
+    resultResource = await addResource(inputResourceModel);
   } catch (error) {
     logger.error(error);
     return null;
   }
-  return resultResource;
+  if (!resultResource) {
+    return null;
+  }
+  return resultResource as ResourceType;
 };
