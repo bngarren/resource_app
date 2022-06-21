@@ -9,6 +9,11 @@ const getResourceById = async (id: number) => {
     null) as ResourceType | null;
 };
 
+const createResource = async (model: ResourceModel) => {
+  return ((await ResourceModel.query().insert(model).returning("*")) ||
+    null) as ResourceType | null;
+};
+
 // ----- REGIONS -----
 const createRegion = async (h3Index: string) => {
   try {
@@ -70,6 +75,7 @@ const getRegionsFromH3Array = async (h3Array: string[]) => {
 
 export {
   getResourceById,
+  createResource,
   createRegion,
   updateUpdatedAtRegion,
   getRegionsFromH3Array,
