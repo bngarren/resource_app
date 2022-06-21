@@ -1,7 +1,8 @@
 # Project root
 
 ## npm scripts
-- `"dev": "ts-node-dev --respawn --transpile-only ./src/main.ts | npx pino-pretty"`
+- `"dev": "npm run migrate-latest && ts-node-dev --respawn --transpile-only ./src/main.ts | npx pino-pretty"`
+   - First runs the knex migration to get the database schema up to date. If this errors, may need to rollback and then try to migrate up again
    - Restarts target process (main.ts) each time it sees file changes and uses ts-node to compile to Typescript between each run. Similar to running nodemon with ts-node
 - `"test": "LOGGER_LEVEL=fatal jest --runInBand"`
    - We use the "--runInBand" flag to make jest run tests serially rather than in parallel (default) so that we don't have conflicts with multiple tests trying to operate on the test database at the same time
