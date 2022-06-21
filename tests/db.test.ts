@@ -47,14 +47,15 @@ describe("Resources", () => {
   // Create a dummy Region row (needed for FK's)
   let newRegion: RegionModel;
   let insertedRegion: RegionType;
-  beforeAll(async () => {
+  beforeEach(async () => {
     newRegion = RegionModel.fromJson(MOCK_DATA.region);
     [insertedRegion] = (await db("regions")
       .insert(newRegion)
       .returning("*")) as RegionType[];
   });
-  afterAll(async () => {
-    db("regions").where("id", insertedRegion.id).del();
+  afterEach(async () => {
+    await db("resources").del();
+    await db("regions").where("id", insertedRegion.id).del();
   });
 
   describe("getResourceById()", () => {

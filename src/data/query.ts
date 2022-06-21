@@ -10,8 +10,13 @@ const getResourceById = async (id: number) => {
 };
 
 const createResource = async (model: ResourceModel) => {
-  return ((await ResourceModel.query().insert(model).returning("*")) ||
-    null) as ResourceType | null;
+  let result: ResourceType | null = null;
+  try {
+    result = (await ResourceModel.query().insert(model).returning("*")) || null;
+  } catch (error) {
+    logger.error(error);
+  }
+  return result;
 };
 
 // ----- REGIONS -----

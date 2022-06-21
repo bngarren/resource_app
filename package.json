@@ -7,7 +7,8 @@
    },
    "scripts": {
       "dev": "ts-node-dev --respawn --transpile-only ./src/main.ts | npx pino-pretty",
-      "test": "jest --runInBand",
+      "test": "LOGGER_LEVEL=fatal jest --runInBand",
+      "test:debug": "LOGGER_LEVEL=fatal node --inspect-brk node_modules/.bin/jest --runInBand",
       "build": "rm -rf dist && tsc -p ./tsconfig.build.json",
       "heroku-postbuild": "npm run migrate-latest",
       "deploy": "git push heroku master",
