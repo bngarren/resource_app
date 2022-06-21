@@ -1,4 +1,5 @@
 import { Model, ModelObject } from "objection";
+import ResourceModel from "./Resource";
 
 export default class RegionModel extends Model {
   id!: number;
@@ -26,6 +27,17 @@ export default class RegionModel extends Model {
       },
     };
   }
+
+  static relationMappings = () => ({
+    resources: {
+      relation: Model.HasManyRelation,
+      modelClass: ResourceModel,
+      join: {
+        from: "regions.id",
+        to: "resources.region_id",
+      },
+    },
+  });
 }
 
 export type RegionType = ModelObject<RegionModel>;

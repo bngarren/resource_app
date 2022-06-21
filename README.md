@@ -1,10 +1,14 @@
-# App notes
+# Project root
 
 ## npm scripts
-- `"dev": "ts-node-dev --respawn --transpile-only ./src/main.ts | npx pino-pretty"`
+- `"dev": "npm run migrate-latest && ts-node-dev --respawn --transpile-only ./src/main.ts | npx pino-pretty"`
+   - First runs the knex migration to get the database schema up to date. If this errors, may need to rollback and then try to migrate up again
    - Restarts target process (main.ts) each time it sees file changes and uses ts-node to compile to Typescript between each run. Similar to running nodemon with ts-node
-- `"test": "jest --runInBand"`
+- `"test": "LOGGER_LEVEL=fatal jest --runInBand"`
    - We use the "--runInBand" flag to make jest run tests serially rather than in parallel (default) so that we don't have conflicts with multiple tests trying to operate on the test database at the same time
+   - We set the LOGGER_LEVEL env variable to fatal to suppress any logs lower than this level during tests (complicates the output)
+- `"test:debug": "LOGGER_LEVEL=fatal node --inspect-brk node_modules/.bin/jest --runInBand"`
+   - Runs jest in debug mode. Once this is run, go to chrome://inspect and open the target. Can then step through each test
 - `"build": "rm -rf dist && tsc -p ./tsconfig.build.json"`
    - Uses the typescript compiler to transpile all of our .ts files to javascript. We first remove the old dist (prior build). When building for production we use a separate tsconfig file that excludes the tests folder.
 - `"heroku-postbuild": "npm run migrate-latest"`
@@ -25,6 +29,13 @@
 - **tsconfig.json** - 
 - **tsconfig.build.json** - extends the actual tsconfig.json but customizes it slightly. Primarily, it excludes transpiling the /tests folder, which doesn't need to go to /dist
 - **.env** - Stores environment variables. This file *is not version controlled (it in .gitignore)*.
+
+# Project architecture
+
+## ORM, validation, and type safety
+- We are using **Objection.js** as our ORM (built on top of **Knex** query builder)
+- An Objection model (e.g. ResourceModel) defines the properties of the database row and provides a jsonSchema to validate the model data before any insert/update operation
+- To pass a non-model version of the item around, we use a type derived from the model object: `export type ResourceType = ModelObject<ResourceModel>`, which contains all the properties defined in the model
 
 # Heroku deployment
 ## Config vars
