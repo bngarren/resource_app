@@ -1,16 +1,16 @@
 import { setupDB } from "../src/data/db";
 import config from "../src/config";
-import {
-  getResourceById,
-  addRegion,
-  getRegionsFromH3Array,
-} from "../src/data/query";
 import type { ResourceType } from "../src/models/Resource";
 import type { RegionType } from "../src/models/Region";
 import RegionModel from "../src/models/Region";
 import { Knex } from "knex";
 import ResourceModel from "../src/models/Resource";
-import { datesAreCloseEnough } from "./test-util";
+import { expectDatesAreCloseEnough } from "./test-util";
+import {
+  addRegion,
+  getRegionsFromH3Array,
+} from "../src/data/queries/queryRegion";
+import { getResourceById } from "../src/data/queries/queryResource";
 
 // externally validated h3Index's (resolution 9) with
 // kRing distance of 1 (first element is center)
@@ -80,9 +80,9 @@ describe("Resources", () => {
       expect(result.region_id).toEqual(insertedRegion.id);
     });
 
-    it("returns null if no resource found with id", async () => {
+    it("returns undefined if no resource found with id", async () => {
       const result = await getResourceById(12345);
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 });
@@ -115,12 +115,14 @@ describe("Regions", () => {
       if (result) {
         const now = new Date();
         const created_at = new Date(result.created_at);
-        datesAreCloseEnough(now, created_at);
+        expectDatesAreCloseEnough(now, created_at);
       }
     });
   });
   it("gets regions associated with array of h3 indices", async () => {
-    const emptyInput: RegionType[] = await getRegionsFromH3Array([]);
+    const emptyInput = await getRegionsFromH3Array([]);
+
+    if (emptyInput == null) return false;
 
     await RegionModel.query().insert({
       h3Index: MOCK_DATA.region.h3Index,
@@ -130,6 +132,8 @@ describe("Regions", () => {
     const resultSingleInput = await getRegionsFromH3Array([
       MOCK_DATA.region.h3Index,
     ]);
+
+    if (resultSingleInput == null) return false;
 
     expect(emptyInput.length).toEqual(0);
     expect(resultSingleInput.length).toEqual(1);

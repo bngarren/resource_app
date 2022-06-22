@@ -6,7 +6,7 @@ import {
   handleCreateRegion,
   updateRegion,
 } from "../src/services/regionService";
-import { datesAreCloseEnough } from "./test-util";
+import { expectDatesAreCloseEnough } from "./test-util";
 import ResourceModel from "../src/models/Resource";
 import { RESOURCES_PER_REGION, REGION_RESET_INTERVAL } from "../src/constants";
 
@@ -76,7 +76,7 @@ describe("handleCreateRegion()", () => {
         const future = new Date(now);
         future.setDate(future.getDate() + REGION_RESET_INTERVAL);
 
-        datesAreCloseEnough(future, new Date(result.reset_date));
+        expectDatesAreCloseEnough(future, new Date(result.reset_date));
       }
     });
     it(`should create ${RESOURCES_PER_REGION} new resources associated with the region`, async () => {
@@ -118,7 +118,7 @@ describe("updateRegion()", () => {
     const updatedRegion = await RegionModel.query().findById(testRegion.id);
     const now = new Date();
     if (updatedRegion?.updated_at) {
-      datesAreCloseEnough(now, new Date(updatedRegion.updated_at));
+      expectDatesAreCloseEnough(now, new Date(updatedRegion.updated_at));
     }
   });
   describe("if no resources are present in this region", () => {
@@ -195,6 +195,14 @@ describe("updateRegion()", () => {
       );
 
       expect(new_resources[0].region_id).toEqual(parentRegion?.id);
+    });
+    it(`updates the region's 'reset_date' to ${REGION_RESET_INTERVAL} days from now`, async () => {
+      await updateRegion(testRegion.id);
+      const region = await RegionModel.query().findById(testRegion.id);
+      if (!region || !region.reset_date) return false;
+      const future = new Date();
+      future.setDate(future.getDate() + REGION_RESET_INTERVAL);
+      expectDatesAreCloseEnough(future, new Date(region.reset_date));
     });
   });
 });

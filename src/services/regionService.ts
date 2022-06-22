@@ -1,9 +1,13 @@
-import { RESOURCES_PER_REGION, RESOURCE_H3_RESOLUTION } from "../constants";
+import {
+  REGION_RESET_INTERVAL,
+  RESOURCES_PER_REGION,
+  RESOURCE_H3_RESOLUTION,
+} from "../constants";
 import {
   addRegion,
   deleteResourcesOfRegion,
-  updateUpdatedAtRegion,
-} from "../data/query";
+  modifyRegion,
+} from "../data/queries/queryRegion";
 import { logger } from "../logger";
 import RegionModel, { RegionType } from "../models/Region";
 import ResourceModel, { ResourceType } from "../models/Resource";
@@ -56,10 +60,11 @@ const populateResources = async (
   );
   const newResources = promises_newResources
     .filter(
-      (x): x is PromiseFulfilledResult<ResourceType> => x.status === "fulfilled"
+      (x): x is PromiseFulfilledResult<ResourceModel> =>
+        x.status === "fulfilled"
     )
     .map((x) => x.value)
-    .filter((x): x is ResourceType => x != null);
+    .filter((x): x is ResourceModel => x != null);
 
   return newResources;
 };
@@ -74,7 +79,7 @@ const populateResources = async (
  *
  *
  * @param resourceJson The new resource's data in json object
- * @returns Promise with the RegionType, or null if validation or database query failure
+ * @returns Promise resolving to a RegionModel, or null if validation or database query failure
  */
 export const handleCreateRegion = async (
   regionJson: Partial<RegionModel>,
@@ -100,11 +105,12 @@ export const handleCreateRegion = async (
       RESOURCE_H3_RESOLUTION
     );
   }
-  return resultRegion as RegionType;
+
+  return resultRegion;
 };
 
-export const updateRegion = async (id: number): Promise<RegionType | null> => {
-  // - If the region has a stale "reset_date", repopulate all resources
+export const updateRegion = async (id: number): Promise<RegionModel | null> => {
+  // - If the region has a stale "reset_date", repopulate all resources and update "reset_date"
   // - If no resources are present, populate them now
   // - Update the region's `updated_at` field to now
   const region = await RegionModel.query().findById(id);
@@ -125,12 +131,15 @@ export const updateRegion = async (id: number): Promise<RegionType | null> => {
       RESOURCES_PER_REGION,
       RESOURCE_H3_RESOLUTION
     );
+    const nextResetDate = new Date();
+    nextResetDate.setDate(nextResetDate.getDate() + REGION_RESET_INTERVAL);
+    await modifyRegion(region.id, { reset_date: nextResetDate.toISOString() });
   }
 
   // Update the region's 'update_at' field to time now
   // TODO Maybe the database should create the time?
   const now = new Date().toISOString();
-  const result = await updateUpdatedAtRegion(region.id, now);
+  const result = await modifyRegion(region.id, { updated_at: now });
 
-  return result;
+  return result || null;
 };
