@@ -6,7 +6,7 @@
       "node": "16.x"
    },
    "scripts": {
-      "dev": "npm run migrate-latest && ts-node-dev --respawn --transpile-only ./src/main.ts | npx pino-pretty",
+      "dev": "clear && npm run migrate-latest && ts-node-dev --respawn --transpile-only ./src/main.ts | npx pino-pretty",
       "test": "LOGGER_LEVEL=fatal jest --runInBand",
       "test:debug": "LOGGER_LEVEL=fatal node --inspect-brk node_modules/.bin/jest --runInBand",
       "build": "rm -rf dist && tsc -p ./tsconfig.build.json",

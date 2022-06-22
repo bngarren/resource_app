@@ -56,6 +56,32 @@ afterEach(async () => {
   await db("regions").del();
 });
 
+describe("handleCreateRegion()", () => {
+  describe("should return null if:", () => {
+    it("the h3Index is not valid", async () => {
+      const result = await handleCreateRegion({
+        h3Index: "abcd", //not valid
+      });
+      expect(result).toBeNull();
+    });
+  });
+  describe("when a new region is created", () => {
+    it("should return a region with a 'reset_date' 3 days from now", async () => {
+      const result = await handleCreateRegion({
+        h3Index: MOCK_DATA.region.h3Index,
+      });
+      expect(result?.reset_date).toBeTruthy();
+      if (result?.reset_date) {
+        const now = new Date();
+        const future = new Date(now);
+        future.setDate(future.getDate() + 3);
+
+        datesAreCloseEnough(future, new Date(result.reset_date));
+      }
+    });
+  });
+});
+
 describe("updateRegion()", () => {
   // Create a test Region for these tests...
   let testRegion: RegionType;

@@ -19,7 +19,7 @@ const getResourceById = async (id: number) => {
 const addResource = async (model: ResourceModel) => {
   let result: ResourceModel | undefined;
   try {
-    result = await ResourceModel.query().insert(model).returning("*");
+    result = await model.$query().insert().returning("*");
   } catch (error) {
     logger.error(error);
   }
@@ -39,7 +39,7 @@ const addResource = async (model: ResourceModel) => {
 const addRegion = async (model: RegionModel) => {
   let result: RegionModel | undefined;
   try {
-    result = await RegionModel.query().insert(model).returning("*");
+    result = await model.$query().insert().returning("*");
   } catch (error) {
     logger.error(error);
   }

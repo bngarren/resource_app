@@ -10,6 +10,23 @@ export const handleScan = async () => {
   return await getResourceById(1);
 };
 
+/**
+ *
+ * - Get the user's h3 index (resolution 9)
+ * - Get kRing neighbors
+ * - Server should create new regions, if needed
+ * - Update each region (and repopulate resources, if needed)
+ * - Determine if user's position is currently within a resource h3 hexagon (resolution 11)
+ * - Find user equipment within the scanned regions
+ * - Determine if user's position is currently within an equipment h3 hexagon
+ *
+ * Return to the user: List of scanned resources, distances/direction to each, option to mine resource,
+ * option to pick up equipment
+ *
+ * @param userId
+ * @param userPosition
+ * @returns
+ */
 export const handleScanByUserAtLocation = async (
   userId: number,
   userPosition: UserPosition
