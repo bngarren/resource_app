@@ -10,7 +10,7 @@
       "test": "LOGGER_LEVEL=fatal jest --runInBand",
       "test:debug": "LOGGER_LEVEL=fatal node --inspect-brk node_modules/.bin/jest --runInBand",
       "build": "rm -rf dist && tsc -p ./tsconfig.build.json",
-      "heroku-postbuild": "npm run migrate-latest",
+      "heroku-postbuild": "echo heroku-postbuild",
       "deploy": "git push heroku master",
       "start": "npm run migrate-latest && npm run build && node dist/main.js | npx pino-pretty",
       "migrate-latest": "knex migrate:latest --knexfile src/knexfile.ts",

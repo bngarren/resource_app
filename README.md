@@ -11,8 +11,11 @@
    - Runs jest in debug mode. Once this is run, go to chrome://inspect and open the target. Can then step through each test
 - `"build": "rm -rf dist && tsc -p ./tsconfig.build.json"`
    - Uses the typescript compiler to transpile all of our .ts files to javascript. We first remove the old dist (prior build). When building for production we use a separate tsconfig file that excludes the tests folder.
-- `"heroku-postbuild": "npm run migrate-latest"`
+   - Since we are currently using Heroku, we don't even use this build command for "production"
+- `"heroku-postbuild": "echo heroku-postbuild"`
    - Heroku uses this script instead of "build". Our heroku deployment has a buildpack that manages the typescript transpiling and dependencies for us
+   - We just echo here so that our other build script doesn't also run
+   - We accomplish database migrations in the release phase (see Procfile)
 - `"deploy": "git push heroku master"`
    - Our custom deploy script just pushes our master branch to the heroku remote which triggers a new deploy/build
 - `"start": "npm run migrate-latest && npm run build && node dist/main.js | npx pino-pretty"`
@@ -26,6 +29,7 @@
 
 ## Project root files
 - **Procfile** - this is a file that Heroku uses to know how to start our app. It points to our entry point, i.e. dist/main.js
+   - It also defines a release process which is run after the build is complete and can be used to run database migration
 - **tsconfig.json** - 
 - **tsconfig.build.json** - extends the actual tsconfig.json but customizes it slightly. Primarily, it excludes transpiling the /tests folder, which doesn't need to go to /dist
 - **.env** - Stores environment variables. This file *is not version controlled (it in .gitignore)*.
