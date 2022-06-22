@@ -3,7 +3,9 @@ import { UserPosition } from "../src/types";
 import { setupDB } from "../src/data/db";
 import { Knex } from "knex";
 import config from "../src/config";
-import { getRegionsFromH3Array } from "../src/data/query";
+import { getRegionsFromH3Array } from "../src/data/queries/queryRegion";
+import h3 from "h3-js";
+import { REGION_H3_RESOLUTION } from "../src/constants";
 
 // externally validated h3Index's (resolution 9) with
 // kRing distance of 1 (first element is center)
@@ -46,16 +48,17 @@ afterEach(async () => {
 // fires it also calls updateRegion on region's that have
 // no resources, so they are created
 // * We could mock the create resource function??
-describe.skip("handleScanByUserAtLocation()", () => {
+describe("handleScanByUserAtLocation()", () => {
   describe("when no associated regions exist in the database", () => {
     it("creates 7 new regions with the correct h3Index's", async () => {
-      const q = await getRegionsFromH3Array(MOCK_DATA.h3Group);
-      expect(q).toHaveLength(0);
+      expect(getRegionsFromH3Array(MOCK_DATA.h3Group)).resolves.toHaveLength(0);
 
       await handleScanByUserAtLocation(1, MOCK_DATA.userPosition);
 
       const regions = await getRegionsFromH3Array(MOCK_DATA.h3Group);
       expect(regions).toHaveLength(7);
+
+      if (regions == null) return false;
 
       const regionsH3 = regions.map((r) => r.h3Index);
 
@@ -101,6 +104,23 @@ describe.skip("handleScanByUserAtLocation()", () => {
         expect(now.getUTCDay()).toEqual(updated_at.getUTCDay());
         expect(now.getUTCMinutes()).toEqual(updated_at.getUTCMinutes());
       }
+    });
+    it("includes the number of regions equal to the number of h3 indexes in the scan area", async () => {
+      const scanDistance = 1;
+      const scanResult = await handleScanByUserAtLocation(
+        1,
+        MOCK_DATA.userPosition,
+        scanDistance
+      );
+      const h3Index = h3.geoToH3(
+        MOCK_DATA.userPosition.latitude,
+        MOCK_DATA.userPosition.longitude,
+        REGION_H3_RESOLUTION
+      );
+      const h3Group = h3.kRing(h3Index, scanDistance);
+
+      if (scanResult === -1) return false;
+      expect(scanResult.regions).toHaveLength(h3Group.length);
     });
   });
 });

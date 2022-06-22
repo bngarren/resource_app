@@ -1,7 +1,8 @@
 import ResourceModel, { ResourceType } from "../models/Resource";
 import { logger } from "../logger";
-import { addResource } from "../data/query";
 import { selectRandom } from "./helpers";
+import { addResource } from "../data/queries/queryResource";
+import { TransactionOrKnex } from "objection";
 
 const resource_names = ["Gold", "Silver", "Iron", "Copper"];
 
@@ -35,16 +36,17 @@ export const getRandomResource = async (
  *
  *
  * @param resourceJson The new resource's data in json object
- * @returns Promise with the ResourceType, or null if validation or database query failure
+ * @returns Promise resolving to a ResourceModel, or null if validation or database query failure
  */
 export const handleCreateResource = async (
-  resourceJson: Partial<ResourceModel>
+  resourceJson: Partial<ResourceModel>,
+  trx?: TransactionOrKnex
 ) => {
   let inputResourceModel: ResourceModel;
   let resultResource: ResourceModel | undefined;
   try {
     inputResourceModel = ResourceModel.fromJson(resourceJson);
-    resultResource = await addResource(inputResourceModel);
+    resultResource = await addResource(inputResourceModel, trx);
   } catch (error) {
     logger.error(error);
     return null;
@@ -52,5 +54,5 @@ export const handleCreateResource = async (
   if (!resultResource) {
     return null;
   }
-  return resultResource as ResourceType;
+  return resultResource;
 };
