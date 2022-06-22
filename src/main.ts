@@ -10,6 +10,9 @@ const message = `
 
 
 
+
+
+
 --------------------------------------------------------------------------------------
      ____  ___________ ____  __  ______  ____________            ___    ____  ____ 
     / __ \\/ ____/ ___// __ \\/ / / / __ \\/ ____/ ____/           /   |  / __ \\/ __ \\
@@ -21,20 +24,23 @@ const message = `
 --------------------------------------------------------------------------------------
 
     Running on port: ${port}
-    Log level: "${logger.level}" [${Object.keys(logger.levels.values)}]
+    Log level: "${logger.level.toUpperCase()}" [${Object.keys(
+  logger.levels.values
+)}]
     NODE_ENV: "${config.node_env}"
+
+
+
 `;
 
 const start = async (p: number) => {
+  const startTime = new Date();
+
   app
     .listen(p, () => {
       logger.info(message);
-
-      // Display the current log level (and available levels)
       logger.info(
-        "Log level = %s => %o",
-        logger.level,
-        Object.keys(logger.levels.values)
+        `Server start: ${startTime.toLocaleDateString()} at ${startTime.toLocaleTimeString()}`
       );
     })
     .on("error", (err) => {

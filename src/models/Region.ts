@@ -1,5 +1,6 @@
-import { Model, ModelObject } from "objection";
+import { Model, ModelObject, ValidationError } from "objection";
 import ResourceModel from "./Resource";
+import h3 from "h3-js";
 
 export default class RegionModel extends Model {
   id!: number;
@@ -26,6 +27,22 @@ export default class RegionModel extends Model {
         reset_date: { type: "string", readOnly: true },
       },
     };
+  }
+
+  $beforeInsert() {
+    // Check to make sure the input h3Index is valid
+    if (!h3.h3IsValid(this.h3Index)) {
+      throw new ValidationError({
+        message: "h3Index is invalid",
+        type: "ModelValidation",
+      });
+    }
+
+    // Update the "reset_date"
+    const now = new Date();
+    const future = new Date();
+    future.setDate(now.getDate() + 3);
+    this.reset_date = future.toISOString();
   }
 
   static relationMappings = () => ({

@@ -1,4 +1,4 @@
-import { Model, ModelObject, StaticHookArguments } from "objection";
+import { Model, ModelObject, ValidationError } from "objection";
 import RegionModel from "./Region";
 import h3 from "h3-js";
 
@@ -40,15 +40,14 @@ export default class ResourceModel extends Model {
     };
   }
 
-  static beforeInsert(args: StaticHookArguments<ResourceModel>) {
+  $beforeInsert() {
     // Check to make sure the input h3Index is valid
-    const inputModels = args.inputItems;
-    inputModels.forEach((m) => {
-      if (!h3.h3IsValid(m.h3Index)) {
-        args.cancelQuery(null); // not sure this works
-        throw new Error("h3Index is invalid.");
-      }
-    });
+    if (!h3.h3IsValid(this.h3Index)) {
+      throw new ValidationError({
+        message: "h3Index is invalid",
+        type: "ModelValidation",
+      });
+    }
   }
 
   static relationMappings = () => ({
