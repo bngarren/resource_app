@@ -9,6 +9,7 @@ import {
 import { expectDatesAreCloseEnough } from "./test-util";
 import ResourceModel from "../src/models/Resource";
 import { RESOURCES_PER_REGION, REGION_RESET_INTERVAL } from "../src/constants";
+import * as queryRegion from "../src/data/queries/queryRegion";
 
 // Each of the resources has an h3Index that is
 // resolution 11 and a child of the parent region
@@ -103,6 +104,19 @@ describe("updateRegion()", () => {
   afterEach(async () => {
     await db("resources").del();
     await RegionModel.query().deleteById(testRegion.id);
+  });
+
+  it("should not commit the transaction if a component fails", async () => {
+    await ResourceModel.query().del();
+    jest
+      .spyOn(queryRegion, "deleteResourcesOfRegion")
+      .mockImplementation(async () => undefined);
+
+    const result = await updateRegion(testRegion.id);
+    expect(result).toBeNull();
+    expect(ResourceModel.query().select()).resolves.toHaveLength(0);
+
+    jest.restoreAllMocks();
   });
 
   it("should update the region's 'updated_at' column", async () => {

@@ -1,3 +1,4 @@
+import { transaction, TransactionOrKnex } from "objection";
 import {
   REGION_RESET_INTERVAL,
   RESOURCES_PER_REGION,
@@ -39,7 +40,8 @@ const isRegionStale = (region: RegionModel) => {
 const populateResources = async (
   region: RegionModel,
   quantity: number,
-  resource_h3_resultion: number
+  resource_h3_resultion: number,
+  trx?: TransactionOrKnex
 ) => {
   // Get the child h3's of this region at the specified resolution
   // These are potential spots for a resource
@@ -55,7 +57,7 @@ const populateResources = async (
       // get random resource data
       const randomResource = await getRandomResource(region.id, s);
       // create the resource
-      return handleCreateResource(randomResource);
+      return handleCreateResource(randomResource, trx);
     })
   );
   const newResources = promises_newResources
@@ -83,13 +85,14 @@ const populateResources = async (
  */
 export const handleCreateRegion = async (
   regionJson: Partial<RegionModel>,
-  withResources = true
+  withResources = true,
+  trx?: TransactionOrKnex
 ) => {
   let inputRegionModel: RegionModel;
   let resultRegion: RegionModel | undefined;
   try {
     inputRegionModel = RegionModel.fromJson(regionJson);
-    resultRegion = await addRegion(inputRegionModel);
+    resultRegion = await addRegion(inputRegionModel, trx);
   } catch (error) {
     logger.error(error);
     return null;
@@ -102,7 +105,8 @@ export const handleCreateRegion = async (
     await populateResources(
       resultRegion,
       RESOURCES_PER_REGION,
-      RESOURCE_H3_RESOLUTION
+      RESOURCE_H3_RESOLUTION,
+      trx
     );
   }
 
@@ -123,23 +127,63 @@ export const updateRegion = async (id: number): Promise<RegionModel | null> => {
   // Check for existing resources
   const resources = await region.$relatedQuery<ResourceModel>("resources");
 
+  /* We use a Transaction here to ensure that all queries are successful before committing them.
+  This way, if one fails, they all fail (rolled back) */
+  let trxStatus = true;
+  const trx = await RegionModel.startTransaction();
+
   // Region's "reset_date" is stale/overdue -- repopulate all resources
   if (resources.length === 0 || isRegionStale(region)) {
-    await deleteResourcesOfRegion(region);
-    await populateResources(
+    const _result1 = await deleteResourcesOfRegion(region, trx);
+    if (_result1 == null) {
+      await trx.rollback();
+      trxStatus = false;
+    }
+    const _result2 = await populateResources(
       region,
       RESOURCES_PER_REGION,
-      RESOURCE_H3_RESOLUTION
+      RESOURCE_H3_RESOLUTION,
+      trx
     );
+
+    if (_result2 == null) {
+      await trx.rollback();
+      trxStatus = false;
+    }
+
     const nextResetDate = new Date();
     nextResetDate.setDate(nextResetDate.getDate() + REGION_RESET_INTERVAL);
-    await modifyRegion(region.id, { reset_date: nextResetDate.toISOString() });
+    const _result3 = await modifyRegion(
+      region.id,
+      {
+        reset_date: nextResetDate.toISOString(),
+      },
+      trx
+    );
+
+    if (_result3 == null) {
+      await trx.rollback();
+      trxStatus = false;
+    }
   }
 
   // Update the region's 'update_at' field to time now
   // TODO Maybe the database should create the time?
   const now = new Date().toISOString();
-  const result = await modifyRegion(region.id, { updated_at: now });
+  const _result4 = await modifyRegion(region.id, { updated_at: now }, trx);
+
+  if (_result4 == null) {
+    await trx.rollback();
+    trxStatus = false;
+  }
+
+  let result;
+  if (trxStatus === true) {
+    await trx.commit();
+    result = _result4;
+  } else {
+    logger.error("Could not complete the updateRegion transaction");
+  }
 
   return result || null;
 };

@@ -1,3 +1,4 @@
+import { TransactionOrKnex } from "objection";
 import { logger } from "../../logger";
 import RegionModel from "../../models/Region";
 import ResourceModel from "../../models/Resource";
@@ -11,8 +12,11 @@ import ResourceModel from "../../models/Resource";
  * @param model The ResourceModel to insert
  * @returns The QueryBuilder for this query
  */
-export const query_addResource = (model: ResourceModel) => {
-  return model.$query().insert().returning("*");
+export const query_addResource = (
+  model: ResourceModel,
+  trx?: TransactionOrKnex
+) => {
+  return model.$query(trx).insert().returning("*");
 };
 
 /**
@@ -22,9 +26,12 @@ export const query_addResource = (model: ResourceModel) => {
  * @param model The ResourceModel to insert
  * @returns The inserted ResourceModel or undefined if failed
  */
-export const addResource = async (model: ResourceModel) => {
+export const addResource = async (
+  model: ResourceModel,
+  trx?: TransactionOrKnex
+) => {
   try {
-    return await query_addResource(model);
+    return await query_addResource(model, trx);
   } catch (error) {
     logger.error(error);
   }
@@ -39,8 +46,11 @@ export const addResource = async (model: ResourceModel) => {
  * @param resourceId The id of the resource
  * @returns The QueryBuilder for this query
  */
-export const query_getResourceById = (resourceId: number) => {
-  return ResourceModel.query().findById(resourceId);
+export const query_getResourceById = (
+  resourceId: number,
+  trx?: TransactionOrKnex
+) => {
+  return ResourceModel.query(trx).findById(resourceId);
 };
 
 /**
@@ -50,9 +60,12 @@ export const query_getResourceById = (resourceId: number) => {
  * @param resourceId The id of the resource
  * @returns The resource
  */
-export const getResourceById = async (resourceId: number) => {
+export const getResourceById = async (
+  resourceId: number,
+  trx?: TransactionOrKnex
+) => {
   try {
-    return await query_getResourceById(resourceId);
+    return await query_getResourceById(resourceId, trx);
   } catch (error) {
     logger.error(error);
   }

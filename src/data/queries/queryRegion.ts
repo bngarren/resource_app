@@ -1,3 +1,4 @@
+import { TransactionOrKnex } from "objection";
 import { logger } from "../../logger";
 import RegionModel from "../../models/Region";
 import ResourceModel from "../../models/Resource";
@@ -11,8 +12,11 @@ import ResourceModel from "../../models/Resource";
  * @param model The RegionModel to insert
  * @returns The QueryBuilder for this query
  */
-export const query_addRegion = (model: RegionModel) => {
-  return model.$query().insert().returning("*");
+export const query_addRegion = (
+  model: RegionModel,
+  trx?: TransactionOrKnex
+) => {
+  return model.$query(trx).insert().returning("*");
 };
 
 /**
@@ -22,9 +26,12 @@ export const query_addRegion = (model: RegionModel) => {
  * @param model The RegionModel to insert
  * @returns The inserted RegionModel or undefined if failed
  */
-export const addRegion = async (model: RegionModel) => {
+export const addRegion = async (
+  model: RegionModel,
+  trx?: TransactionOrKnex
+) => {
   try {
-    return await query_addRegion(model);
+    return await query_addRegion(model, trx);
   } catch (error) {
     logger.error(error);
   }
@@ -39,8 +46,11 @@ export const addRegion = async (model: RegionModel) => {
  * @param h3Array The array of h3 indexes
  * @returns The QueryBuilder for this query
  */
-export const query_getRegionsFromH3Array = (h3Array: string[]) => {
-  return RegionModel.query().select().whereIn("h3Index", h3Array);
+export const query_getRegionsFromH3Array = (
+  h3Array: string[],
+  trx?: TransactionOrKnex
+) => {
+  return RegionModel.query(trx).select().whereIn("h3Index", h3Array);
 };
 
 /**
@@ -50,9 +60,12 @@ export const query_getRegionsFromH3Array = (h3Array: string[]) => {
  * @param h3Array The array of h3 indexes
  * @returns An array of RegionModel
  */
-export const getRegionsFromH3Array = async (h3Array: string[]) => {
+export const getRegionsFromH3Array = async (
+  h3Array: string[],
+  trx?: TransactionOrKnex
+) => {
   try {
-    return await query_getRegionsFromH3Array(h3Array);
+    return await query_getRegionsFromH3Array(h3Array, trx);
   } catch (error) {
     logger.error(error);
   }
@@ -70,9 +83,10 @@ export const getRegionsFromH3Array = async (h3Array: string[]) => {
  */
 export const query_modifyRegion = (
   regionId: number,
-  data: Partial<RegionModel>
+  data: Partial<RegionModel>,
+  trx?: TransactionOrKnex
 ) => {
-  return RegionModel.query()
+  return RegionModel.query(trx)
     .patch(data)
     .where("id", regionId)
     .returning("*")
@@ -89,10 +103,11 @@ export const query_modifyRegion = (
  */
 export const modifyRegion = async (
   regionId: number,
-  data: Partial<RegionModel>
+  data: Partial<RegionModel>,
+  trx?: TransactionOrKnex
 ) => {
   try {
-    return await query_modifyRegion(regionId, data);
+    return await query_modifyRegion(regionId, data, trx);
   } catch (error) {
     logger.error(error);
   }
@@ -107,8 +122,14 @@ export const modifyRegion = async (
  * @param region The region of interest
  * @returns The QueryBuilder for this query
  */
-export const query_deleteResourcesOfRegion = (region: RegionModel) => {
-  return region.$relatedQuery<ResourceModel>("resources").del().returning("*");
+export const query_deleteResourcesOfRegion = (
+  region: RegionModel,
+  trx?: TransactionOrKnex
+) => {
+  return region
+    .$relatedQuery<ResourceModel>("resources", trx)
+    .del()
+    .returning("*");
 };
 
 /**
@@ -118,9 +139,12 @@ export const query_deleteResourcesOfRegion = (region: RegionModel) => {
  * @param region The region of interest
  * @returns An array of the deleted resources
  */
-export const deleteResourcesOfRegion = async (region: RegionModel) => {
+export const deleteResourcesOfRegion = async (
+  region: RegionModel,
+  trx?: TransactionOrKnex
+) => {
   try {
-    return await query_deleteResourcesOfRegion(region);
+    return await query_deleteResourcesOfRegion(region, trx);
   } catch (error) {
     logger.error(error);
   }
