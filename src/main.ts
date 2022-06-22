@@ -36,15 +36,6 @@ const message = `
 const start = async (p: number) => {
   const startTime = new Date();
 
-  let uptimer: NodeJS.Timer;
-
-  if (config.node_env === "development") {
-    uptimer = setInterval(() => {
-      const now = new Date();
-      logger.info(`UPTIME: ${now.getMinutes() - startTime.getMinutes()}`);
-    }, 900000); // every 15 min
-  }
-
   app
     .listen(p, () => {
       logger.info(message);
@@ -54,7 +45,6 @@ const start = async (p: number) => {
     })
     .on("error", (err) => {
       logger.error(err);
-      if (uptimer) clearInterval(uptimer);
       process.exit(1);
     });
 };

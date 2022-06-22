@@ -72,10 +72,15 @@ const getRegionsFromH3Array = async (h3Array: string[]) => {
     .whereIn("h3Index", h3Array)) as RegionType[];
 };
 
+const deleteResourcesOfRegion = async (region: RegionModel) => {
+  await region.$relatedQuery<ResourceModel>("resources").del();
+};
+
 export {
   getResourceById,
   addResource,
   addRegion,
   updateUpdatedAtRegion,
   getRegionsFromH3Array,
+  deleteResourcesOfRegion,
 };
