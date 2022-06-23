@@ -1,16 +1,48 @@
 import * as h3 from "h3-js";
-import { REGION_H3_RESOLUTION, SCAN_DISTANCE } from "../constants";
-import { getRegionsFromH3Array } from "../data/queries/queryRegion";
+import {
+  REGION_H3_RESOLUTION,
+  SCAN_DISTANCE,
+  USER_AREA_OF_EFFECT,
+} from "../constants";
+import {
+  getRegionsFromH3Array,
+  getResourcesOfRegion,
+} from "../data/queries/queryRegion";
 import { getResourceById } from "../data/queries/queryResource";
 import type { RegionType } from "../models/Region";
 import RegionModel from "../models/Region";
+import ResourceModel, { ResourceType } from "../models/Resource";
 import { UserPosition } from "../types";
-import { ScanResult } from "../types/scanService.types";
+import { ScanResult, ScanResultResource } from "../types/scanService.types";
+import { getAllSettled } from "../util/getAllSettled";
 import { handleCreateRegion, updateRegion } from "./regionService";
 
 //! TESTING ONLY
 export const handleScan = async () => {
   return await getResourceById(1);
+};
+
+const getResourceDataFromScannedRegions = async (
+  regions: RegionModel[],
+  userPosition: UserPosition
+): Promise<ScanResultResource[]> => {
+  const resources = await getAllSettled<ResourceModel[]>(
+    regions.map((r) => getResourcesOfRegion(r.id))
+  );
+  const flat_resources = resources.flat(1);
+  const result = flat_resources.map((r) => {
+    const dist = h3.pointDist(
+      [userPosition.latitude, userPosition.longitude],
+      h3.h3ToGeo(r.h3Index),
+      "m"
+    );
+    return {
+      ...(r as ResourceType),
+      distanceFromUser: dist,
+      userCanInteract: dist <= USER_AREA_OF_EFFECT,
+    };
+  });
+  return result;
 };
 
 /**
@@ -60,18 +92,9 @@ export const handleScanByUserAtLocation = async (
     );
 
     // Create these regions in the database
-    const promises_newRegions = await Promise.allSettled(
-      missingRegions.map((m) => {
-        return handleCreateRegion({ h3Index: m });
-      })
+    const newRegions = await getAllSettled<RegionModel>(
+      missingRegions.map((m) => handleCreateRegion({ h3Index: m }))
     );
-    const newRegions = promises_newRegions
-      .filter(
-        (x): x is PromiseFulfilledResult<RegionModel> =>
-          x.status === "fulfilled"
-      )
-      .map((x) => x.value)
-      .filter((x): x is RegionModel => x != null);
 
     let regions = [...existingRegions, ...newRegions];
 
@@ -82,26 +105,28 @@ export const handleScanByUserAtLocation = async (
     }
 
     // Update each region
-    const promises_updatedRegions = await Promise.allSettled(
+    regions = await getAllSettled<RegionModel>(
       regions.map((r) => updateRegion(r.id))
     );
-    regions = promises_updatedRegions
-      .filter(
-        (x): x is PromiseFulfilledResult<RegionModel> =>
-          x.status === "fulfilled"
-      )
-      .map((x) => x.value)
-      .filter((x): x is RegionModel => x != null);
 
     // expect that every region was sucessfully updated
     if (regions.length !== h3Group.length) {
       throw new Error("Error attempting to update regions");
     }
 
+    // Get the resources of the scan
+    // ! WIP
+    const resourceData = await getResourceDataFromScannedRegions(
+      regions,
+      userPosition
+    );
+
     // Return the scan result
     const scanResult: ScanResult = {
       regions: regions as RegionType[],
+      resources: resourceData,
     };
+
     return scanResult;
   } catch (error) {
     if (error instanceof Error) console.error(error.message);

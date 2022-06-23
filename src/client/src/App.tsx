@@ -87,12 +87,19 @@ function App() {
       <p>{scanStatus && scanStatus}</p>
       {scanResult && (
         <div>
-          <h3>Regions</h3>
+          <h3>Resources</h3>
           <ul>
-            {scanResult.regions.map((r: any) => {
+            {scanResult.resources.map((r: any) => {
+              const shouldBold = r.distanceFromUser <= 100;
               return (
-                <li key={r.id}>
-                  {r.id} - {r.h3Index}
+                <li
+                  key={r.id}
+                  style={{
+                    fontWeight: shouldBold ? "bold" : "normal",
+                    backgroundColor: r.userCanInteract ? "#C2FF85" : "inherit",
+                  }}
+                >
+                  {r.id} - {r.name} - {Math.round(r.distanceFromUser)}m away
                 </li>
               );
             })}

@@ -10,6 +10,7 @@ import ResourceModel from "../../models/Resource";
  * Note: This returns a chainable QueryBuilder instance
  *
  * @param model The ResourceModel to insert
+ * @param trx Optional transaction object (http://knexjs.org/guide/transactions.html)
  * @returns The QueryBuilder for this query
  */
 export const query_addResource = (
@@ -21,9 +22,10 @@ export const query_addResource = (
 
 /**
  *
- * Runs the QueryBuilder for query_addResource
+ * Executes the query for query_addResource
  *
  * @param model The ResourceModel to insert
+ * @param trx Optional transaction object (http://knexjs.org/guide/transactions.html)
  * @returns The inserted ResourceModel or undefined if failed
  */
 export const addResource = async (
@@ -44,6 +46,7 @@ export const addResource = async (
  * Note: This returns a chainable QueryBuilder instance
  *
  * @param resourceId The id of the resource
+ * @param trx Optional transaction object (http://knexjs.org/guide/transactions.html)
  * @returns The QueryBuilder for this query
  */
 export const query_getResourceById = (
@@ -55,9 +58,10 @@ export const query_getResourceById = (
 
 /**
  *
- * Runs the QueryBuilder for query_getResourceById
+ * Executes the query for query_getResourceById
  *
  * @param resourceId The id of the resource
+ * @param trx Optional transaction object (http://knexjs.org/guide/transactions.html)
  * @returns The resource
  */
 export const getResourceById = async (
