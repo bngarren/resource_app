@@ -28,6 +28,9 @@ function App() {
           },
           () => {
             reject();
+          },
+          {
+            enableHighAccuracy: true,
           }
         );
       }
@@ -80,6 +83,24 @@ function App() {
     return new Date(utc).toLocaleString();
   };
 
+  const getDistanceColor = (dist: number) => {
+    if (dist > 500) {
+      return "#FFC285";
+    } else if (dist > 400) {
+      return "#FFE085";
+    } else if (dist > 300) {
+      return "#FBFF85";
+    } else if (dist > 200) {
+      return "#E7FF85";
+    } else if (dist > 100) {
+      return "#D4FF85";
+    } else if (dist > 75) {
+      return "#C9FF85";
+    } else if (dist <= 75) {
+      return "#B5FF85";
+    }
+  };
+
   return (
     <div className="App">
       <h1>Resource App</h1>
@@ -89,20 +110,26 @@ function App() {
         <div>
           <h3>Resources</h3>
           <ul>
-            {scanResult.resources.map((r: any) => {
-              const shouldBold = r.distanceFromUser <= 100;
-              return (
-                <li
-                  key={r.id}
-                  style={{
-                    fontWeight: shouldBold ? "bold" : "normal",
-                    backgroundColor: r.userCanInteract ? "#C2FF85" : "inherit",
-                  }}
-                >
-                  {r.id} - {r.name} - {Math.round(r.distanceFromUser)}m away
-                </li>
-              );
-            })}
+            {scanResult.resources
+              .sort((a: any, b: any) => {
+                return a.distanceFromUser - b.distanceFromUser;
+              })
+              .map((r: any) => {
+                const shouldBold = r.distanceFromUser <= 100;
+                return (
+                  <li
+                    key={r.id}
+                    style={{
+                      fontWeight: shouldBold ? "bold" : "normal",
+                      backgroundColor: r.userCanInteract
+                        ? "#C2FF85"
+                        : getDistanceColor(r.distanceFromUser),
+                    }}
+                  >
+                    {r.id} - {r.name} - {Math.round(r.distanceFromUser)}m away
+                  </li>
+                );
+              })}
           </ul>
         </div>
       )}
