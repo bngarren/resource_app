@@ -6,6 +6,7 @@ import config from "../src/config";
 import { getRegionsFromH3Array } from "../src/data/queries/queryRegion";
 import h3 from "h3-js";
 import { REGION_H3_RESOLUTION } from "../src/constants";
+import { expectDatesAreCloseEnough } from "./test-util";
 
 // externally validated h3Index's (resolution 9) with
 // kRing distance of 1 (first element is center)
@@ -101,8 +102,7 @@ describe("handleScanByUserAtLocation()", () => {
         const region1 = result.regions[0];
         const now = new Date();
         const updated_at = new Date(region1.updated_at || 1);
-        expect(now.getUTCDay()).toEqual(updated_at.getUTCDay());
-        expect(now.getUTCMinutes()).toEqual(updated_at.getUTCMinutes());
+        expectDatesAreCloseEnough(now, updated_at);
       }
     });
     it("includes the number of regions equal to the number of h3 indexes in the scan area", async () => {

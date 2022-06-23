@@ -14,3 +14,17 @@ export const selectRandom = (arr: string[], quantity: number) => {
   });
   return result;
 };
+
+/**
+ * Checks whether a region has an overdue "reset_date"
+ * @param region RegionModel
+ * @returns True if overdue, false if not overdue or "reset_date" is null
+ */
+export const isRegionStale = (region: RegionModel) => {
+  if (!region.reset_date) {
+    return true;
+  }
+  const now = new Date();
+  const reset_date = new Date(region.reset_date);
+  return now >= reset_date;
+};

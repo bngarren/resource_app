@@ -6,7 +6,7 @@ import {
   handleCreateRegion,
   updateRegion,
 } from "../src/services/regionService";
-import { expectDatesAreCloseEnough } from "./test-util";
+import { expectDatesAreCloseEnough, expectDatesAreNotClose } from "./test-util";
 import ResourceModel from "../src/models/Resource";
 import { RESOURCES_PER_REGION, REGION_RESET_INTERVAL } from "../src/constants";
 import * as queryRegion from "../src/data/queries/queryRegion";
@@ -108,15 +108,21 @@ describe("updateRegion()", () => {
 
   it("should not commit the transaction if a component fails", async () => {
     await ResourceModel.query().del();
-    jest
+    const spy1 = jest
       .spyOn(queryRegion, "deleteResourcesOfRegion")
       .mockImplementation(async () => undefined);
 
-    const result = await updateRegion(testRegion.id);
-    expect(result).toBeNull();
+    await expect(updateRegion(testRegion.id)).resolves.toBeNull();
     expect(ResourceModel.query().select()).resolves.toHaveLength(0);
+    spy1.mockRestore();
 
-    jest.restoreAllMocks();
+    const spy2 = jest
+      .spyOn(queryRegion, "modifyRegion")
+      .mockImplementation(async () => undefined);
+
+    await expect(updateRegion(testRegion.id)).resolves.toBeNull();
+    expect(ResourceModel.query().select()).resolves.toHaveLength(0);
+    spy2.mockRestore();
   });
 
   it("should update the region's 'updated_at' column", async () => {
@@ -217,6 +223,42 @@ describe("updateRegion()", () => {
       const future = new Date();
       future.setDate(future.getDate() + REGION_RESET_INTERVAL);
       expectDatesAreCloseEnough(future, new Date(region.reset_date));
+    });
+  });
+  describe("if the region is not stale (reset_date is still in the future)", () => {
+    beforeEach(async () => {
+      const future = new Date();
+      future.setDate(future.getDate() + 100);
+
+      // alter the reset_date to setup the test
+      await RegionModel.query()
+        .patch({ reset_date: future.toISOString() })
+        .where("id", testRegion.id);
+    });
+    it("should not update the reset_date", async () => {
+      let region = await RegionModel.query().findById(testRegion.id);
+      if (!region || !region.reset_date) return false;
+      const currentResetDate = new Date(region.reset_date);
+      await updateRegion(testRegion.id);
+
+      region = await RegionModel.query().findById(testRegion.id);
+      if (!region || !region.reset_date) return false;
+      const updatedResetDate = new Date(region.reset_date);
+
+      expectDatesAreCloseEnough(currentResetDate, updatedResetDate);
+    });
+    it("should keep the same resources", async () => {
+      const currentResources = await RegionModel.relatedQuery<ResourceModel>(
+        "resources"
+      ).for(testRegion.id);
+
+      await updateRegion(testRegion.id);
+
+      const newResources = await RegionModel.relatedQuery<ResourceModel>(
+        "resources"
+      ).for(testRegion.id);
+      if (!currentResources || !newResources) return false;
+      expect(currentResources).toMatchObject(newResources);
     });
   });
 });

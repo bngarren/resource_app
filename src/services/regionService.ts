@@ -1,4 +1,4 @@
-import { transaction, TransactionOrKnex } from "objection";
+import { TransactionOrKnex } from "objection";
 import {
   REGION_RESET_INTERVAL,
   RESOURCES_PER_REGION,
@@ -10,24 +10,10 @@ import {
   modifyRegion,
 } from "../data/queries/queryRegion";
 import { logger } from "../logger";
-import RegionModel, { RegionType } from "../models/Region";
-import ResourceModel, { ResourceType } from "../models/Resource";
-import { getH3ChildrenOfRegion, selectRandom } from "./helpers";
+import RegionModel from "../models/Region";
+import ResourceModel from "../models/Resource";
+import { getH3ChildrenOfRegion, isRegionStale, selectRandom } from "./helpers";
 import { getRandomResource, handleCreateResource } from "./resourceService";
-
-/**
- * Checks whether a region has an overdue "reset_date"
- * @param region RegionModel
- * @returns True if overdue, false if not overdue or "reset_date" is null
- */
-const isRegionStale = (region: RegionModel) => {
-  if (!region.reset_date) {
-    return true;
-  }
-  const now = new Date();
-  const reset_date = new Date(region.reset_date);
-  return now >= reset_date;
-};
 
 /**
  * Given a region, finds random child H3 indexes and creates new resources in these areas
@@ -113,77 +99,92 @@ export const handleCreateRegion = async (
   return resultRegion;
 };
 
-export const updateRegion = async (id: number): Promise<RegionModel | null> => {
-  // - If the region has a stale "reset_date", repopulate all resources and update "reset_date"
-  // - If no resources are present, populate them now
-  // - Update the region's `updated_at` field to now
-  const region = await RegionModel.query().findById(id);
+/**
+ *
+ * Updates a region, which includes:
+ *   - If the region has a stale "reset_date", repopulates all resources and updates the region's "reset_date"
+ *   - If no resources are present (associatd with this region),
+ * will populate new resources
+ *   - Updates the region's "updated_at" attribute to current time
+ *
+ * This function uses a transaction to help ensure an atomic update
+ * and read of the database
+ *
+ * @param regionId The id of the region to update
+ * @returns The updated region, or null
+ */
+export const updateRegion = async (
+  regionId: number
+): Promise<RegionModel | null> => {
+  const region = await RegionModel.query().findById(regionId);
 
   if (!region) {
-    logger.error(`Could not updateRegion (id=${id})`);
+    logger.error(`Could not updateRegion (id=${regionId})`);
     return null;
   }
 
   // Check for existing resources
+  // * NOTE: a region should always have resources, from its creation
   const resources = await region.$relatedQuery<ResourceModel>("resources");
 
   /* We use a Transaction here to ensure that all queries are successful before committing them.
   This way, if one fails, they all fail (rolled back) */
-  let trxStatus = true;
-  const trx = await RegionModel.startTransaction();
+  let trxResult;
+  try {
+    trxResult = await RegionModel.transaction(async (trx) => {
+      // Region's "reset_date" is stale/overdue -- repopulate all resources
+      if (resources.length === 0 || isRegionStale(region)) {
+        // Delete old resources, if present
+        const _result1 = await deleteResourcesOfRegion(region, trx);
+        if (_result1 == null) {
+          throw new Error("Delete action failed.");
+        }
+        // Populate new resources
+        const _result2 = await populateResources(
+          region,
+          RESOURCES_PER_REGION,
+          RESOURCE_H3_RESOLUTION,
+          trx
+        );
 
-  // Region's "reset_date" is stale/overdue -- repopulate all resources
-  if (resources.length === 0 || isRegionStale(region)) {
-    const _result1 = await deleteResourcesOfRegion(region, trx);
-    if (_result1 == null) {
-      await trx.rollback();
-      trxStatus = false;
+        if (_result2 == null || _result2.length === 0) {
+          throw new Error("Populate resources failed.");
+        }
+
+        // New reset date is set to current time + reset interval
+        const nextResetDate = new Date();
+        nextResetDate.setDate(nextResetDate.getDate() + REGION_RESET_INTERVAL);
+        const _result3 = await modifyRegion(
+          region.id,
+          {
+            reset_date: nextResetDate.toISOString(),
+          },
+          trx
+        );
+
+        if (_result3 == null || _result3.reset_date == null) {
+          throw new Error("Modify region (reset_date) failed.");
+        }
+      }
+
+      // Update the region's 'update_at' field to time now
+      // TODO Maybe the database should create the time?
+      const now = new Date().toISOString();
+
+      // Finally, the transaction will return the updated region
+      return await modifyRegion(region.id, { updated_at: now }, trx);
+    });
+  } catch (error) {
+    let reason = "";
+    if (error instanceof Error) {
+      reason = error.message;
     }
-    const _result2 = await populateResources(
-      region,
-      RESOURCES_PER_REGION,
-      RESOURCE_H3_RESOLUTION,
-      trx
+    logger.error(
+      `Something went wrong with transaction...No database actions were committed. ${
+        reason && reason
+      }`
     );
-
-    if (_result2 == null) {
-      await trx.rollback();
-      trxStatus = false;
-    }
-
-    const nextResetDate = new Date();
-    nextResetDate.setDate(nextResetDate.getDate() + REGION_RESET_INTERVAL);
-    const _result3 = await modifyRegion(
-      region.id,
-      {
-        reset_date: nextResetDate.toISOString(),
-      },
-      trx
-    );
-
-    if (_result3 == null) {
-      await trx.rollback();
-      trxStatus = false;
-    }
   }
 
-  // Update the region's 'update_at' field to time now
-  // TODO Maybe the database should create the time?
-  const now = new Date().toISOString();
-  const _result4 = await modifyRegion(region.id, { updated_at: now }, trx);
-
-  if (_result4 == null) {
-    await trx.rollback();
-    trxStatus = false;
-  }
-
-  let result;
-  if (trxStatus === true) {
-    await trx.commit();
-    result = _result4;
-  } else {
-    logger.error("Could not complete the updateRegion transaction");
-  }
-
-  return result || null;
+  return trxResult || null;
 };
