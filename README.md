@@ -7,7 +7,9 @@
 - `"test": "LOGGER_LEVEL=fatal jest --runInBand"`
    - We use the "--runInBand" flag to make jest run tests serially rather than in parallel (default) so that we don't have conflicts with multiple tests trying to operate on the test database at the same time
    - We set the LOGGER_LEVEL env variable to fatal to suppress any logs lower than this level during tests (complicates the output)
-- `"test:debug": "LOGGER_LEVEL=fatal node --inspect-brk node_modules/.bin/jest --runInBand"`
+- `"test:error": "LOGGER_LEVEL=error jest --runInBand"`
+   - Same as above but runs with log level of "error" to show errors
+- `"test:debugger": "LOGGER_LEVEL=fatal node --inspect-brk node_modules/.bin/jest --runInBand"`
    - Runs jest in debug mode. Once this is run, go to chrome://inspect and open the target. Can then step through each test
 - `"build": "rm -rf dist && tsc -p ./tsconfig.build.json"`
    - Uses the typescript compiler to transpile all of our .ts files to javascript. We first remove the old dist (prior build). When building for production we use a separate tsconfig file that excludes the tests folder.

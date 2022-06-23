@@ -1,14 +1,15 @@
 {
    "name": "resource-app",
    "private": true,
-   "version": "0.0.9",
+   "version": "0.0.10",
    "engines": {
       "node": "16.x"
    },
    "scripts": {
       "dev": "clear && npm run migrate-latest && ts-node-dev --respawn --transpile-only ./src/main.ts | npx pino-pretty",
       "test": "LOGGER_LEVEL=fatal jest --runInBand",
-      "test:debug": "LOGGER_LEVEL=fatal node --inspect-brk node_modules/.bin/jest --runInBand",
+      "test:error": "LOGGER_LEVEL=error jest --runInBand",
+      "test:debugger": "LOGGER_LEVEL=fatal node --inspect-brk node_modules/.bin/jest --runInBand",
       "build": "rm -rf dist && tsc -p ./tsconfig.build.json",
       "heroku-postbuild": "echo heroku-postbuild",
       "deploy": "git push heroku master",
