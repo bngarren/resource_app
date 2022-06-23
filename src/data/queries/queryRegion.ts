@@ -10,6 +10,7 @@ import ResourceModel from "../../models/Resource";
  * Note: This returns a chainable QueryBuilder instance
  *
  * @param model The RegionModel to insert
+ * @param trx Optional transaction object (http://knexjs.org/guide/transactions.html)
  * @returns The QueryBuilder for this query
  */
 export const query_addRegion = (
@@ -21,9 +22,10 @@ export const query_addRegion = (
 
 /**
  *
- * Runs the QueryBuilder for query_addRegion
+ * Executes the query for query_addRegion
  *
  * @param model The RegionModel to insert
+ * @param trx Optional transaction object (http://knexjs.org/guide/transactions.html)
  * @returns The inserted RegionModel or undefined if failed
  */
 export const addRegion = async (
@@ -44,6 +46,7 @@ export const addRegion = async (
  * Note: This returns a chainable QueryBuilder instance
  *
  * @param h3Array The array of h3 indexes
+ * @param trx Optional transaction object (http://knexjs.org/guide/transactions.html)
  * @returns The QueryBuilder for this query
  */
 export const query_getRegionsFromH3Array = (
@@ -55,9 +58,10 @@ export const query_getRegionsFromH3Array = (
 
 /**
  *
- * Runs the QueryBuilder for query_getRegionsFromH3Array
+ * Executes the query for query_getRegionsFromH3Array
  *
  * @param h3Array The array of h3 indexes
+ * @param trx Optional transaction object (http://knexjs.org/guide/transactions.html)
  * @returns An array of RegionModel
  */
 export const getRegionsFromH3Array = async (
@@ -73,12 +77,50 @@ export const getRegionsFromH3Array = async (
 
 /**
  *
+ * Query to get a region's associated resources.
+ *
+ * Note: This returns a chainable QueryBuilder instance
+ *
+ * @param regionId The id of the region to use
+ * @param trx Optional transaction object (http://knexjs.org/guide/transactions.html)
+ * @returns The QueryBuilder for this query
+ */
+export const query_getResourcesOfRegion = (
+  regionId: number,
+  trx?: TransactionOrKnex
+) => {
+  return RegionModel.relatedQuery<ResourceModel>("resources", trx).for(
+    regionId
+  );
+};
+
+/**
+ * Executes the query for query_getResourcesOfRegion
+ *
+ * @param regionId The id of the region to use
+ * @param trx Optional transaction object (http://knexjs.org/guide/transactions.html)
+ * @returns The QueryBuilder for this query
+ */
+export const getResourcesOfRegion = async (
+  regionId: number,
+  trx?: TransactionOrKnex
+) => {
+  try {
+    return await query_getResourcesOfRegion(regionId, trx);
+  } catch (error) {
+    logger.error(error);
+  }
+};
+
+/**
+ *
  * Query to modify (patch) a region's attribute(s).
  *
  * Note: This returns a chainable QueryBuilder instance
  *
  * @param regionId The id of the region to modify
  * @param data A json object of the attributes with new values
+ * @param trx Optional transaction object (http://knexjs.org/guide/transactions.html)
  * @returns The QueryBuilder for this query
  */
 export const query_modifyRegion = (
@@ -95,10 +137,11 @@ export const query_modifyRegion = (
 
 /**
  *
- * Runs the QueryBuilder for query_modifyRegion
+ * Executes the query for query_modifyRegion
  *
  * @param regionId The id of the region to modify
  * @param data A json object of the attributes with new values
+ * @param trx Optional transaction object (http://knexjs.org/guide/transactions.html)
  * @returns The updated RegionModel
  */
 export const modifyRegion = async (
@@ -120,6 +163,7 @@ export const modifyRegion = async (
  * Note: This returns a chainable QueryBuilder instance
  *
  * @param region The region of interest
+ * @param trx Optional transaction object (http://knexjs.org/guide/transactions.html)
  * @returns The QueryBuilder for this query
  */
 export const query_deleteResourcesOfRegion = (
@@ -134,9 +178,10 @@ export const query_deleteResourcesOfRegion = (
 
 /**
  *
- * Runs the QueryBuilder for query_deleteResourcesOfRegion
+ * Executes the query for query_deleteResourcesOfRegion
  *
  * @param region The region of interest
+ * @param trx Optional transaction object (http://knexjs.org/guide/transactions.html)
  * @returns An array of the deleted resources
  */
 export const deleteResourcesOfRegion = async (
