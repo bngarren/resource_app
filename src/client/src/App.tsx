@@ -17,10 +17,17 @@ interface UserPosition {
   longitude: number;
 }
 
+const Loading = () => {
+  return <>Scanning...</>;
+};
+
 function App() {
   const [userPosition, setUserPosition] = React.useState<[number, number]>();
   const [scanResult, setScanResult] = React.useState<any>();
   const [scanStatus, setScanStatus] = React.useState<string | null>(null);
+  const [interactableResources, setInteractableResources] = React.useState<
+    number[]
+  >([]);
   const [recentRegions, setRecentRegions] = React.useState<any>();
   const [recentResources, setRecentResources] = React.useState<any>();
 
@@ -59,12 +66,12 @@ function App() {
   }, []);
 
   const scan = async () => {
-    setScanStatus("Loading...");
+    setScanStatus("loading");
     setScanResult(null);
     const userPosition = await getLocation();
 
     if (!userPosition) {
-      setScanStatus("Error");
+      setScanStatus("error");
       return;
     }
 
@@ -82,11 +89,13 @@ function App() {
       },
     });
     if (!res.ok) {
-      setScanStatus("Error");
+      setScanStatus("error");
     }
     const json = await res.json();
     setScanResult(json);
     setScanStatus(null);
+    setInteractableResources(json.interactableResources);
+
     await showRecent();
   };
 
@@ -124,9 +133,43 @@ function App() {
 
   return (
     <div className="App">
-      <h1>Resource App</h1>
-      <button onClick={scan}>Scan</button>
-      <p>{scanStatus && scanStatus}</p>
+      <div id="map">
+        {userPosition && scanResult ? (
+          <MapContainer center={userPosition} zoom={16} scrollWheelZoom={false}>
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Marker position={userPosition}>
+              <Popup>You are here.</Popup>
+            </Marker>
+            <Circle
+              center={userPosition}
+              radius={SCAN_DISTANCE_METERS}
+            ></Circle>
+            {scanResult &&
+              scanResult.resources.map((r: any) => {
+                return (
+                  <Polygon
+                    positions={r.vertices}
+                    pathOptions={{
+                      color: r.userCanInteract ? "#2AFB09" : "purple",
+                    }}
+                    key={r.id}
+                  >
+                    <Popup>{`${r.name} ${Math.round(
+                      r.distanceFromUser
+                    )}m`}</Popup>
+                  </Polygon>
+                );
+              })}
+          </MapContainer>
+        ) : scanStatus === "loading" ? (
+          <Loading />
+        ) : (
+          "Scan the area to find resources."
+        )}
+      </div>
 
       {userPosition && scanResult && (
         <MapContainer center={userPosition} zoom={16} scrollWheelZoom={false}>
@@ -154,6 +197,22 @@ function App() {
             })}
         </MapContainer>
       )}
+      <div>
+        <button onClick={scan}>Scan</button>
+      </div>
+
+      <div>
+        <ul>
+          {interactableResources.map((r) => {
+            const resource = scanResult.resources.find((f: any) => (f.id = r));
+            return (
+              <li key={resource.id}>
+                You have found {resource.name}! <button>Harvest</button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
 
       {scanResult && (
         <div>
