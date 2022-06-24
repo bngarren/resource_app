@@ -47,11 +47,7 @@ const getResourceDataFromScannedRegions = async (
     const resourcePosition = h3.h3ToGeo(r.h3Index);
 
     // distance from the user
-    const dist = h3.pointDist(
-      [userPosition.latitude, userPosition.longitude],
-      resourcePosition,
-      "m"
-    );
+    const dist = h3.pointDist(userPosition, resourcePosition, "m");
 
     // Gets the vertices for the region's hexagon (for displaying on a map)
     const vertices = h3.h3ToGeoBoundary(r.h3Index);
@@ -90,15 +86,23 @@ export const handleScanByUserAtLocation = async (
 ) => {
   // Get the h3 index based on the user's position
   const h3Index = h3.geoToH3(
-    userPosition.latitude,
-    userPosition.longitude,
+    userPosition[0],
+    userPosition[1],
     REGION_H3_RESOLUTION
   );
+
+  logger.debug("userPosition: %o", userPosition);
 
   // Get the 6 neighbors plus the user's h3 (7 total)
   const h3Group = h3.kRing(h3Index, scanDistance);
 
+  logger.debug("scan h3Group: %o", h3Group);
+
   try {
+    if (!h3Group || h3Group.length === 0) {
+      throw new Error("Could not process h3Group for the scan");
+    }
+
     // Query for regions associated with these h3 locations
     // If empty, should return [], not undefined
     const existingRegions = await getRegionsFromH3Array(h3Group);

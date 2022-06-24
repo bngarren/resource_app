@@ -4,7 +4,4 @@ export interface UserScanRequest {
   userPosition: UserPosition;
 }
 
-export interface UserPosition {
-  latitude: number;
-  longitude: number;
-}
+export type UserPosition = [number, number] | number[];

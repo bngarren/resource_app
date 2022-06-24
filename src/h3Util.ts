@@ -8,4 +8,8 @@ const getChildren = (index: string) => {
   console.log(children);
 };
 
-console.log(h3.getRes0Indexes().length);
+const getRegion = (lat: number, long: number) => {
+  return h3.geoToH3(lat, long, 11);
+};
+
+console.log(getRegion(42.33351344484759, -71.11869201284838));
