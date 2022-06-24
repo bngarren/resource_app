@@ -7,6 +7,10 @@ import { getRegionsFromH3Array } from "../src/data/queries/queryRegion";
 import h3 from "h3-js";
 import { REGION_H3_RESOLUTION } from "../src/constants";
 import { expectDatesAreCloseEnough } from "./test-util";
+import ResourceModel from "../src/models/Resource";
+import { handleCreateResource } from "../src/services/resourceService";
+import RegionModel from "../src/models/Region";
+import { handleCreateRegion } from "../src/services/regionService";
 
 // externally validated h3Index's (resolution 9) with
 // kRing distance of 1 (first element is center)
@@ -21,10 +25,7 @@ const MOCK_DATA = {
     "892830829dbffff",
     "892830828afffff",
   ],
-  userPosition: {
-    latitude: 37.777493908651344,
-    longitude: -122.42904243437428,
-  },
+  userPosition: [37.777493908651344, -122.42904243437428] as UserPosition,
 };
 
 let db: Knex;
@@ -113,14 +114,48 @@ describe("handleScanByUserAtLocation()", () => {
         scanDistance
       );
       const h3Index = h3.geoToH3(
-        MOCK_DATA.userPosition.latitude,
-        MOCK_DATA.userPosition.longitude,
+        MOCK_DATA.userPosition[0],
+        MOCK_DATA.userPosition[1],
         REGION_H3_RESOLUTION
       );
       const h3Group = h3.kRing(h3Index, scanDistance);
 
       if (scanResult === -1) return false;
       expect(scanResult.regions).toHaveLength(h3Group.length);
+    });
+    it("includes an array of interactable resources (by id) if the user is close enough to a resource", async () => {
+      // Create region with resources
+      const region = await handleCreateRegion(
+        {
+          h3Index: MOCK_DATA.h3Index,
+        },
+        true
+      );
+      if (region == null) return false;
+      const resource = await region
+        .$relatedQuery<ResourceModel>("resources")
+        .first();
+      if (resource == null) return false;
+      const userPosition = h3.h3ToGeo(resource.h3Index);
+      // the user scans and is not near the resource
+      const scanResult_far = await handleScanByUserAtLocation(
+        1,
+        MOCK_DATA.userPosition,
+        1
+      );
+      // the user scans and is within the resource
+      const scanResult_close = await handleScanByUserAtLocation(
+        1,
+        userPosition,
+        1
+      );
+      if (scanResult_close === -1 || scanResult_far === -1) return false;
+      expect(scanResult_close.interactableResources).toEqual(
+        expect.arrayContaining([resource.id])
+      );
+      expect(scanResult_far.interactableResources).not.toEqual(
+        expect.arrayContaining([resource.id])
+      );
     });
   });
 });

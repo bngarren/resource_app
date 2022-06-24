@@ -1,28 +1,15 @@
 import * as React from "react";
 import config from "./config";
 import "./styles/App.css";
-import {
-  MapContainer,
-  TileLayer,
-  useMap,
-  Marker,
-  Popup,
-  Circle,
-  Polygon,
-} from "react-leaflet";
-import { SCAN_DISTANCE_METERS } from "@backend/constants";
-
-interface UserPosition {
-  latitude: number;
-  longitude: number;
-}
+import Map from "./components/Map";
+import { UserPosition } from "./types";
 
 const Loading = () => {
   return <>Scanning...</>;
 };
 
 function App() {
-  const [userPosition, setUserPosition] = React.useState<[number, number]>();
+  const [userPosition, setUserPosition] = React.useState<UserPosition>();
   const [scanResult, setScanResult] = React.useState<any>();
   const [scanStatus, setScanStatus] = React.useState<string | null>(null);
   const [interactableResources, setInteractableResources] = React.useState<
@@ -43,10 +30,7 @@ function App() {
               position.coords.latitude,
               position.coords.longitude,
             ]);
-            resolve({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-            });
+            resolve([position.coords.latitude, position.coords.longitude]);
           },
           () => {
             reject();
@@ -68,6 +52,7 @@ function App() {
   const scan = async () => {
     setScanStatus("loading");
     setScanResult(null);
+    setInteractableResources([]);
     const userPosition = await getLocation();
 
     if (!userPosition) {
@@ -77,26 +62,30 @@ function App() {
 
     console.log("sending:", userPosition);
 
-    const res = await fetch(`${config.url}/scan`, {
-      method: "POST",
-      body: JSON.stringify({
-        userPosition: {
-          ...userPosition,
+    try {
+      const res = await fetch(`${config.url}/scan`, {
+        method: "POST",
+        body: JSON.stringify({
+          userPosition,
+        }),
+        headers: {
+          "Content-Type": "application/json",
         },
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    if (!res.ok) {
-      setScanStatus("error");
+      });
+      if (!res.ok) {
+        setScanStatus("error");
+        throw new Error(`Error with scan. ${res.status}`);
+      }
+      const data = await res.json();
+      console.log("scanResult", data);
+      setScanResult(data);
+      setScanStatus(null);
+      setInteractableResources([...data.interactableResources]);
+    } catch (error) {
+      console.log(error);
     }
-    const json = await res.json();
-    setScanResult(json);
-    setScanStatus(null);
-    setInteractableResources(json.interactableResources);
 
-    await showRecent();
+    // await showRecent();
   };
 
   const showRecent = async () => {
@@ -135,35 +124,7 @@ function App() {
     <div className="App">
       <div id="map">
         {userPosition && scanResult ? (
-          <MapContainer center={userPosition} zoom={16} scrollWheelZoom={false}>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <Marker position={userPosition}>
-              <Popup>You are here.</Popup>
-            </Marker>
-            <Circle
-              center={userPosition}
-              radius={SCAN_DISTANCE_METERS}
-            ></Circle>
-            {scanResult &&
-              scanResult.resources.map((r: any) => {
-                return (
-                  <Polygon
-                    positions={r.vertices}
-                    pathOptions={{
-                      color: r.userCanInteract ? "#2AFB09" : "purple",
-                    }}
-                    key={r.id}
-                  >
-                    <Popup>{`${r.name} ${Math.round(
-                      r.distanceFromUser
-                    )}m`}</Popup>
-                  </Polygon>
-                );
-              })}
-          </MapContainer>
+          <Map userPosition={userPosition} resources={scanResult.resources} />
         ) : scanStatus === "loading" ? (
           <Loading />
         ) : (
@@ -171,46 +132,26 @@ function App() {
         )}
       </div>
 
-      {userPosition && scanResult && (
-        <MapContainer center={userPosition} zoom={16} scrollWheelZoom={false}>
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <Marker position={userPosition}>
-            <Popup>You are here.</Popup>
-          </Marker>
-          <Circle center={userPosition} radius={SCAN_DISTANCE_METERS}></Circle>
-          {scanResult &&
-            scanResult.resources.map((r: any) => {
-              return (
-                <Polygon
-                  positions={r.vertices}
-                  pathOptions={{
-                    color: r.userCanInteract ? "2AFB09" : "purple",
-                  }}
-                  key={r.id}
-                >
-                  <Popup>{r.name}</Popup>
-                </Polygon>
-              );
-            })}
-        </MapContainer>
-      )}
       <div>
         <button onClick={scan}>Scan</button>
       </div>
 
-      <div>
+      <div id="actions">
         <ul>
-          {interactableResources.map((r) => {
-            const resource = scanResult.resources.find((f: any) => (f.id = r));
-            return (
-              <li key={resource.id}>
-                You have found {resource.name}! <button>Harvest</button>
-              </li>
-            );
-          })}
+          {scanResult &&
+            interactableResources.map((r) => {
+              console.log(scanResult.resources);
+              const resource = scanResult?.resources?.find(
+                (f: any) => f.id === r
+              );
+
+              if (resource != null)
+                return (
+                  <li key={resource.id}>
+                    You have found {resource.name}! <button>Harvest</button>
+                  </li>
+                );
+            })}
         </ul>
       </div>
 
@@ -219,7 +160,7 @@ function App() {
           <h3>Resources</h3>
           <ul>
             {scanResult.resources
-              .sort((a: any, b: any) => {
+              ?.sort((a: any, b: any) => {
                 return a.distanceFromUser - b.distanceFromUser;
               })
               .map((r: any) => {
