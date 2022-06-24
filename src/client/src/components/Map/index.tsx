@@ -34,7 +34,11 @@ const Map = ({ userPosition, resources }: MapProps) => {
             }}
             key={r.id}
           >
-            <Popup>{`${r.name} ${Math.round(r.distanceFromUser)}m`}</Popup>
+            <Popup>
+              {`${r.name} ${Math.round(r.distanceFromUser)}m`}
+              <br />
+              {`${r.h3Index}`}
+            </Popup>
           </Polygon>
         );
       })}

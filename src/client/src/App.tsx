@@ -3,6 +3,7 @@ import config from "./config";
 import "./styles/App.css";
 import Map from "./components/Map";
 import { UserPosition } from "./types";
+import { Link } from "react-router-dom";
 
 const Loading = () => {
   return <>Scanning...</>;
@@ -77,7 +78,6 @@ function App() {
         throw new Error(`Error with scan. ${res.status}`);
       }
       const data = await res.json();
-      console.log("scanResult", data);
       setScanResult(data);
       setScanStatus(null);
       setInteractableResources([...data.interactableResources]);
