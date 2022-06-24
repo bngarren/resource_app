@@ -25,6 +25,9 @@ function App() {
   const [userPosition, setUserPosition] = React.useState<[number, number]>();
   const [scanResult, setScanResult] = React.useState<any>();
   const [scanStatus, setScanStatus] = React.useState<string | null>(null);
+  const [interactableResources, setInteractableResources] = React.useState<
+    number[]
+  >([]);
   const [recentRegions, setRecentRegions] = React.useState<any>();
   const [recentResources, setRecentResources] = React.useState<any>();
 
@@ -91,6 +94,8 @@ function App() {
     const json = await res.json();
     setScanResult(json);
     setScanStatus(null);
+    setInteractableResources(json.interactableResources);
+
     await showRecent();
   };
 
@@ -192,6 +197,19 @@ function App() {
       )}
       <div>
         <button onClick={scan}>Scan</button>
+      </div>
+
+      <div>
+        <ul>
+          {interactableResources.map((r) => {
+            const resource = scanResult.resources.find((f: any) => (f.id = r));
+            return (
+              <li key={resource.id}>
+                You have found {resource.name}! <button>Harvest</button>
+              </li>
+            );
+          })}
+        </ul>
       </div>
 
       {scanResult && (

@@ -141,16 +141,17 @@ export const handleScanByUserAtLocation = async (
       userPosition
     );
 
-    // Is there a resource to interact with?
-    const canInteractWithResource = resourceData.some(
-      (r) => r.userCanInteract === true
-    );
+    // Which resources can be interacted with?
+    const interactableResources = resourceData.flatMap((r) => {
+      if (r.userCanInteract) return [r.id];
+      return [];
+    });
 
-    // Return the scan result
+    // - - - - - Return the scan result - - - - -
     const scanResult: ScanResult = {
       regions: regions as RegionType[],
       resources: resourceData,
-      canInteractWithResource,
+      interactableResources,
     };
 
     return scanResult;

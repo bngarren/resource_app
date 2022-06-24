@@ -21,5 +21,6 @@ export type ScanResultResource = ResourceType & {
 export interface ScanResult {
   regions: RegionType[];
   resources: ScanResultResource[];
-  canInteractWithResource: boolean;
+  /** Resource id's of resources that the user can interact with, e.g. harvest */
+  interactableResources: number[];
 }
