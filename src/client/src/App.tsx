@@ -1,6 +1,16 @@
 import * as React from "react";
 import config from "./config";
 import "./styles/App.css";
+import {
+  MapContainer,
+  TileLayer,
+  useMap,
+  Marker,
+  Popup,
+  Circle,
+  Polygon,
+} from "react-leaflet";
+import { SCAN_DISTANCE_METERS } from "@backend/constants";
 
 interface UserPosition {
   latitude: number;
@@ -8,6 +18,7 @@ interface UserPosition {
 }
 
 function App() {
+  const [userPosition, setUserPosition] = React.useState<[number, number]>();
   const [scanResult, setScanResult] = React.useState<any>();
   const [scanStatus, setScanStatus] = React.useState<string | null>(null);
   const [recentRegions, setRecentRegions] = React.useState<any>();
@@ -21,6 +32,10 @@ function App() {
       } else {
         navigator.geolocation.getCurrentPosition(
           (position) => {
+            setUserPosition([
+              position.coords.latitude,
+              position.coords.longitude,
+            ]);
             resolve({
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
@@ -36,6 +51,12 @@ function App() {
       }
     });
   };
+
+  React.useLayoutEffect(() => {
+    (async function gl() {
+      await getLocation();
+    })();
+  }, []);
 
   const scan = async () => {
     setScanStatus("Loading...");
@@ -106,6 +127,32 @@ function App() {
       <h1>Resource App</h1>
       <button onClick={scan}>Scan</button>
       <p>{scanStatus && scanStatus}</p>
+
+      {userPosition && scanResult && (
+        <MapContainer center={userPosition} zoom={16} scrollWheelZoom={false}>
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <Marker position={userPosition}>
+            <Popup>You are here.</Popup>
+          </Marker>
+          <Circle center={userPosition} radius={SCAN_DISTANCE_METERS}></Circle>
+          {scanResult &&
+            scanResult.resources.map((r: any) => {
+              return (
+                <Polygon
+                  positions={r.vertices}
+                  pathOptions={{ color: "purple" }}
+                  key={r.id}
+                >
+                  <Popup>{r.name}</Popup>
+                </Polygon>
+              );
+            })}
+        </MapContainer>
+      )}
+
       {scanResult && (
         <div>
           <h3>Resources</h3>

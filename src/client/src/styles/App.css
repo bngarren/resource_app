@@ -25,3 +25,5 @@ button {
 button:hover {
   background-color: blue;
 }
+
+.leaflet-container { width: 100%;height: 400px; }

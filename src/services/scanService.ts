@@ -31,13 +31,17 @@ const getResourceDataFromScannedRegions = async (
   );
   const flat_resources = resources.flat(1);
   const result = flat_resources.map((r) => {
+    const resourcePosition = h3.h3ToGeo(r.h3Index);
     const dist = h3.pointDist(
       [userPosition.latitude, userPosition.longitude],
-      h3.h3ToGeo(r.h3Index),
+      resourcePosition,
       "m"
     );
+    const vertices = h3.h3ToGeoBoundary(r.h3Index);
     return {
       ...(r as ResourceType),
+      resourcePosition: resourcePosition,
+      vertices: vertices,
       distanceFromUser: dist,
       userCanInteract: dist <= USER_AREA_OF_EFFECT,
     };
