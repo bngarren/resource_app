@@ -143,7 +143,9 @@ function App() {
               return (
                 <Polygon
                   positions={r.vertices}
-                  pathOptions={{ color: "purple" }}
+                  pathOptions={{
+                    color: r.userCanInteract ? "2AFB09" : "purple",
+                  }}
                   key={r.id}
                 >
                   <Popup>{r.name}</Popup>
@@ -169,7 +171,7 @@ function App() {
                     style={{
                       fontWeight: shouldBold ? "bold" : "normal",
                       backgroundColor: r.userCanInteract
-                        ? "#C2FF85"
+                        ? "#2AFB09"
                         : getDistanceColor(r.distanceFromUser),
                     }}
                   >
