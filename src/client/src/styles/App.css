@@ -14,6 +14,10 @@ h3 {
   font-size: 1.3rem;
 }
 
+a {
+  cursor: pointer
+}
+
 
 button {
   font-size: calc(12px + 2vmin);
