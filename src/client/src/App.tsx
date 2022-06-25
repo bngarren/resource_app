@@ -3,7 +3,17 @@ import config from "./config";
 import "./styles/App.css";
 import Map from "./components/Map";
 import { UserPosition } from "./types";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  List,
+  ListItem,
+  Stack,
+  Typography,
+} from "@mui/material";
+import RadarIcon from "@mui/icons-material/Radar";
+import HardwareIcon from "@mui/icons-material/Hardware";
 
 const Loading = () => {
   return (
@@ -93,16 +103,6 @@ function App() {
     // await showRecent();
   };
 
-  const showRecent = async () => {
-    setRecentRegions(null);
-    setRecentResources(null);
-    const res = await fetch(`${config.url}/debug`);
-    if (!res.ok) return;
-    const json = await res.json();
-    setRecentRegions(json.regions);
-    setRecentResources(json.resources);
-  };
-
   const toDate = (utc: string) => {
     return new Date(utc).toLocaleString();
   };
@@ -138,11 +138,18 @@ function App() {
       </div>
 
       <div>
-        <button onClick={scan}>Scan</button>
+        <Button
+          onClick={scan}
+          size="large"
+          variant="contained"
+          startIcon={<RadarIcon />}
+        >
+          Scan
+        </Button>
       </div>
 
       <div id="actions">
-        <ul>
+        <List>
           {scanResult &&
             interactableResources.map((r) => {
               console.log(scanResult.resources);
@@ -152,18 +159,29 @@ function App() {
 
               if (resource != null)
                 return (
-                  <li key={resource.id}>
-                    You have found {resource.name}! <button>Harvest</button>
-                  </li>
+                  <ListItem key={resource.id}>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Typography variant="body1">
+                        You have found <b>{resource.name}</b>!
+                      </Typography>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="success"
+                        startIcon={<HardwareIcon />}
+                      >
+                        Harvest
+                      </Button>
+                    </Stack>
+                  </ListItem>
                 );
             })}
-        </ul>
+        </List>
       </div>
 
       {scanResult && (
         <div>
-          <h3>Resources</h3>
-          <ul>
+          <List>
             {scanResult.resources
               ?.sort((a: any, b: any) => {
                 return a.distanceFromUser - b.distanceFromUser;
@@ -171,7 +189,7 @@ function App() {
               .map((r: any) => {
                 const shouldBold = r.distanceFromUser <= 100;
                 return (
-                  <li
+                  <ListItem
                     key={r.id}
                     style={{
                       fontWeight: shouldBold ? "bold" : "normal",
@@ -181,110 +199,12 @@ function App() {
                     }}
                   >
                     {r.id} - {r.name} - {Math.round(r.distanceFromUser)}m away
-                  </li>
+                  </ListItem>
                 );
               })}
-          </ul>
+          </List>
         </div>
       )}
-      <div
-        style={{
-          marginTop: "4rem",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          fontSize: "10px",
-        }}
-      >
-        <button onClick={showRecent}>Update Recent</button>
-        {recentRegions && (
-          <div style={{ width: "600px" }}>
-            <table style={{ width: "100%" }}>
-              <thead
-                style={{
-                  backgroundColor: "darkblue",
-                  color: "white",
-                  fontSize: "15px",
-                }}
-              >
-                <tr>
-                  <th colSpan={5}>Recent Regions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr style={{ fontWeight: "bold", fontSize: "12px" }}>
-                  <th
-                    scope="col"
-                    style={{ fontWeight: "bold", backgroundColor: "lightblue" }}
-                  >
-                    id
-                  </th>
-                  <th scope="col">h3Index</th>
-                  <th scope="col">created_at</th>
-                  <th
-                    scope="col"
-                    style={{ fontWeight: "bold", backgroundColor: "yellow" }}
-                  >
-                    updated_at
-                  </th>
-                  <th scope="col">reset_date</th>
-                </tr>
-                {recentRegions.map((r: any) => {
-                  return (
-                    <tr key={r.id}>
-                      <td>{r.id}</td>
-                      <td>{r.h3Index}</td>
-                      <td>{toDate(r.created_at)}</td>
-                      <td>{toDate(r.updated_at)}</td>
-                      <td>{toDate(r.reset_date)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {recentResources && (
-          <div style={{ width: "600px" }}>
-            <table style={{ width: "100%" }}>
-              <thead
-                style={{
-                  backgroundColor: "darkblue",
-                  color: "white",
-                  fontSize: "15px",
-                }}
-              >
-                <tr>
-                  <th colSpan={5}>Recent Resources</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr style={{ fontWeight: "bold", fontSize: "12px" }}>
-                  <th scope="col">id</th>
-                  <th scope="col">name</th>
-                  <th
-                    scope="col"
-                    style={{ fontWeight: "bold", backgroundColor: "lightblue" }}
-                  >
-                    region_id
-                  </th>
-                  <th scope="col">h3Index</th>
-                </tr>
-                {recentResources.map((r: any) => {
-                  return (
-                    <tr key={r.id}>
-                      <td>{r.id}</td>
-                      <td>{r.name}</td>
-                      <td>{r.region_id}</td>
-                      <td>{r.h3Index}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
