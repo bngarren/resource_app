@@ -63,3 +63,15 @@
 - To log objects, use string formatting (printf style) See [here](https://github.com/pinojs/pino/blob/HEAD/docs/api.md#message-string)
 - The **log level** (threshold at which logs are displayed) comes from config file, which tries to pull from .env variable. Thus log level can be set from environment or command line `LOGGER_LEVEL=debug`
 - For logging Express (i.e. requests/responses), we use express-pino-logger module. We create this middleware in /middleware and then apply it in server.ts with `app.use()`. We can customize the output and stuff as well
+
+# Firebase authentication
+
+- There is a client firebase implementation (for the user to sign up/login/sign out) with the Firebase server and receive ID tokens back to signify the authentication
+- There is a server firebase implementation (Admin SDK) which we use to verify the ID token sent within an HTTP request to one of the endpoints. This ensures that we know/trust/allow the client to access our endpoint
+
+## JWT
+- ID tokens are what the modern client SDKs actually use to authenticate end users
+- ID tokens are short-lived JWTs, lasting for just one hour.
+- Firebase will refresh a user’s ID token on your behalf using a refresh token
+   - When you authenticate, FB generates an ID token / refresh token pair and every hour continues to refresh the ID token on our behalf
+- To securely access our app's API endpoints, we will send our ID token within the HTTP request header

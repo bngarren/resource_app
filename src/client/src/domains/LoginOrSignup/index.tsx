@@ -13,17 +13,22 @@ import {
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useToasty } from "../../components/Toasty";
+import { UserCredential } from "firebase/auth";
+import { LocationState } from "../../types";
 
-type LocationState = {
-  from: { pathname: string };
+type LoginOrSignupProps = {
+  type: "login" | "signup";
 };
 
-const LoginPage = () => {
-  const { signIn } = useAuth();
+const LoginOrSignup = (props: LoginOrSignupProps) => {
+  const { type } = props;
+  const { createUser, signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as LocationState;
-  const from = locationState?.from?.pathname || "/";
+  const from = locationState?.from || "/app";
+
+  console.log("In /login, came from", from);
 
   const { openToasty } = useToasty();
 
@@ -34,7 +39,14 @@ const LoginPage = () => {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    const result = await signIn(email, password);
+    let result: UserCredential | Error;
+    if (type === "login") {
+      result = await signIn(email, password);
+    } else if (type === "signup") {
+      result = await createUser(email, password);
+    } else {
+      result = new Error("Could not complete. Try reloading the page.");
+    }
 
     if (result instanceof Error) {
       openToasty(result.message, "error");
@@ -43,6 +55,10 @@ const LoginPage = () => {
     console.log("userCredential", result);
 
     navigate(from, { replace: true });
+  };
+
+  const getTitle = () => {
+    return type === "login" ? "Sign in" : "Sign up";
   };
 
   return (
@@ -59,7 +75,7 @@ const LoginPage = () => {
           <LockOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
-          Sign in
+          {getTitle()}
         </Typography>
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
           <TextField
@@ -82,30 +98,35 @@ const LoginPage = () => {
             id="password"
             autoComplete="current-password"
           />
-          <FormControlLabel
-            control={<Checkbox value="remember" color="primary" />}
-            label="Remember me"
-          />
+          {type === "login" && (
+            <FormControlLabel
+              control={<Checkbox value="remember" color="primary" />}
+              label="Remember me"
+            />
+          )}
+
           <Button
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
           >
-            Sign In
+            {getTitle()}
           </Button>
-          <Grid container>
-            <Grid item xs>
-              <Link to="#">Forgot password?</Link>
+          {type === "login" && (
+            <Grid container>
+              <Grid item xs>
+                <Link to="#">Forgot password?</Link>
+              </Grid>
+              <Grid item>
+                <Link to="/signup">{"Don't have an account? Sign Up"}</Link>
+              </Grid>
             </Grid>
-            <Grid item>
-              <Link to="#">{"Don't have an account? Sign Up"}</Link>
-            </Grid>
-          </Grid>
+          )}
         </Box>
       </Box>
     </Container>
   );
 };
 
-export default LoginPage;
+export default LoginOrSignup;
