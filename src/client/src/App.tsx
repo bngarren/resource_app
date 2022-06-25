@@ -15,6 +15,7 @@ import {
 import RadarIcon from "@mui/icons-material/Radar";
 import HardwareIcon from "@mui/icons-material/Hardware";
 import { useAuth } from "./global/auth";
+import { useFetch } from "./global/useFetch";
 
 const Loading = () => {
   return (
@@ -32,7 +33,8 @@ function App() {
   const [interactableResources, setInteractableResources] = React.useState<
     number[]
   >([]);
-  const { user } = useAuth();
+
+  const { backendFetch } = useFetch();
 
   const getLocation = (): Promise<UserPosition | undefined> => {
     return new Promise((resolve, reject) => {
@@ -78,36 +80,17 @@ function App() {
 
     console.log("sending:", userPosition);
 
-    try {
-      const idToken = await user?.getIdToken();
-      console.log(idToken);
-      const res = await fetch(`${config.url}/scan`, {
-        method: "POST",
-        body: JSON.stringify({
-          userPosition,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
-        },
-      });
-      if (!res.ok) {
-        setScanStatus("error");
-        throw new Error(`Error with scan. ${res.status}`);
-      }
-      const data = await res.json();
-      setScanResult(data);
-      setScanStatus(null);
-      setInteractableResources([...data.interactableResources]);
-    } catch (error) {
-      console.log(error);
-    }
-
-    // await showRecent();
-  };
-
-  const toDate = (utc: string) => {
-    return new Date(utc).toLocaleString();
+    const data = await backendFetch(
+      "POST",
+      "scan",
+      JSON.stringify({
+        userPosition,
+      }),
+      true
+    );
+    setScanResult(data);
+    setScanStatus(null);
+    setInteractableResources([...data.interactableResources]);
   };
 
   const getDistanceColor = (dist: number) => {
