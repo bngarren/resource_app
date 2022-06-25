@@ -3,10 +3,15 @@ import config from "./config";
 import "./styles/App.css";
 import Map from "./components/Map";
 import { UserPosition } from "./types";
-import { Link } from "react-router-dom";
+import { Box, CircularProgress, Typography } from "@mui/material";
 
 const Loading = () => {
-  return <>Scanning...</>;
+  return (
+    <Box flexDirection="column">
+      <CircularProgress sx={{ color: "#D7F363" }} />
+      <Typography variant="h5">Scanning...</Typography>
+    </Box>
+  );
 };
 
 function App() {
