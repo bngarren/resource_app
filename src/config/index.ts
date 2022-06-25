@@ -20,4 +20,5 @@ export default {
   db_name: process.env.DB_NAME,
   db_test_name: process.env.DB_TEST_NAME,
   logger_level: process.env.LOGGER_LEVEL || "info",
+  fb_service_acct_key: process.env.FB_SERVICE_ACCT_KEY,
 };
