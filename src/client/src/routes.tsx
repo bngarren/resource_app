@@ -7,7 +7,7 @@ import {
 import App from "./App";
 import Layout from "./components/Layout";
 import Dashboard from "./domains/Dashboard";
-import LoginPage from "./domains/Login";
+import LoginOrSignup from "./domains/LoginOrSignup";
 import PublicLanding from "./domains/PublicLanding";
 import { useAuth } from "./global/auth";
 
@@ -15,25 +15,39 @@ const Routes = () => {
   return (
     <RouterRoutes>
       <Route element={<Layout />}>
-        <Route path="/" element={<PublicLanding />}>
-          <Route
-            path="/app"
-            element={
-              <RequireAuth>
-                <App />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <RequireAuth>
-                <Dashboard />
-              </RequireAuth>
-            }
-          />
-        </Route>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<PublicLanding />} />
+        <Route
+          path="/app"
+          element={
+            <RequireAuth>
+              <App />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <RequireAuth>
+              <Dashboard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <RedirectIfAuth>
+              <LoginOrSignup type="login" />
+            </RedirectIfAuth>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <RedirectIfAuth>
+              <LoginOrSignup type="signup" />
+            </RedirectIfAuth>
+          }
+        />
         <Route
           path="*"
           element={
@@ -56,9 +70,22 @@ function RequireAuth({ children }: { children: JSX.Element }) {
     // trying to go to when they were redirected. This allows us to send them
     // along to that page after they login, which is a nicer user experience
     // than dropping them off on the home page.
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    console.log(`Can't access ${location.pathname}, redirecting to /login`);
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
+  return children;
+}
 
+/** If a user is already signed in, they should be redirected when trying to access
+ * this route
+ */
+function RedirectIfAuth({ children }: { children: JSX.Element }) {
+  const auth = useAuth();
+  const location = useLocation();
+
+  if (auth.user) {
+    return <Navigate to="/app" replace state={{ from: location.pathname }} />;
+  }
   return children;
 }
 

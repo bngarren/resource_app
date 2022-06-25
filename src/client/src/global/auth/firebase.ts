@@ -33,7 +33,27 @@ const auth = getAuth(fb);
 // Exposed functions for the client app
 
 export const createUser = async (email: string, password: string) => {
-  return await createUserWithEmailAndPassword(auth, email, password);
+  try {
+    return await createUserWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    let message = "There was an error in the submission.";
+    if (error instanceof FirebaseError) {
+      message = error.message;
+      switch (error.code) {
+        case "auth/invalid-email":
+          message = "The email address is invalid.";
+          break;
+        case "auth/email-already-in-use":
+          message = "This email address is already in use.";
+          break;
+        case "auth/weak-password":
+          message = "A stronger password is required.";
+          break;
+      }
+    }
+    console.error(message);
+    return new Error(message);
+  }
 };
 
 export const signIn = async (email: string, password: string) => {

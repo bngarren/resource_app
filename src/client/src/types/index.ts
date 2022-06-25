@@ -41,3 +41,7 @@ export type Region = {
   updated_at: string;
   reset_date: string;
 };
+
+export type LocationState = {
+  from: { pathname: string };
+};

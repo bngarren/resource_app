@@ -4,6 +4,7 @@ import { User } from "firebase/auth";
 
 interface AuthContextType {
   user: User | null;
+  createUser: typeof firebase.createUser;
   signIn: typeof firebase.signIn;
   signOut: typeof firebase.signOut;
 }
@@ -30,6 +31,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const contextValue = {
     user,
+    createUser: firebase.createUser,
     signIn: firebase.signIn,
     signOut: firebase.signOut,
   };
