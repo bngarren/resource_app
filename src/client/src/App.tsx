@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import RadarIcon from "@mui/icons-material/Radar";
 import HardwareIcon from "@mui/icons-material/Hardware";
+import { useAuth } from "./global/auth";
 
 const Loading = () => {
   return (
@@ -31,8 +32,7 @@ function App() {
   const [interactableResources, setInteractableResources] = React.useState<
     number[]
   >([]);
-  const [recentRegions, setRecentRegions] = React.useState<any>();
-  const [recentResources, setRecentResources] = React.useState<any>();
+  const { user } = useAuth();
 
   const getLocation = (): Promise<UserPosition | undefined> => {
     return new Promise((resolve, reject) => {
@@ -79,6 +79,8 @@ function App() {
     console.log("sending:", userPosition);
 
     try {
+      const idToken = await user?.getIdToken();
+      console.log(idToken);
       const res = await fetch(`${config.url}/scan`, {
         method: "POST",
         body: JSON.stringify({
@@ -86,6 +88,7 @@ function App() {
         }),
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
         },
       });
       if (!res.ok) {

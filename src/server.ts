@@ -4,6 +4,7 @@ import cors from "cors";
 import routes from "./routes";
 import config from "./config";
 import { logRequest } from "./middleware/logRequest";
+import firebaseAuthentication from "./middleware/firebaseAuthentication";
 
 const CORS_OPTIONS = {
   origin: config.cors_allowed_origins,
@@ -20,6 +21,9 @@ app.options("*", cors<Request>());
 app.use(logRequest);
 
 app.get("/", (req, res) => res.send(`Backend is working!`));
+
+// Firebase authentication middleware
+app.use(firebaseAuthentication);
 
 app.use("/api", routes);
 
