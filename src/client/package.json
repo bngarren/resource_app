@@ -1,13 +1,19 @@
 {
   "name": "resource-app-client",
   "private": true,
-  "version": "0.0.5",
+  "version": "0.0.6",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.9.3",
+    "@emotion/styled": "^11.9.3",
+    "@fontsource/roboto": "^4.5.7",
+    "@mui/icons-material": "^5.8.4",
+    "@mui/material": "^5.8.5",
+    "firebase": "^9.8.4",
     "h3-js": "^3.7.2",
     "leaflet": "^1.8.0",
     "react": "^18.2.0",

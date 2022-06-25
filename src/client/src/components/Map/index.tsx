@@ -16,7 +16,7 @@ const Map = ({ userPosition, resources }: MapProps) => {
       zoom={17}
       scrollWheelZoom={false}
     >
-      <ZoomControl position={"topright"} />
+      <ZoomControl position={"bottomleft"} />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
