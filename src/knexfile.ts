@@ -6,10 +6,6 @@ if (process.env.DATABASE_URL) {
   pg.defaults.ssl = { rejectUnauthorized: false };
 }
 
-if (!config.db_port) {
-  throw new Error("Could not establish database connection.");
-}
-
 const sharedConfig = {
   client: "pg",
   migrations: { directory: __dirname + "/data/migrations" },
