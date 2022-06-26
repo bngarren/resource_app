@@ -14,6 +14,8 @@ import {
 } from "@mui/material";
 import RadarIcon from "@mui/icons-material/Radar";
 import HardwareIcon from "@mui/icons-material/Hardware";
+import GpsFixedIcon from "@mui/icons-material/GpsFixed";
+import GpsOffIcon from "@mui/icons-material/GpsOff";
 import { useAuth } from "./global/auth";
 import { useFetch } from "./global/useFetch";
 import { useGeoLocation } from "./global/useGeoLocation";
@@ -30,6 +32,8 @@ const Loading = () => {
 function App() {
   const { startWatching, location, lastLocation, locationError, isWatching } =
     useGeoLocation(10000);
+  const [lastScannedLocation, setLastScannedLocation] =
+    React.useState<UserPosition>();
   const [scanResult, setScanResult] = React.useState<any>();
   const [scanStatus, setScanStatus] = React.useState<string | null>(null);
   const [interactableResources, setInteractableResources] = React.useState<
@@ -71,6 +75,8 @@ function App() {
       setScanStatus("error");
       return;
     }
+
+    setLastScannedLocation(userPosition);
 
     console.log("sending:", userPosition);
 
@@ -115,22 +121,26 @@ function App() {
   };
 
   const userPosition = (): UserPosition | undefined => {
-    if (location) {
-      return [location.latitude, location.longitude];
+    if (lastScannedLocation) {
+      return lastScannedLocation;
     } else if (lastLocation) {
-      return [lastLocation.latitude, lastLocation.longitude];
-    } else return undefined;
+      return [lastLocation.latitude, lastLocation.longitude] as UserPosition;
+    }
   };
 
   return (
     <div className="App">
       <div id="map">
         <Map
-          userPosition={userPosition()}
+          position={userPosition()}
           resources={scanResult?.resources || undefined}
         />
       </div>
-      {isWatching ? "GPS is on." : "GPS is off."}
+      {isWatching ? (
+        <GpsFixedIcon sx={{ color: "darkgreen" }} />
+      ) : (
+        <GpsOffIcon />
+      )}
 
       <div>
         <Button
