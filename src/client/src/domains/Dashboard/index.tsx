@@ -46,7 +46,7 @@ const Dashboard = () => {
         style={{ width: "100%", height: "400px", marginBottom: "1rem" }}
       >
         {position && scanResult && (
-          <Map userPosition={position} resources={scanResult.resources} />
+          <Map position={position} resources={scanResult.resources} />
         )}
       </div>
       <div style={{ padding: "0 2rem" }}>
