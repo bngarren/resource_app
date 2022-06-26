@@ -16,6 +16,7 @@ import RadarIcon from "@mui/icons-material/Radar";
 import HardwareIcon from "@mui/icons-material/Hardware";
 import { useAuth } from "./global/auth";
 import { useFetch } from "./global/useFetch";
+import { useGeoLocation } from "./global/useGeoLocation";
 
 const Loading = () => {
   return (
@@ -27,7 +28,8 @@ const Loading = () => {
 };
 
 function App() {
-  const [userPosition, setUserPosition] = React.useState<UserPosition>();
+  const { startWatching, location, lastLocation, locationError, isWatching } =
+    useGeoLocation(10000);
   const [scanResult, setScanResult] = React.useState<any>();
   const [scanStatus, setScanStatus] = React.useState<string | null>(null);
   const [interactableResources, setInteractableResources] = React.useState<
@@ -36,42 +38,34 @@ function App() {
 
   const { backendFetch } = useFetch();
 
-  const getLocation = (): Promise<UserPosition | undefined> => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        setScanStatus("Geolocation is not supported by your browser");
-        reject();
-      } else {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            setUserPosition([
-              position.coords.latitude,
-              position.coords.longitude,
-            ]);
-            resolve([position.coords.latitude, position.coords.longitude]);
-          },
-          () => {
-            reject();
-          },
-          {
-            enableHighAccuracy: true,
-          }
-        );
-      }
-    });
-  };
+  React.useEffect(() => {
+    startWatching();
+  }, [startWatching]);
 
-  React.useLayoutEffect(() => {
-    (async function gl() {
-      await getLocation();
-    })();
-  }, []);
+  const scan = React.useCallback(async () => {
+    console.log("Scan started...");
+    if (locationError) {
+      console.error(locationError);
+      return;
+    }
 
-  const scan = async () => {
-    setScanStatus("loading");
+    if (!isWatching) {
+      console.log("Scan aborted, awaiting GPS location.");
+      setScanStatus("awaiting location");
+      startWatching();
+      return;
+    }
+
+    if (!location) {
+      console.error("Did not have GPS location to scan");
+      return;
+    }
+
+    setScanStatus("scanning");
     setScanResult(null);
     setInteractableResources([]);
-    const userPosition = await getLocation();
+
+    const userPosition: UserPosition = [location.latitude, location.longitude];
 
     if (!userPosition) {
       setScanStatus("error");
@@ -88,10 +82,19 @@ function App() {
       }),
       true
     );
+    startWatching(true); // reset the timer
     setScanResult(data);
     setScanStatus(null);
     setInteractableResources([...data.interactableResources]);
-  };
+    console.log("Scan completed.");
+  }, [backendFetch, isWatching, location, locationError, startWatching]);
+
+  React.useEffect(() => {
+    if (scanStatus === "awaiting location" && location) {
+      scan();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scanStatus, location]);
 
   const getDistanceColor = (dist: number) => {
     if (dist > 500) {
@@ -111,17 +114,23 @@ function App() {
     }
   };
 
+  const userPosition = (): UserPosition | undefined => {
+    if (location) {
+      return [location.latitude, location.longitude];
+    } else if (lastLocation) {
+      return [lastLocation.latitude, lastLocation.longitude];
+    } else return undefined;
+  };
+
   return (
     <div className="App">
       <div id="map">
-        {userPosition && scanResult ? (
-          <Map userPosition={userPosition} resources={scanResult.resources} />
-        ) : scanStatus === "loading" ? (
-          <Loading />
-        ) : (
-          "Scan the area to find resources."
-        )}
+        <Map
+          userPosition={userPosition()}
+          resources={scanResult?.resources || undefined}
+        />
       </div>
+      {isWatching ? "GPS is on." : "GPS is off."}
 
       <div>
         <Button
@@ -138,7 +147,6 @@ function App() {
         <List>
           {scanResult &&
             interactableResources.map((r) => {
-              console.log(scanResult.resources);
               const resource = scanResult?.resources?.find(
                 (f: any) => f.id === r
               );

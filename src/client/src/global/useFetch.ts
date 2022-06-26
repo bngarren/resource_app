@@ -4,6 +4,13 @@ import { useAuth } from "./auth";
 
 type HTTPMethod = "GET" | "POST" | "UPDATE" | "DELETE" | "PATCH" | "PUT";
 
+/**
+ * This custom hooks helps wrap the Fetch API and provide us with
+ * the user's JWT token so that it can be passed in the fetch requests
+ * to our backend.
+ *
+ * @param withAuthentication If true, will get user JWT prepared
+ */
 export const useFetch = (withAuthentication = true) => {
   const { user } = useAuth();
   const [token, setToken] = React.useState<string>();
@@ -17,6 +24,18 @@ export const useFetch = (withAuthentication = true) => {
     })();
   });
 
+  /**
+   * A wrapper for Fetch API that uses authentication (i.e., inserts
+   * the appropriate "authentication" header into the request with
+   * the logged in user's token)
+   *
+   * @param method HTTP method
+   * @param endpoint Our backend endpoint, e.g. /api/[endpoint]
+   * @param body Body of the request. If an object, should be JSON.stringified
+   * @param useAuth Whether to insert authentication header
+   * @param additionalHeaders Other headers to add to the request
+   * @returns
+   */
   const backendFetch = async (
     method: HTTPMethod,
     endpoint: string,
