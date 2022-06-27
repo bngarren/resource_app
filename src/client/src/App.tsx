@@ -19,8 +19,6 @@ import GpsOffIcon from "@mui/icons-material/GpsOff";
 import { useAuth } from "./global/auth";
 import { useFetch } from "./global/useFetch";
 import { useGeoLocation } from "./global/useGeoLocation";
-import { MapContainer, TileLayer } from "react-leaflet";
-import { LatLngExpression, LatLng } from "leaflet";
 
 const Loading = () => {
   return (
@@ -36,7 +34,7 @@ function App() {
     useGeoLocation(10000);
   const [lastScannedLocation, setLastScannedLocation] =
     React.useState<UserPosition>();
-  const [mapIsReady, setMapIsReady] = React.useState(false);
+  const scanCount = React.useRef<number>(0);
   const [scanResult, setScanResult] = React.useState<any>();
   const [scanStatus, setScanStatus] = React.useState<string | null>(null);
   const [interactableResources, setInteractableResources] = React.useState<
@@ -79,6 +77,7 @@ function App() {
       return;
     }
 
+    scanCount.current = scanCount.current + 1;
     setLastScannedLocation(userPosition);
 
     console.log("sending:", userPosition);
@@ -123,20 +122,12 @@ function App() {
     }
   };
 
-  const userLatLng = (): LatLngExpression | undefined => {
-    if (lastScannedLocation) {
-      return new LatLng(...lastScannedLocation);
-    } else if (lastLocation) {
-      return new LatLng(lastLocation.latitude, lastLocation.longitude);
-    }
-  };
-
   return (
     <div className="App">
       <div id="map">
         <MapWrapper
-          mapCenter={userLatLng()}
-          userPosition={userLatLng()}
+          location={lastLocation}
+          userPosition={lastScannedLocation}
           resources={scanResult?.resources}
         />
       </div>
@@ -145,6 +136,7 @@ function App() {
       ) : (
         <GpsOffIcon />
       )}
+      {location && `Acc ${location.accuracy}m`}
 
       <div>
         <Button

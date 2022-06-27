@@ -1,5 +1,7 @@
+import { LatLngTuple } from "leaflet";
+
 /** [Latitude, longitude] */
-export type UserPosition = [number, number];
+export type UserPosition = LatLngTuple;
 
 /** Mirrors the server's ResourceType */
 type ResourceType = {
