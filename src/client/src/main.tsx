@@ -17,17 +17,15 @@ import ToastyProvider from "./components/Toasty";
 const container = document.getElementById("root") as HTMLElement;
 const root = createRoot(container);
 root.render(
-  <React.StrictMode>
-    <ThemeProvider theme={theme}>
-      <CssBaseline>
-        <AuthProvider>
-          <ToastyProvider>
-            <BrowserRouter>
-              <Routes />
-            </BrowserRouter>
-          </ToastyProvider>
-        </AuthProvider>
-      </CssBaseline>
-    </ThemeProvider>
-  </React.StrictMode>
+  <ThemeProvider theme={theme}>
+    <CssBaseline>
+      <AuthProvider>
+        <ToastyProvider>
+          <BrowserRouter>
+            <Routes />
+          </BrowserRouter>
+        </ToastyProvider>
+      </AuthProvider>
+    </CssBaseline>
+  </ThemeProvider>
 );

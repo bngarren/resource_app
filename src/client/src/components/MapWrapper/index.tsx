@@ -11,45 +11,59 @@ import { MapContainer, ZoomControl } from "react-leaflet";
 import { SCAN_DISTANCE_METERS } from "@backend/constants";
 import { Resource, UserPosition } from "../../types";
 import { Typography } from "@mui/material";
-import { LatLng, LatLngExpression } from "leaflet";
+import { LatLng, LatLngExpression, LatLngTuple } from "leaflet";
 
-const BOSTON = new LatLng(42.3600825, -71.0588801);
+const DEFAULT_MAP_CENTER = [42.3600825, -71.0588801] as LatLngTuple;
 
 const MapPlaceHolder = () => {
   return <>MAP PLACEHOLDER</>;
 };
 
-type PanToViewOnUserPositionProps = {
-  userPosition: LatLngExpression;
+type FlyToPositionProps = {
+  position: LatLngExpression;
   animateRef: React.MutableRefObject<boolean>;
+  animateDuration?: number;
 };
-const PanToViewOnUserPosition = ({
-  userPosition,
+const FlyToPosition = ({
+  position,
   animateRef,
-}: PanToViewOnUserPositionProps) => {
+  animateDuration,
+}: FlyToPositionProps) => {
   const map = useMap();
-  map.flyTo(userPosition, 17, {
+
+  map.setView(position, 17, {
     animate: animateRef.current != null || false,
-    duration: 1,
+    duration: animateDuration || 1,
   });
   return null;
 };
 
 type MapWrapperProps = {
-  mapCenter?: LatLngExpression;
-  userPosition?: LatLngExpression;
+  location?: UserPosition;
+  userPosition?: UserPosition;
   resources?: Resource[];
 };
 
-const MapWrapper = ({
-  mapCenter = BOSTON,
-  userPosition,
-  resources,
-}: MapWrapperProps) => {
+const MapWrapper = ({ location, userPosition, resources }: MapWrapperProps) => {
+  const [mapCenter, setMapCenter] = React.useState<LatLngTuple>();
+  const preScanUserPosition = React.useRef<LatLngTuple>();
   const animateRef = React.useRef(userPosition == null);
+
+  React.useEffect(() => {
+    if (location) {
+      if (mapCenter == null) {
+        console.log("set map center");
+        setMapCenter(location);
+      }
+      if (!preScanUserPosition.current) {
+        preScanUserPosition.current = location;
+      }
+    }
+  }, [location, mapCenter]);
+
   return (
     <MapContainer
-      center={mapCenter}
+      center={DEFAULT_MAP_CENTER}
       zoomControl={false}
       zoom={2}
       scrollWheelZoom={false}
@@ -60,18 +74,22 @@ const MapWrapper = ({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <ZoomControl position={"bottomleft"} />
-      {userPosition && (
-        <PanToViewOnUserPosition
-          userPosition={userPosition}
+      {mapCenter && (
+        <FlyToPosition
+          position={mapCenter}
           animateRef={animateRef}
+          animateDuration={3}
         />
+      )}
+
+      {preScanUserPosition.current != null && (
+        <Marker position={userPosition || preScanUserPosition.current}>
+          <Popup>You are here.</Popup>
+        </Marker>
       )}
 
       {userPosition && (
         <>
-          <Marker position={userPosition}>
-            <Popup>You are here.</Popup>
-          </Marker>
           {resources && (
             <Circle center={userPosition} radius={SCAN_DISTANCE_METERS} />
           )}

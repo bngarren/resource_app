@@ -1,5 +1,5 @@
-import { time } from "console";
 import * as React from "react";
+import { UserPosition } from "../types";
 
 export const useGeoLocation = (watchTimeout = 30000) => {
   const [supported, setSupported] = React.useState<boolean>(true);
@@ -7,7 +7,7 @@ export const useGeoLocation = (watchTimeout = 30000) => {
   const [location, setLocation] = React.useState<GeolocationCoordinates | null>(
     null
   );
-  const lastLocation = React.useRef<GeolocationCoordinates>();
+  const lastLocation = React.useRef<UserPosition>();
   const [isWatching, setIsWatching] = React.useState(false);
   const watchId = React.useRef<number>();
   const timer = React.useRef<NodeJS.Timeout>();
@@ -19,7 +19,17 @@ export const useGeoLocation = (watchTimeout = 30000) => {
       position.coords
     );
     setLocation(position.coords);
-    lastLocation.current = position.coords;
+
+    if (
+      !lastLocation.current ||
+      lastLocation.current[0] !== position.coords.latitude ||
+      lastLocation.current[1] !== position.coords.longitude
+    ) {
+      lastLocation.current = [
+        position.coords.latitude,
+        position.coords.longitude,
+      ];
+    }
     setError("");
   }, []);
 
