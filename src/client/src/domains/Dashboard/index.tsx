@@ -1,8 +1,9 @@
 import * as React from "react";
-import Map from "../../components/Map";
+import MapWrapper from "../../components/MapWrapper";
 import config from "../../config";
 import { UserPosition } from "../../types";
 import { h3ToGeo } from "h3-js";
+import { MapContainer } from "react-leaflet";
 
 const Dashboard = () => {
   const [position, setPosition] = React.useState<UserPosition>();
@@ -44,11 +45,7 @@ const Dashboard = () => {
       <div
         id="mapContainer"
         style={{ width: "100%", height: "400px", marginBottom: "1rem" }}
-      >
-        {position && scanResult && (
-          <Map position={position} resources={scanResult.resources} />
-        )}
-      </div>
+      ></div>
       <div style={{ padding: "0 2rem" }}>
         h3 index:
         <input

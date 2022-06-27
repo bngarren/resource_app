@@ -1,7 +1,7 @@
 import * as React from "react";
 import config from "./config";
 import "./styles/App.css";
-import Map from "./components/Map";
+import MapWrapper from "./components/MapWrapper";
 import { UserPosition } from "./types";
 import {
   Box,
@@ -19,6 +19,8 @@ import GpsOffIcon from "@mui/icons-material/GpsOff";
 import { useAuth } from "./global/auth";
 import { useFetch } from "./global/useFetch";
 import { useGeoLocation } from "./global/useGeoLocation";
+import { MapContainer, TileLayer } from "react-leaflet";
+import { LatLngExpression, LatLng } from "leaflet";
 
 const Loading = () => {
   return (
@@ -34,6 +36,7 @@ function App() {
     useGeoLocation(10000);
   const [lastScannedLocation, setLastScannedLocation] =
     React.useState<UserPosition>();
+  const [mapIsReady, setMapIsReady] = React.useState(false);
   const [scanResult, setScanResult] = React.useState<any>();
   const [scanStatus, setScanStatus] = React.useState<string | null>(null);
   const [interactableResources, setInteractableResources] = React.useState<
@@ -120,20 +123,21 @@ function App() {
     }
   };
 
-  const userPosition = (): UserPosition | undefined => {
+  const userLatLng = (): LatLngExpression | undefined => {
     if (lastScannedLocation) {
-      return lastScannedLocation;
+      return new LatLng(...lastScannedLocation);
     } else if (lastLocation) {
-      return [lastLocation.latitude, lastLocation.longitude] as UserPosition;
+      return new LatLng(lastLocation.latitude, lastLocation.longitude);
     }
   };
 
   return (
     <div className="App">
       <div id="map">
-        <Map
-          position={userPosition()}
-          resources={scanResult?.resources || undefined}
+        <MapWrapper
+          mapCenter={userLatLng()}
+          userPosition={userLatLng()}
+          resources={scanResult?.resources}
         />
       </div>
       {isWatching ? (
