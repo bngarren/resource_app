@@ -1,15 +1,18 @@
 import * as React from "react";
 
-const getCurrentPositionPromise = (options?: PositionOptions) => {
-  return new Promise<GeolocationPosition>((resolve, reject) =>
-    navigator.geolocation.getCurrentPosition(resolve, reject, options)
-  );
-};
-
 export const useGeoLocation = () => {
   const watchId = React.useRef<number | null>(null);
   const watchTimer = React.useRef<NodeJS.Timeout>();
-  const improvingAccuracyTimer = React.useRef<NodeJS.Timeout>();
+
+  /**
+   * In the case where it's the first time using the primary watchId
+   * session, we don't want to just accept the first watchResult because
+   * accuracy is often poor. And sometimes only 1 result comes through, especially
+   * if the user is stationary. So we start this timer concurrently so that
+   * we can always ensure we get at least a 2nd watchResult after some time.
+   */
+  const secondWatcherTimer = React.useRef<NodeJS.Timeout>();
+
   const [lastWatchResult, setLastWatchResult] =
     React.useState<GeolocationPosition | null>(null);
   const numberOfWatchResults = React.useRef(0);
@@ -34,9 +37,12 @@ export const useGeoLocation = () => {
 
   const endWatcher = React.useCallback((clearData = true) => {
     // ! DEBUG
-    console.log(`Stopping watchId ${watchId.current}`);
+    console.log(`endWatcher called`);
     // !
     if (watchId.current != null) {
+      // ! DEBUG
+      console.log(`ended ${watchId.current}`);
+      // !
       navigator.geolocation.clearWatch(watchId.current);
       watchId.current = null;
       setIsWatching(false);
@@ -46,10 +52,12 @@ export const useGeoLocation = () => {
       setLocation(null);
       numberOfWatchResults.current = 0;
     }
+
+    clearTimeout(watchTimer.current);
   }, []);
 
   const startWatcher = React.useCallback(
-    (clearPrevious = false) => {
+    (clearPrevious = true) => {
       endWatcher(clearPrevious);
       watchId.current = navigator.geolocation.watchPosition(
         watchResult,
@@ -75,35 +83,42 @@ export const useGeoLocation = () => {
     // !
     // If no location already present, must be the first round
     // for this watchPosition
-    if (!location) {
+    if (!lastLocation.current) {
       // ! DEBUG
       console.log(`useEffect, no prior location...`);
       // !
 
       // If this is our first watchResult we are dealing with,
-      // start a timer.. If this is a subsequent watchResult,
-      // we will just use it for setLocation
+      // start a timer because sometimes we don't even get a second
+      // watchResult from a given watchPosition.
       if (numberOfWatchResults.current === 1) {
         // ! DEBUG
         console.log(
           `useEffect, starting a timer to get another watchResult...`
         );
         // !
-        improvingAccuracyTimer.current = setTimeout(() => {
+
+        console.log(secondWatcherTimer.current);
+        secondWatcherTimer.current = setTimeout(() => {
           // ! DEBUG
           console.log(`useEffect, timer up, using 2nd startWatcher`);
           // !
           // Start a new watchPosition, but don't clear previous results, etc.
           startWatcher(false);
         }, 2000);
-      } else {
+      }
+      // We have now gotten at least 2 watchResults back...Figure out if accuracy is good enough
+      else {
         setLocation(lastWatchResult.coords);
-        clearTimeout(improvingAccuracyTimer.current);
+        clearTimeout(secondWatcherTimer.current);
         // ! DEBUG
-        console.log(`useEffect, got another watchResult! used it`);
+        console.log(`useEffect, using a watchResult!`);
         // !
       }
-    } else {
+    }
+    // Since this wasn't the first watchResult of this watchId session, we are assuming accuracy
+    // is okay and just using the result
+    else {
       setLocation(lastWatchResult.coords);
     }
 
@@ -123,6 +138,7 @@ export const useGeoLocation = () => {
       if (watchId.current != null)
         navigator.geolocation.clearWatch(watchId.current);
       clearTimeout(watchTimer.current);
+      clearTimeout(secondWatcherTimer.current);
     };
   }, []);
 
