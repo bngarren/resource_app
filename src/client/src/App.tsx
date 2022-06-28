@@ -18,7 +18,8 @@ import GpsFixedIcon from "@mui/icons-material/GpsFixed";
 import GpsOffIcon from "@mui/icons-material/GpsOff";
 import { useAuth } from "./global/auth";
 import { useFetch } from "./global/useFetch";
-import { useGeoLocation } from "./global/useGeoLocation";
+import { useGeoLocation } from "./global/useGeoLocation.new";
+import { LatLngTuple } from "leaflet";
 
 const Loading = () => {
   return (
@@ -30,8 +31,7 @@ const Loading = () => {
 };
 
 function App() {
-  const { startWatching, location, lastLocation, locationError, isWatching } =
-    useGeoLocation(10000);
+  const { startWatcher, lastLocation, isWatching } = useGeoLocation();
   const [lastScannedLocation, setLastScannedLocation] =
     React.useState<UserPosition>();
   const scanCount = React.useRef<number>(0);
@@ -44,24 +44,20 @@ function App() {
   const { backendFetch } = useFetch();
 
   React.useEffect(() => {
-    startWatching();
-  }, [startWatching]);
+    startWatcher();
+  }, [startWatcher]);
 
   const scan = React.useCallback(async () => {
     console.log("Scan started...");
-    if (locationError) {
-      console.error(locationError);
-      return;
-    }
 
     if (!isWatching) {
       console.log("Scan aborted, awaiting GPS location.");
       setScanStatus("awaiting location");
-      startWatching();
+      startWatcher();
       return;
     }
 
-    if (!location) {
+    if (!lastLocation) {
       console.error("Did not have GPS location to scan");
       return;
     }
@@ -70,7 +66,10 @@ function App() {
     setScanResult(null);
     setInteractableResources([]);
 
-    const userPosition: UserPosition = [location.latitude, location.longitude];
+    const userPosition: UserPosition = [
+      lastLocation.latitude,
+      lastLocation.longitude,
+    ];
 
     if (!userPosition) {
       setScanStatus("error");
@@ -90,19 +89,19 @@ function App() {
       }),
       true
     );
-    startWatching(true); // reset the timer
+    // startWatching(true); // reset the timer
     setScanResult(data);
     setScanStatus(null);
     setInteractableResources([...data.interactableResources]);
     console.log("Scan completed.");
-  }, [backendFetch, isWatching, location, locationError, startWatching]);
+  }, [backendFetch, isWatching, lastLocation, startWatcher]);
 
   React.useEffect(() => {
-    if (scanStatus === "awaiting location" && location) {
+    if (scanStatus === "awaiting location" && lastLocation) {
       scan();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scanStatus, location]);
+  }, [scanStatus, lastLocation]);
 
   const getDistanceColor = (dist: number) => {
     if (dist > 500) {
@@ -122,11 +121,15 @@ function App() {
     }
   };
 
+  const mapLocation = lastLocation
+    ? ([lastLocation.latitude, lastLocation.longitude] as LatLngTuple)
+    : undefined;
+
   return (
     <div className="App">
       <div id="map">
         <MapWrapper
-          location={lastLocation}
+          location={mapLocation}
           userPosition={lastScannedLocation}
           resources={scanResult?.resources}
         />
@@ -136,7 +139,7 @@ function App() {
       ) : (
         <GpsOffIcon />
       )}
-      {location && `Acc ${location.accuracy}m`}
+      {lastLocation && `Acc ${lastLocation.accuracy}m`}
 
       <div>
         <Button

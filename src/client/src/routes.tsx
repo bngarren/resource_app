@@ -5,6 +5,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import App from "./App";
+import AppDebug from "./AppDebug";
 import Layout from "./components/Layout";
 import Dashboard from "./domains/Dashboard";
 import LoginOrSignup from "./domains/LoginOrSignup";
@@ -48,6 +49,7 @@ const Routes = () => {
             </RedirectIfAuth>
           }
         />
+        <Route path="/debug" element={<AppDebug />} />
         <Route
           path="*"
           element={
