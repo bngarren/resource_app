@@ -3,18 +3,11 @@ import * as React from "react";
 export const useGeoLocation = () => {
   const watchId = React.useRef<number | null>(null);
   const watchTimer = React.useRef<NodeJS.Timeout>();
-
-  /**
-   * In the case where it's the first time using the primary watchId
-   * session, we don't want to just accept the first watchResult because
-   * accuracy is often poor. And sometimes only 1 result comes through, especially
-   * if the user is stationary. So we start this timer concurrently so that
-   * we can always ensure we get at least a 2nd watchResult after some time.
-   */
-  const secondWatcherTimer = React.useRef<NodeJS.Timeout>();
+  const startTime = React.useRef<number | null>(null);
 
   const [lastWatchResult, setLastWatchResult] =
     React.useState<GeolocationPosition | null>(null);
+  const lastWatchResultTime = React.useRef<number | null>(null);
   const numberOfWatchResults = React.useRef(0);
   const [location, _setLocation] =
     React.useState<GeolocationCoordinates | null>(null);
@@ -51,6 +44,7 @@ export const useGeoLocation = () => {
       setLastWatchResult(null);
       setLocation(null);
       numberOfWatchResults.current = 0;
+      lastWatchResultTime.current = null;
     }
 
     clearTimeout(watchTimer.current);
@@ -65,6 +59,7 @@ export const useGeoLocation = () => {
         { enableHighAccuracy: true }
       );
       setIsWatching(true);
+      startTime.current = new Date().getTime();
 
       // ! DEBUG
       console.log(`Started watchId ${watchId.current}`);
@@ -88,32 +83,27 @@ export const useGeoLocation = () => {
       console.log(`useEffect, no prior location...`);
       // !
 
-      // If this is our first watchResult we are dealing with,
-      // start a timer because sometimes we don't even get a second
-      // watchResult from a given watchPosition.
-      if (numberOfWatchResults.current === 1) {
-        // ! DEBUG
-        console.log(
-          `useEffect, starting a timer to get another watchResult...`
-        );
-        // !
+      const fallbackTimer = setTimeout(() => {
+        if (!lastLocation.current) {
+          setLocation(lastWatchResult.coords);
+        }
+      }, 5000);
 
-        console.log(secondWatcherTimer.current);
-        secondWatcherTimer.current = setTimeout(() => {
-          // ! DEBUG
-          console.log(`useEffect, timer up, using 2nd startWatcher`);
-          // !
-          // Start a new watchPosition, but don't clear previous results, etc.
-          startWatcher(false);
-        }, 2000);
-      }
-      // We have now gotten at least 2 watchResults back...Figure out if accuracy is good enough
-      else {
+      const now = new Date().getTime();
+
+      const timeSinceLastWatchResult = lastWatchResultTime.current
+        ? now - lastWatchResultTime.current
+        : 0;
+      const timeSinceStart = startTime.current ? now - startTime.current : 0;
+      console.log(
+        `timeSinceLastWatchResult = ${timeSinceLastWatchResult}, timeSinceStart = ${timeSinceStart}`
+      );
+      if (timeSinceLastWatchResult > 1500 || timeSinceStart > 5000) {
+        console.log("useEffect, times up! setLocation now");
         setLocation(lastWatchResult.coords);
-        clearTimeout(secondWatcherTimer.current);
-        // ! DEBUG
-        console.log(`useEffect, using a watchResult!`);
-        // !
+        clearTimeout(fallbackTimer);
+      } else {
+        console.log("useEffect, still allowing more location data...");
       }
     }
     // Since this wasn't the first watchResult of this watchId session, we are assuming accuracy
@@ -121,6 +111,8 @@ export const useGeoLocation = () => {
     else {
       setLocation(lastWatchResult.coords);
     }
+
+    lastWatchResultTime.current = new Date().getTime();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastWatchResult]);
@@ -138,7 +130,6 @@ export const useGeoLocation = () => {
       if (watchId.current != null)
         navigator.geolocation.clearWatch(watchId.current);
       clearTimeout(watchTimer.current);
-      clearTimeout(secondWatcherTimer.current);
     };
   }, []);
 
