@@ -35,7 +35,7 @@ function App() {
   const { backendFetch } = useFetch();
 
   React.useEffect(() => {
-    startWatcher();
+    startWatcher(10000);
   }, [startWatcher]);
 
   const scan = React.useCallback(async () => {
@@ -44,7 +44,7 @@ function App() {
     if (!isWatching) {
       console.log("Scan aborted, awaiting GPS location.");
       setScanStatus("awaiting location");
-      startWatcher();
+      startWatcher(10000);
       return;
     }
 
@@ -118,13 +118,11 @@ function App() {
 
   return (
     <div className="App">
-      <div id="map">
-        <MapWrapper
-          initLocation={mapLocation}
-          userPosition={lastScannedLocation}
-          resources={scanResult?.resources}
-        />
-      </div>
+      <MapWrapper
+        initLocation={mapLocation}
+        userPosition={lastScannedLocation}
+        resources={scanResult?.resources}
+      />
       {isWatching ? (
         <GpsFixedIcon sx={{ color: "darkgreen" }} />
       ) : (
