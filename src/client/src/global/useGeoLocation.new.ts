@@ -1,24 +1,73 @@
 import * as React from "react";
 
 export const useGeoLocation = () => {
-  const watchId = React.useRef<number | null>(null);
-  const watchTimer = React.useRef<NodeJS.Timeout>();
-  const startTime = React.useRef<number | null>(null);
+  /**
+   * Whether navigator.geolocation is supported by the client
+   */
+  const [supported, setSupported] = React.useState<boolean>(true);
 
+  /**
+   * Holds any error string for this hook
+   */
+  const [error, setError] = React.useState("");
+  /**
+   * Id returned by the watchPosition function so that it
+   * can be stopped/cleared at a later time
+   */
+  const watchId = React.useRef<number | null>(null);
+  /**
+   * Timeout used to end the watchPosition function
+   */
+  const watchTimer = React.useRef<NodeJS.Timeout>();
+  /**
+   * Marks the start time of the watchPosition function
+   */
+  const startTime = React.useRef<number | null>(null);
+  /**
+   * The last successful result returned by the watchPosition callback.
+   */
   const [lastWatchResult, setLastWatchResult] =
     React.useState<GeolocationPosition | null>(null);
+  /**
+   * Marks the last time that a successful watchPosition result was received
+   */
   const lastWatchResultTime = React.useRef<number | null>(null);
+  /**
+   * Tracks the number of successful watchPosition results.
+   * We use it to know if at least more than 1 position has been received
+   */
   const numberOfWatchResults = React.useRef(0);
+  /**
+   * This is the location we send to the caller of the hook
+   */
   const [location, _setLocation] =
     React.useState<GeolocationCoordinates | null>(null);
+  /**
+   * We also keep a ref to the last location for when we need referential stability.
+   * E.g., when watchPosition ends, we clear the location, but we can still access the lastLocation
+   * through this variable
+   */
   const lastLocation = React.useRef<GeolocationCoordinates | null>(null);
+  /**
+   * Should be true when watchPosition is on/active.
+   */
   const [isWatching, setIsWatching] = React.useState(false);
 
+  /**
+   * Sets both the location state and a lastLocation ref
+   * @param l The new location to set
+   */
   const setLocation = (l: GeolocationCoordinates | null) => {
     _setLocation(l);
     lastLocation.current = l;
+
+    console.log("Location set: ", l);
   };
 
+  /**
+   * Callback for a successful result from watchPosition
+   * @param position GeolocationPosition
+   */
   const watchResult = (position: GeolocationPosition) => {
     setLastWatchResult(position);
     numberOfWatchResults.current++;
@@ -52,6 +101,8 @@ export const useGeoLocation = () => {
 
   const startWatcher = React.useCallback(
     (clearPrevious = true) => {
+      if (!supported) return;
+
       endWatcher(clearPrevious);
       watchId.current = navigator.geolocation.watchPosition(
         watchResult,
@@ -68,7 +119,7 @@ export const useGeoLocation = () => {
         endWatcher();
       }, 10000);
     },
-    [endWatcher]
+    [endWatcher, supported]
   );
 
   React.useEffect(() => {
@@ -83,31 +134,40 @@ export const useGeoLocation = () => {
       console.log(`useEffect, no prior location...`);
       // !
 
+      const now = new Date().getTime();
+      const timeSinceStart = startTime.current ? now - startTime.current : 0;
+      const max_time = 6000;
+
+      // If another watchResult never comes through, just use the one we have
       const fallbackTimer = setTimeout(() => {
         if (!lastLocation.current) {
           setLocation(lastWatchResult.coords);
+          console.log("useEffect, too long since startTime! setLocation now");
         }
-      }, 5000);
+      }, max_time - timeSinceStart);
+      //return;
 
-      const now = new Date().getTime();
-
+      // We continue to wait for more results, with max time limits...
       const timeSinceLastWatchResult = lastWatchResultTime.current
         ? now - lastWatchResultTime.current
         : 0;
-      const timeSinceStart = startTime.current ? now - startTime.current : 0;
+
       console.log(
-        `timeSinceLastWatchResult = ${timeSinceLastWatchResult}, timeSinceStart = ${timeSinceStart}`
+        `timeSinceLastWatchResult = ${Math.round(
+          timeSinceLastWatchResult / 1000
+        )}, timeSinceStart = ${Math.round(timeSinceStart / 1000)}`
       );
-      if (timeSinceLastWatchResult > 1500 || timeSinceStart > 5000) {
-        console.log("useEffect, times up! setLocation now");
+      if (timeSinceLastWatchResult > 1500) {
+        console.log(
+          "useEffect, too long since lastWatchResult! setLocation now"
+        );
         setLocation(lastWatchResult.coords);
         clearTimeout(fallbackTimer);
       } else {
         console.log("useEffect, still allowing more location data...");
       }
     }
-    // Since this wasn't the first watchResult of this watchId session, we are assuming accuracy
-    // is okay and just using the result
+    // Since this wasn't the first watchResult of this watchId session, we are assuming accuracy is okay and just using the result
     else {
       setLocation(lastWatchResult.coords);
     }
@@ -117,14 +177,15 @@ export const useGeoLocation = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastWatchResult]);
 
-  //! DEBUG
-  React.useEffect(() => {
-    if (!location) return;
-    console.log("New location set", location);
-  }, [location]);
-
   // Cleanup
   React.useEffect(() => {
+    if (!navigator.geolocation) {
+      setSupported(false);
+      setError("Geolocation is not supported by your browser");
+    } else {
+      setSupported(true);
+      setError("");
+    }
     return () => {
       console.log("cleanup");
       if (watchId.current != null)
@@ -137,5 +198,6 @@ export const useGeoLocation = () => {
     startWatcher,
     lastLocation: lastLocation.current,
     isWatching,
+    error,
   };
 };

@@ -39,27 +39,29 @@ const FlyToPosition = ({
 };
 
 type MapWrapperProps = {
-  location?: UserPosition;
+  initLocation?: LatLngTuple;
   userPosition?: UserPosition;
   resources?: Resource[];
 };
 
-const MapWrapper = ({ location, userPosition, resources }: MapWrapperProps) => {
+const MapWrapper = ({
+  initLocation,
+  userPosition,
+  resources,
+}: MapWrapperProps) => {
   const [mapCenter, setMapCenter] = React.useState<LatLngTuple>();
   const preScanUserPosition = React.useRef<LatLngTuple>();
   const animateRef = React.useRef(userPosition == null);
 
-  React.useEffect(() => {
-    if (location) {
-      if (mapCenter == null) {
-        console.log("set map center");
-        setMapCenter(location);
-      }
-      if (!preScanUserPosition.current) {
-        preScanUserPosition.current = location;
-      }
+  if (initLocation) {
+    if (mapCenter == null) {
+      console.log("set map center");
+      setMapCenter(initLocation);
     }
-  }, [location, mapCenter]);
+    if (!preScanUserPosition.current) {
+      preScanUserPosition.current = initLocation;
+    }
+  }
 
   return (
     <MapContainer
@@ -77,6 +79,13 @@ const MapWrapper = ({ location, userPosition, resources }: MapWrapperProps) => {
       {mapCenter && (
         <FlyToPosition
           position={mapCenter}
+          animateRef={animateRef}
+          animateDuration={3}
+        />
+      )}
+      {userPosition && (
+        <FlyToPosition
+          position={userPosition}
           animateRef={animateRef}
           animateDuration={3}
         />

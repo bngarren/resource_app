@@ -21,15 +21,6 @@ import { useFetch } from "./global/useFetch";
 import { useGeoLocation } from "./global/useGeoLocation.new";
 import { LatLngTuple } from "leaflet";
 
-const Loading = () => {
-  return (
-    <Box flexDirection="column">
-      <CircularProgress sx={{ color: "#D7F363" }} />
-      <Typography variant="h5">Scanning...</Typography>
-    </Box>
-  );
-};
-
 function App() {
   const { startWatcher, lastLocation, isWatching } = useGeoLocation();
   const [lastScannedLocation, setLastScannedLocation] =
@@ -129,7 +120,7 @@ function App() {
     <div className="App">
       <div id="map">
         <MapWrapper
-          location={mapLocation}
+          initLocation={mapLocation}
           userPosition={lastScannedLocation}
           resources={scanResult?.resources}
         />
