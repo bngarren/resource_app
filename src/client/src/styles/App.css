@@ -50,6 +50,11 @@ button:hover {
   justify-content: center;
 }
 
-.dummy .MuiSvgIcon-root {
 
+.radar {
+  position: relative;
+  top: 0;
+  left: 0;
 }
+
+@keyframes sweep { to { transform: rotate(360deg); } }

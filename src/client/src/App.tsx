@@ -28,6 +28,7 @@ function App() {
   const scanCount = React.useRef<number>(0);
   const [scanResult, setScanResult] = React.useState<any>();
   const [scanStatus, setScanStatus] = React.useState<ScanStatus>(null);
+  const scanAnimationTimer = React.useRef<NodeJS.Timeout>();
   const [interactableResources, setInteractableResources] = React.useState<
     number[]
   >([]);
@@ -81,11 +82,13 @@ function App() {
       }),
       true
     );
-    // startWatching(true); // reset the timer
-    setScanResult(data);
-    setScanStatus("complete");
-    setInteractableResources([...data.interactableResources]);
-    console.log("Scan completed.");
+    scanAnimationTimer.current = setTimeout(() => {
+      // startWatching(true); // reset the timer
+      setScanResult(data);
+      setScanStatus("complete");
+      setInteractableResources([...data.interactableResources]);
+      console.log("Scan completed.");
+    }, 1500);
   }, [backendFetch, isWatching, lastLocation, startWatcher]);
 
   React.useEffect(() => {
@@ -94,6 +97,13 @@ function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanStatus, lastLocation]);
+
+  // Clean up
+  React.useEffect(() => {
+    return () => {
+      clearTimeout(scanAnimationTimer.current);
+    };
+  }, []);
 
   const getDistanceColor = (dist: number) => {
     if (dist > 500) {

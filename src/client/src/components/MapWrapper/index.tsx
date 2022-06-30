@@ -8,7 +8,8 @@ import {
   useMap,
   LayerGroup,
 } from "react-leaflet";
-import { userIcon } from "./userIcon";
+import { UserIcon } from "./userIcon";
+import { RadarIcon } from "./radarIcon";
 import { MapContainer, ZoomControl } from "react-leaflet";
 import { SCAN_DISTANCE_METERS } from "@backend/constants";
 import { Resource, ScanStatus, UserPosition } from "../../types";
@@ -19,7 +20,8 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { LatLng, LatLngExpression, LatLngTuple } from "leaflet";
+import L, { LatLngExpression, LatLngTuple } from "leaflet";
+import GeometryUtil from "leaflet-geometryutil";
 
 // TODO Consider using an early location based on IP address to set this prior to GPS location being available
 /**
@@ -113,7 +115,7 @@ const MapInitialization = ({ position }: MapInitializationProps) => {
     return (
       <ChangeView
         position={position}
-        animateDuration={2}
+        animateDuration={1.5}
         zoomLevel={15}
         type="fly"
       />
@@ -124,6 +126,7 @@ const MapInitialization = ({ position }: MapInitializationProps) => {
 type UserMarkerProps = {
   position: LatLngExpression | null;
   isScanning: boolean;
+  showRadar: boolean;
 };
 
 /**
@@ -132,14 +135,49 @@ type UserMarkerProps = {
  *
  * @returns JSX.Element
  */
-const UserMarker = ({ position, isScanning }: UserMarkerProps) => {
+const UserMarker = ({
+  position,
+  isScanning,
+  showRadar = false,
+}: UserMarkerProps) => {
+  const map = useMap();
   if (position != null) {
+    // Calculate the scan radius in pixels
+    const l2 = GeometryUtil.destination(
+      map.getCenter(),
+      90,
+      SCAN_DISTANCE_METERS
+    );
+    const p1 = map.latLngToContainerPoint(map.getCenter());
+    const p2 = map.latLngToContainerPoint(l2);
+    const res = p1.distanceTo(p2);
+
     const color = isScanning ? "green" : "blue";
 
     return (
-      <Marker position={position} icon={userIcon(color, {})}>
-        <Popup>You are here.</Popup>
-      </Marker>
+      <>
+        {showRadar && (
+          <>
+            <Marker
+              position={position}
+              icon={RadarIcon(res)}
+              bubblingMouseEvents={true}
+            />
+            <Circle
+              center={position}
+              radius={SCAN_DISTANCE_METERS}
+              pathOptions={{
+                opacity: 0.3,
+                fill: false,
+                color: "green",
+              }}
+            />
+          </>
+        )}
+        <Marker position={position} icon={UserIcon(color, {})}>
+          <Popup>You are here.</Popup>
+        </Marker>
+      </>
     );
   } else return <></>;
 };
@@ -155,16 +193,19 @@ type ScanAreaProps = {
  * @returns JSX.Element
  */
 const ScanArea = ({ position }: ScanAreaProps) => {
+  const map = useMap();
   if (position != null) {
     return (
-      <Circle
-        center={position}
-        radius={SCAN_DISTANCE_METERS}
-        pathOptions={{
-          opacity: 0.6,
-          fillOpacity: 0.1,
-        }}
-      />
+      <>
+        <Circle
+          center={position}
+          radius={SCAN_DISTANCE_METERS}
+          pathOptions={{
+            opacity: 0.6,
+            fillOpacity: 0.1,
+          }}
+        />
+      </>
     );
   } else return <></>;
 };
@@ -205,7 +246,7 @@ const MapWrapper = ({
       }}
     >
       <Backdrop
-        open={mapCenter == null || isScanning}
+        open={mapCenter == null || scanStatus === "awaiting"}
         sx={{
           position: "absolute",
           zIndex: 10000,
@@ -226,7 +267,7 @@ const MapWrapper = ({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <ZoomControl position={"bottomleft"} />
+        {!isScanning && <ZoomControl position={"bottomleft"} />}
 
         {mapCenter && !userPosition && (
           <MapInitialization position={mapCenter} />
@@ -235,6 +276,7 @@ const MapWrapper = ({
         <UserMarker
           position={userPosition || mapCenter || null}
           isScanning={isScanning}
+          showRadar={scanStatus === "scanning"}
         />
 
         {scanStatus === "complete" && (
