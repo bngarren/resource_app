@@ -2,7 +2,7 @@ import * as React from "react";
 import config from "./config";
 import "./styles/App.css";
 import MapWrapper from "./components/MapWrapper";
-import { UserPosition } from "./types";
+import { ScanStatus, UserPosition } from "./types";
 import {
   Box,
   Button,
@@ -27,7 +27,7 @@ function App() {
     React.useState<UserPosition>();
   const scanCount = React.useRef<number>(0);
   const [scanResult, setScanResult] = React.useState<any>();
-  const [scanStatus, setScanStatus] = React.useState<string | null>(null);
+  const [scanStatus, setScanStatus] = React.useState<ScanStatus>(null);
   const [interactableResources, setInteractableResources] = React.useState<
     number[]
   >([]);
@@ -35,25 +35,26 @@ function App() {
   const { backendFetch } = useFetch();
 
   React.useEffect(() => {
-    startWatcher(10000);
+    startWatcher(30000);
   }, [startWatcher]);
 
   const scan = React.useCallback(async () => {
     console.log("Scan started...");
+    setScanStatus("scanning");
 
     if (!isWatching) {
       console.log("Scan aborted, awaiting GPS location.");
-      setScanStatus("awaiting location");
-      startWatcher(10000);
+      setScanStatus("awaiting");
+      startWatcher(30000);
       return;
     }
 
     if (!lastLocation) {
       console.error("Did not have GPS location to scan");
+      setScanStatus("error");
       return;
     }
 
-    setScanStatus("scanning");
     setScanResult(null);
     setInteractableResources([]);
 
@@ -82,13 +83,13 @@ function App() {
     );
     // startWatching(true); // reset the timer
     setScanResult(data);
-    setScanStatus(null);
+    setScanStatus("complete");
     setInteractableResources([...data.interactableResources]);
     console.log("Scan completed.");
   }, [backendFetch, isWatching, lastLocation, startWatcher]);
 
   React.useEffect(() => {
-    if (scanStatus === "awaiting location" && lastLocation) {
+    if (scanStatus === "awaiting" && lastLocation) {
       scan();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -121,6 +122,7 @@ function App() {
       <MapWrapper
         initLocation={mapLocation}
         userPosition={lastScannedLocation}
+        scanStatus={scanStatus}
         resources={scanResult?.resources}
       />
       {isWatching ? (
@@ -136,6 +138,7 @@ function App() {
           size="large"
           variant="contained"
           startIcon={<RadarIcon />}
+          disabled={scanStatus === "scanning" || scanStatus === "awaiting"}
         >
           Scan
         </Button>

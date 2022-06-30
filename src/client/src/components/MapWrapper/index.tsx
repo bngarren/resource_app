@@ -6,11 +6,12 @@ import {
   Circle,
   Polygon,
   useMap,
+  LayerGroup,
 } from "react-leaflet";
 import { userIcon } from "./userIcon";
 import { MapContainer, ZoomControl } from "react-leaflet";
 import { SCAN_DISTANCE_METERS } from "@backend/constants";
-import { Resource, UserPosition } from "../../types";
+import { Resource, ScanStatus, UserPosition } from "../../types";
 import {
   Backdrop,
   Box,
@@ -20,12 +21,21 @@ import {
 } from "@mui/material";
 import { LatLng, LatLngExpression, LatLngTuple } from "leaflet";
 
+// TODO Consider using an early location based on IP address to set this prior to GPS location being available
+/**
+ * Lat/Lng coordinates used to center the map before any user location data is available. Currently, these are set to Boston, MA
+ *
+ */
 const DEFAULT_MAP_CENTER = [42.3600825, -71.0588801] as LatLngTuple;
 
 const MapPlaceHolder = () => {
   return <>MAP PLACEHOLDER</>;
 };
 
+/**
+ * Used for the content of our Backdrop that displays over the Map
+ * @returns JSX.Element
+ */
 const LoadingOverlay = () => {
   return (
     <Stack direction="column" sx={{ width: "80%" }}>
@@ -44,41 +54,136 @@ const LoadingOverlay = () => {
   );
 };
 
-type FlyToPositionProps = {
+type ChangeViewProps = {
   position: LatLngExpression;
-  animateRef: React.MutableRefObject<boolean>;
+  shouldAnimate?: boolean;
   animateDuration?: number;
   zoomLevel?: number;
+  type?: "fly" | "pan" | "set";
 };
-const FlyToPosition = ({
+const ChangeView = ({
   position,
-  animateRef,
+  shouldAnimate = true,
   animateDuration,
   zoomLevel = 17,
-}: FlyToPositionProps) => {
+  type = "set",
+}: ChangeViewProps) => {
   const map = useMap();
 
-  map.setView(position, zoomLevel, {
-    animate: animateRef.current != null || false,
-    duration: animateDuration || 1,
-  });
+  switch (type) {
+    case "fly":
+      map.flyTo(position, zoomLevel, {
+        animate: shouldAnimate,
+        duration: animateDuration || 1,
+      });
+      break;
+    case "pan":
+      map.panTo(position, {
+        animate: shouldAnimate,
+        duration: animateDuration || 1,
+      });
+      break;
+    case "set":
+      map.setView(position, zoomLevel, {
+        animate: shouldAnimate,
+        duration: animateDuration || 1,
+      });
+      break;
+  }
+
   return null;
+};
+
+type MapInitializationProps = {
+  position: LatLngExpression;
+};
+
+/**
+ *
+ * This component renders a leaflet element that will flyto and animate a new map center upon initial render, after that it will do nothing.
+ *
+ * This sets the position and zoom of the map when we have a user location but prior to any scanning
+ *
+ * @returns JSX.Element
+ */
+const MapInitialization = ({ position }: MapInitializationProps) => {
+  const hasInitialized = React.useRef(false);
+  if (!hasInitialized.current) {
+    hasInitialized.current = true;
+    return (
+      <ChangeView
+        position={position}
+        animateDuration={2}
+        zoomLevel={15}
+        type="fly"
+      />
+    );
+  } else return <></>;
+};
+
+type UserMarkerProps = {
+  position: LatLngExpression | null;
+  isScanning: boolean;
+};
+
+/**
+ *
+ * This component renders a leaflet element that displays the User marker
+ *
+ * @returns JSX.Element
+ */
+const UserMarker = ({ position, isScanning }: UserMarkerProps) => {
+  if (position != null) {
+    const color = isScanning ? "green" : "blue";
+
+    return (
+      <Marker position={position} icon={userIcon(color, {})}>
+        <Popup>You are here.</Popup>
+      </Marker>
+    );
+  } else return <></>;
+};
+
+type ScanAreaProps = {
+  position: LatLngExpression | null;
+};
+
+/**
+ *
+ * This component renders a leaflet element that displays the scanned area
+ *
+ * @returns JSX.Element
+ */
+const ScanArea = ({ position }: ScanAreaProps) => {
+  if (position != null) {
+    return (
+      <Circle
+        center={position}
+        radius={SCAN_DISTANCE_METERS}
+        pathOptions={{
+          opacity: 0.6,
+          fillOpacity: 0.1,
+        }}
+      />
+    );
+  } else return <></>;
 };
 
 type MapWrapperProps = {
   initLocation?: LatLngTuple;
   userPosition?: UserPosition;
+  scanStatus?: ScanStatus;
   resources?: Resource[];
 };
 
 const MapWrapper = ({
   initLocation,
   userPosition,
+  scanStatus,
   resources,
 }: MapWrapperProps) => {
   const [mapCenter, setMapCenter] = React.useState<LatLngTuple>();
   const preScanUserPosition = React.useRef<LatLngTuple>();
-  const animateRef = React.useRef(userPosition == null);
 
   if (initLocation) {
     if (mapCenter == null) {
@@ -90,6 +195,8 @@ const MapWrapper = ({
     }
   }
 
+  const isScanning = scanStatus === "scanning" || scanStatus === "awaiting";
+
   return (
     <Box
       id="map"
@@ -98,7 +205,7 @@ const MapWrapper = ({
       }}
     >
       <Backdrop
-        open={mapCenter == null}
+        open={mapCenter == null || isScanning}
         sx={{
           position: "absolute",
           zIndex: 10000,
@@ -120,60 +227,40 @@ const MapWrapper = ({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <ZoomControl position={"bottomleft"} />
+
         {mapCenter && !userPosition && (
-          <FlyToPosition
-            position={mapCenter}
-            animateRef={animateRef}
-            animateDuration={3}
-            zoomLevel={14}
-          />
-        )}
-        {userPosition && (
-          <FlyToPosition
-            position={userPosition}
-            animateRef={animateRef}
-            animateDuration={4}
-          />
+          <MapInitialization position={mapCenter} />
         )}
 
-        {preScanUserPosition.current != null && !userPosition && (
-          <>
-            <Marker position={preScanUserPosition.current}>
-              <Popup>You are somewhere near here.</Popup>
-            </Marker>
-            <Circle center={preScanUserPosition.current} radius={100} />
-          </>
-        )}
+        <UserMarker
+          position={userPosition || mapCenter || null}
+          isScanning={isScanning}
+        />
 
-        {userPosition && (
-          <>
-            <Marker position={userPosition} icon={userIcon("green", {})}>
-              <Popup>You are here.</Popup>
-            </Marker>
-            {resources && (
-              <Circle center={userPosition} radius={SCAN_DISTANCE_METERS} />
-            )}
-          </>
-        )}
+        {scanStatus === "complete" && (
+          <LayerGroup>
+            <ScanArea position={userPosition || null} />
 
-        {resources &&
-          resources.map((r) => {
-            return (
-              <Polygon
-                positions={r.vertices}
-                pathOptions={{
-                  color: r.userCanInteract ? "#2AFB09" : "purple",
-                }}
-                key={r.id}
-              >
-                <Popup>
-                  {`${r.name} ${Math.round(r.distanceFromUser)}m`}
-                  <br />
-                  {`${r.h3Index}`}
-                </Popup>
-              </Polygon>
-            );
-          })}
+            {resources &&
+              resources.map((r) => {
+                return (
+                  <Polygon
+                    positions={r.vertices}
+                    pathOptions={{
+                      color: r.userCanInteract ? "#2AFB09" : "purple",
+                    }}
+                    key={r.id}
+                  >
+                    <Popup>
+                      {`${r.name} ${Math.round(r.distanceFromUser)}m`}
+                      <br />
+                      {`${r.h3Index}`}
+                    </Popup>
+                  </Polygon>
+                );
+              })}
+          </LayerGroup>
+        )}
       </MapContainer>
     </Box>
   );
