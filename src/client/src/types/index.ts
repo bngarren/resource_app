@@ -47,3 +47,5 @@ export type Region = {
 export type LocationState = {
   from: { pathname: string };
 };
+
+export type ScanStatus = "scanning" | "awaiting" | "complete" | "error" | null;
