@@ -126,7 +126,6 @@ const MapInitialization = ({ position }: MapInitializationProps) => {
 type UserMarkerProps = {
   position: LatLngExpression | null;
   isScanning: boolean;
-  showRadar: boolean;
 };
 
 /**
@@ -135,13 +134,27 @@ type UserMarkerProps = {
  *
  * @returns JSX.Element
  */
-const UserMarker = ({
-  position,
-  isScanning,
-  showRadar = false,
-}: UserMarkerProps) => {
-  const map = useMap();
+const UserMarker = ({ position, isScanning }: UserMarkerProps) => {
   if (position != null) {
+    const color = isScanning ? "green" : "blue";
+    return (
+      <>
+        <Marker position={position} icon={UserIcon(color, {})}>
+          <Popup>You are here.</Popup>
+        </Marker>
+      </>
+    );
+  } else return <></>;
+};
+
+type RadarMarkerProps = {
+  position: LatLngTuple | null;
+  visible: boolean;
+};
+
+const RadarMarker = React.memo(({ position, visible }: RadarMarkerProps) => {
+  const map = useMap();
+  if (position && visible) {
     // Calculate the scan radius in pixels
     const l2 = GeometryUtil.destination(
       map.getCenter(),
@@ -151,36 +164,27 @@ const UserMarker = ({
     const p1 = map.latLngToContainerPoint(map.getCenter());
     const p2 = map.latLngToContainerPoint(l2);
     const res = p1.distanceTo(p2);
-
-    const color = isScanning ? "green" : "blue";
-
     return (
       <>
-        {showRadar && (
-          <>
-            <Marker
-              position={position}
-              icon={RadarIcon(res)}
-              bubblingMouseEvents={true}
-            />
-            <Circle
-              center={position}
-              radius={SCAN_DISTANCE_METERS}
-              pathOptions={{
-                opacity: 0.3,
-                fill: false,
-                color: "green",
-              }}
-            />
-          </>
-        )}
-        <Marker position={position} icon={UserIcon(color, {})}>
-          <Popup>You are here.</Popup>
-        </Marker>
+        <Marker
+          position={position}
+          icon={RadarIcon(res)}
+          bubblingMouseEvents={true}
+        />
+        <Circle
+          center={position}
+          radius={SCAN_DISTANCE_METERS}
+          pathOptions={{
+            opacity: 0.3,
+            fill: false,
+            color: "green",
+          }}
+        />
       </>
     );
   } else return <></>;
-};
+});
+RadarMarker.displayName = "RadarMarker";
 
 type ScanAreaProps = {
   position: LatLngExpression | null;
@@ -211,7 +215,7 @@ const ScanArea = ({ position }: ScanAreaProps) => {
 };
 
 type MapWrapperProps = {
-  initLocation?: LatLngTuple;
+  initLocation?: GeolocationCoordinates | null;
   userPosition?: UserPosition;
   scanStatus?: ScanStatus;
   resources?: Resource[];
@@ -223,20 +227,12 @@ const MapWrapper = ({
   scanStatus,
   resources,
 }: MapWrapperProps) => {
-  const [mapCenter, setMapCenter] = React.useState<LatLngTuple>();
-  const preScanUserPosition = React.useRef<LatLngTuple>();
-
-  if (initLocation) {
-    if (mapCenter == null) {
-      console.log("set map center");
-      setMapCenter(initLocation);
-    }
-    if (!preScanUserPosition.current) {
-      preScanUserPosition.current = initLocation;
-    }
-  }
-
+  const initLatLng = initLocation
+    ? ([initLocation.latitude, initLocation.longitude] as LatLngTuple)
+    : null;
   const isScanning = scanStatus === "scanning" || scanStatus === "awaiting";
+
+  console.log("MapWrapper render");
 
   return (
     <Box
@@ -246,10 +242,10 @@ const MapWrapper = ({
       }}
     >
       <Backdrop
-        open={mapCenter == null || scanStatus === "awaiting"}
+        open={!initLatLng || scanStatus === "awaiting"}
         sx={{
           position: "absolute",
-          zIndex: 10000,
+          zIndex: 1000,
           opacity: 0.2,
         }}
       >
@@ -269,14 +265,18 @@ const MapWrapper = ({
         />
         {!isScanning && <ZoomControl position={"bottomleft"} />}
 
-        {mapCenter && !userPosition && (
-          <MapInitialization position={mapCenter} />
+        {initLatLng && !userPosition && (
+          <MapInitialization position={initLatLng} />
         )}
 
         <UserMarker
-          position={userPosition || mapCenter || null}
+          position={userPosition || initLatLng || null}
           isScanning={isScanning}
-          showRadar={scanStatus === "scanning"}
+        />
+
+        <RadarMarker
+          position={userPosition || initLatLng || null}
+          visible={scanStatus === "scanning"}
         />
 
         {scanStatus === "complete" && (

@@ -19,10 +19,11 @@ import GpsOffIcon from "@mui/icons-material/GpsOff";
 import { useAuth } from "./global/auth";
 import { useFetch } from "./global/useFetch";
 import { useGeoLocation } from "./global/useGeoLocation.new";
-import { LatLngTuple } from "leaflet";
+import { latLng, LatLngTuple } from "leaflet";
 
 function App() {
-  const { startWatcher, lastLocation, isWatching } = useGeoLocation();
+  const { startWatcher, initLocation, lastLocation, isWatching } =
+    useGeoLocation();
   const [lastScannedLocation, setLastScannedLocation] =
     React.useState<UserPosition>();
   const scanCount = React.useRef<number>(0);
@@ -36,17 +37,17 @@ function App() {
   const { backendFetch } = useFetch();
 
   React.useEffect(() => {
-    startWatcher(30000);
-  }, [startWatcher]);
+    startWatcher(10000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const scan = React.useCallback(async () => {
     console.log("Scan started...");
-    setScanStatus("scanning");
 
     if (!isWatching) {
       console.log("Scan aborted, awaiting GPS location.");
       setScanStatus("awaiting");
-      startWatcher(30000);
+      startWatcher(10000);
       return;
     }
 
@@ -55,6 +56,8 @@ function App() {
       setScanStatus("error");
       return;
     }
+
+    setScanStatus("scanning");
 
     setScanResult(null);
     setInteractableResources([]);
@@ -92,11 +95,11 @@ function App() {
   }, [backendFetch, isWatching, lastLocation, startWatcher]);
 
   React.useEffect(() => {
-    if (scanStatus === "awaiting" && lastLocation) {
+    if (scanStatus === "awaiting" && initLocation) {
       scan();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scanStatus, lastLocation]);
+  }, [scanStatus, initLocation]);
 
   // Clean up
   React.useEffect(() => {
@@ -123,14 +126,10 @@ function App() {
     }
   };
 
-  const mapLocation = lastLocation
-    ? ([lastLocation.latitude, lastLocation.longitude] as LatLngTuple)
-    : undefined;
-
   return (
     <div className="App">
       <MapWrapper
-        initLocation={mapLocation}
+        initLocation={initLocation}
         userPosition={lastScannedLocation}
         scanStatus={scanStatus}
         resources={scanResult?.resources}
