@@ -16,6 +16,7 @@
     "firebase": "^9.8.4",
     "h3-js": "^3.7.2",
     "leaflet": "^1.8.0",
+    "leaflet-geometryutil": "^0.10.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-leaflet": "^4.0.0",

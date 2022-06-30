@@ -4,12 +4,15 @@ import { renderToStaticMarkup } from "react-dom/server";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { CSSProperties } from "@emotion/serialize";
 
-export const userIcon = (
+export const UserIcon = (
   color = "blue",
   otherStyle?: Record<string, string>
 ) => {
   const iconHTML = renderToStaticMarkup(
-    <LocationOnIcon fontSize="large" style={{ fill: color, ...otherStyle }} />
+    <LocationOnIcon
+      fontSize="large"
+      style={{ fill: color, opacity: 0.75, ...otherStyle }}
+    />
   );
   return L.divIcon({
     html: iconHTML,
