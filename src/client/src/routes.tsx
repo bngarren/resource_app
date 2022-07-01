@@ -6,22 +6,22 @@ import {
 } from "react-router-dom";
 import App from "./App";
 import AppDebug from "./AppDebug";
-import Layout from "./components/Layout";
 import Dashboard from "./domains/Dashboard";
 import LoginOrSignup from "./domains/LoginOrSignup";
+import PlayerHome from "./domains/PlayerHome";
 import PublicLanding from "./domains/PublicLanding";
 import { useAuth } from "./global/auth";
 
 const Routes = () => {
   return (
     <RouterRoutes>
-      <Route element={<Layout />}>
+      <Route element={<App />}>
         <Route path="/" element={<PublicLanding />} />
         <Route
-          path="/app"
+          path="/home"
           element={
             <RequireAuth>
-              <App />
+              <PlayerHome />
             </RequireAuth>
           }
         />
@@ -86,7 +86,7 @@ function RedirectIfAuth({ children }: { children: JSX.Element }) {
   const location = useLocation();
 
   if (auth.user) {
-    return <Navigate to="/app" replace state={{ from: location.pathname }} />;
+    return <Navigate to="/home" replace state={{ from: location.pathname }} />;
   }
   return children;
 }

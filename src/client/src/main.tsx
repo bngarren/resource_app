@@ -1,5 +1,5 @@
+import "./global/wdyr";
 import { createRoot } from "react-dom/client";
-import React from "react";
 import { BrowserRouter } from "react-router-dom";
 import Routes from "./routes";
 import { AuthProvider } from "./global/auth";

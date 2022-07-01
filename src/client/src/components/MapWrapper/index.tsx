@@ -221,7 +221,7 @@ type MapWrapperProps = {
   resources?: Resource[];
 };
 
-const MapWrapper = ({
+const MapWrapper = React.memo(({
   initLocation,
   userPosition,
   scanStatus,
@@ -242,7 +242,7 @@ const MapWrapper = ({
       }}
     >
       <Backdrop
-        open={!initLatLng || scanStatus === "awaiting"}
+        open={scanStatus === "awaiting"}
         sx={{
           position: "absolute",
           zIndex: 1000,
@@ -306,6 +306,8 @@ const MapWrapper = ({
       </MapContainer>
     </Box>
   );
-};
+});
 
 export default MapWrapper;
+
+MapWrapper.whyDidYouRender = true

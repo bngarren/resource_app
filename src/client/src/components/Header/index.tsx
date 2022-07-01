@@ -49,7 +49,7 @@ const Header = () => {
             RESOURCE APP
           </Typography>
           <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-            <IconButton component={Link} to="/app" size="large">
+            <IconButton component={Link} to="/home" size="large">
               <HexagonIcon sx={{ color: "#D7F363" }} />
             </IconButton>
 
