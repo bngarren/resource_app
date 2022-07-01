@@ -156,19 +156,29 @@ const RadarMarker = React.memo(({ position, visible }: RadarMarkerProps) => {
   const map = useMap();
   if (position && visible) {
     // Calculate the scan radius in pixels
-    const l2 = GeometryUtil.destination(
+    const l1 = GeometryUtil.destination(
       map.getCenter(),
       90,
       SCAN_DISTANCE_METERS
     );
     const p1 = map.latLngToContainerPoint(map.getCenter());
-    const p2 = map.latLngToContainerPoint(l2);
+    const p2 = map.latLngToContainerPoint(l1);
     const res = p1.distanceTo(p2);
+
+    const l2 = GeometryUtil.destination(
+      map.getCenter(),
+      45,
+      SCAN_DISTANCE_METERS
+    );
+    const zoomedIn = !map.getBounds().contains(l2);
+
+    console.log("zoomedIn", zoomedIn);
+
     return (
       <>
         <Marker
           position={position}
-          icon={RadarIcon(res)}
+          icon={RadarIcon(res, zoomedIn, map.getZoom())}
           bubblingMouseEvents={true}
         />
         <Circle
@@ -221,93 +231,89 @@ type MapWrapperProps = {
   resources?: Resource[];
 };
 
-const MapWrapper = React.memo(({
-  initLocation,
-  userPosition,
-  scanStatus,
-  resources,
-}: MapWrapperProps) => {
-  const initLatLng = initLocation
-    ? ([initLocation.latitude, initLocation.longitude] as LatLngTuple)
-    : null;
-  const isScanning = scanStatus === "scanning" || scanStatus === "awaiting";
+const MapWrapper = React.memo(
+  ({ initLocation, userPosition, scanStatus, resources }: MapWrapperProps) => {
+    const initLatLng = initLocation
+      ? ([initLocation.latitude, initLocation.longitude] as LatLngTuple)
+      : null;
+    const isScanning = scanStatus === "scanning" || scanStatus === "awaiting";
 
-  console.log("MapWrapper render");
-
-  return (
-    <Box
-      id="map"
-      sx={{
-        position: "relative",
-      }}
-    >
-      <Backdrop
-        open={scanStatus === "awaiting"}
+    return (
+      <Box
+        id="map"
         sx={{
-          position: "absolute",
-          zIndex: 1000,
-          opacity: 0.2,
+          position: "relative",
         }}
       >
-        <LoadingOverlay />
-      </Backdrop>
+        <Backdrop
+          open={!initLocation || scanStatus === "awaiting"}
+          sx={{
+            position: "absolute",
+            zIndex: 1000,
+            opacity: 0.2,
+          }}
+        >
+          <LoadingOverlay />
+        </Backdrop>
 
-      <MapContainer
-        center={DEFAULT_MAP_CENTER}
-        zoomControl={false}
-        zoom={2}
-        scrollWheelZoom={false}
-        placeholder={<MapPlaceHolder />}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {!isScanning && <ZoomControl position={"bottomleft"} />}
+        <MapContainer
+          center={DEFAULT_MAP_CENTER}
+          zoomControl={false}
+          zoom={2}
+          scrollWheelZoom={false}
+          placeholder={<MapPlaceHolder />}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          {!isScanning && <ZoomControl position={"bottomleft"} />}
 
-        {initLatLng && !userPosition && (
-          <MapInitialization position={initLatLng} />
-        )}
+          {initLatLng && !userPosition && (
+            <MapInitialization position={initLatLng} />
+          )}
 
-        <UserMarker
-          position={userPosition || initLatLng || null}
-          isScanning={isScanning}
-        />
+          <UserMarker
+            position={userPosition || initLatLng || null}
+            isScanning={isScanning}
+          />
 
-        <RadarMarker
-          position={userPosition || initLatLng || null}
-          visible={scanStatus === "scanning"}
-        />
+          <RadarMarker
+            position={userPosition || initLatLng || null}
+            visible={scanStatus === "scanning"}
+          />
 
-        {scanStatus === "complete" && (
-          <LayerGroup>
-            <ScanArea position={userPosition || null} />
+          {scanStatus === "complete" && (
+            <LayerGroup>
+              <ScanArea position={userPosition || null} />
 
-            {resources &&
-              resources.map((r) => {
-                return (
-                  <Polygon
-                    positions={r.vertices}
-                    pathOptions={{
-                      color: r.userCanInteract ? "#2AFB09" : "purple",
-                    }}
-                    key={r.id}
-                  >
-                    <Popup>
-                      {`${r.name} ${Math.round(r.distanceFromUser)}m`}
-                      <br />
-                      {`${r.h3Index}`}
-                    </Popup>
-                  </Polygon>
-                );
-              })}
-          </LayerGroup>
-        )}
-      </MapContainer>
-    </Box>
-  );
-});
+              {resources &&
+                resources.map((r) => {
+                  return (
+                    <Polygon
+                      positions={r.vertices}
+                      pathOptions={{
+                        color: r.userCanInteract ? "#2AFB09" : "purple",
+                      }}
+                      key={r.id}
+                    >
+                      <Popup>
+                        {`${r.name} ${Math.round(r.distanceFromUser)}m`}
+                        <br />
+                        {`${r.h3Index}`}
+                      </Popup>
+                    </Polygon>
+                  );
+                })}
+            </LayerGroup>
+          )}
+        </MapContainer>
+      </Box>
+    );
+  }
+);
+MapWrapper.displayName = "MapWrapper";
 
 export default MapWrapper;
 
-MapWrapper.whyDidYouRender = true
+MapWrapper.whyDidYouRender = true;
