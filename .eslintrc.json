@@ -16,6 +16,13 @@
       ]
     }
   ],
+  "parserOptions": {
+    "ecmaVersion": "latest"
+},
+
+"env": {
+    "es6": true
+},
   "rules": {
     // Include .prettierrc.js rules
     "prettier/prettier": "error"
