@@ -44,7 +44,7 @@ export const useFetch = (withAuthentication = true) => {
     additionalHeaders?: Record<string, string>
   ) => {
     try {
-      const res = await fetch(`${config.url}/${endpoint}`, {
+      const res = await fetch(`${config.api_url}/${endpoint}`, {
         method: method,
         ...(method === "POST" && {
           body: body,

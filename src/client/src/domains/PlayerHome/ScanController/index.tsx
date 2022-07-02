@@ -12,13 +12,21 @@ import { UserPosition, ScanStatus } from "../../../types";
 const ScanController = () => {
   const { startWatcher, endWatcher, location, isWatching } = useGeoLocation();
 
+  /**
+   * Want to start the useGeoLocation watcher once when this component mounts. If true, has been started once.
+   */
   const startedWatcherOnce = React.useRef(false);
 
+  /**
+   * Stores a ref to the initial location returned by useGeoLocation so that we can initialize our map centered on the user's position.
+   */
   const initLocation = React.useRef<GeolocationCoordinates>();
   if (location && !initLocation.current) {
     initLocation.current = location;
     console.log("initLocation set as", initLocation.current);
   }
+
+  const scanStartTime = React.useRef<number | null>();
 
   const [lastScannedLocation, setLastScannedLocation] =
     React.useState<UserPosition>();
@@ -34,11 +42,12 @@ const ScanController = () => {
 
   const scan = React.useCallback(async () => {
     console.log("Scan started...");
+    scanStartTime.current = new Date().getTime();
 
     if (!isWatching) {
       console.log("Scan aborted, awaiting GPS location.");
       setScanStatus("awaiting");
-      startWatcher(20000);
+      startWatcher();
       return;
     }
 
@@ -73,13 +82,21 @@ const ScanController = () => {
       }),
       true
     );
-    scanAnimationTimer.current = setTimeout(() => {
-      // startWatching(true); // reset the timer
-      setScanResult(data);
-      setScanStatus("complete");
-      setInteractableResources([...data.interactableResources]);
-      console.log("Scan completed.");
-    }, 1500);
+
+    const elapsedScanTime = new Date().getTime() - scanStartTime.current;
+    const remainingAnimationTime = 1500 - elapsedScanTime;
+
+    scanAnimationTimer.current = setTimeout(
+      () => {
+        startWatcher(true); // reset the timer
+        setScanResult(data);
+        setScanStatus("complete");
+        setInteractableResources([...data.interactableResources]);
+        console.log("Scan completed.");
+        scanStartTime.current = null;
+      },
+      remainingAnimationTime > 0 ? remainingAnimationTime : 0
+    );
   }, [backendFetch, isWatching, location, startWatcher]);
 
   // Start the geo location watcher once on mount
@@ -87,7 +104,7 @@ const ScanController = () => {
     if (startedWatcherOnce.current) {
       return;
     }
-    startWatcher(20000);
+    startWatcher();
     startedWatcherOnce.current = true;
   }, [startWatcher]);
 

@@ -1,4 +1,4 @@
-import "./global/wdyr";
+//import "./global/wdyr";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import Routes from "./routes";
