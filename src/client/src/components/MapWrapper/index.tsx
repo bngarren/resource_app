@@ -172,11 +172,13 @@ const RadarMarker = React.memo(({ position, visible }: RadarMarkerProps) => {
     );
     const zoomedIn = !map.getBounds().contains(l2);
 
+    console.log("map size", map.getSize());
+
     return (
       <>
         <Marker
           position={position}
-          icon={RadarIcon(res, zoomedIn)}
+          icon={RadarIcon(res, zoomedIn, map.getSize())}
           bubblingMouseEvents={true}
         />
       </>
