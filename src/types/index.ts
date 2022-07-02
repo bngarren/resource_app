@@ -5,3 +5,7 @@ export interface UserScanRequest {
 }
 
 export type UserPosition = [number, number] | number[];
+
+export type AddUserRequest = {
+  uuid: string;
+};

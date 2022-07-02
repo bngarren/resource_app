@@ -9,7 +9,7 @@ type HTTPMethod = "GET" | "POST" | "UPDATE" | "DELETE" | "PATCH" | "PUT";
  * the user's JWT token so that it can be passed in the fetch requests
  * to our backend.
  *
- * @param withAuthentication If true, will get user JWT prepared
+ * @param withAuthentication If true, will get user JWT prepared (default: true)
  */
 export const useFetch = (withAuthentication = true) => {
   const { user } = useAuth();
@@ -32,7 +32,7 @@ export const useFetch = (withAuthentication = true) => {
    * @param method HTTP method
    * @param endpoint Our backend endpoint, e.g. /api/[endpoint]
    * @param body Body of the request. If an object, should be JSON.stringified
-   * @param useAuth Whether to insert authentication header
+   * @param customToken Use this JWT token instead of the one obtained by the hook
    * @param additionalHeaders Other headers to add to the request
    * @returns
    */
@@ -40,9 +40,9 @@ export const useFetch = (withAuthentication = true) => {
     method: HTTPMethod,
     endpoint: string,
     body?: string,
-    useAuth = true,
+    customToken?: string,
     additionalHeaders?: Record<string, string>
-  ) => {
+  ): Promise<Error | Response> => {
     try {
       const res = await fetch(`${config.api_url}/${endpoint}`, {
         method: method,
@@ -51,7 +51,9 @@ export const useFetch = (withAuthentication = true) => {
         }),
         headers: {
           "Content-Type": "application/json",
-          ...(useAuth && { Authorization: `Bearer ${token}` }),
+          ...(withAuthentication && {
+            Authorization: `Bearer ${customToken || token}`,
+          }),
           ...additionalHeaders,
         },
       });

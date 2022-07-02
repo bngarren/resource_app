@@ -15,6 +15,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useToasty } from "../../components/Toasty";
 import { UserCredential } from "firebase/auth";
 import { LocationState } from "../../types";
+import { useFetch } from "../../global/useFetch";
 
 type LoginOrSignupProps = {
   type: "login" | "signup";
@@ -28,33 +29,78 @@ const LoginOrSignup = (props: LoginOrSignupProps) => {
   const locationState = location.state as LocationState;
   const from = locationState?.from || "/app";
 
-  console.log("In /login, came from", from);
+  const { backendFetch } = useFetch();
 
   const { openToasty } = useToasty();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    let didError = false;
+
     const formData = new FormData(event.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    let result: UserCredential | Error;
+    let fb_result: UserCredential | Error;
     if (type === "login") {
-      result = await signIn(email, password);
+      fb_result = await signIn(email, password);
     } else if (type === "signup") {
-      result = await createUser(email, password);
+      fb_result = await createUser(email, password);
     } else {
-      result = new Error("Could not complete. Try reloading the page.");
+      fb_result = new Error("Could not complete. Try reloading the page.");
     }
 
-    if (result instanceof Error) {
-      openToasty(result.message, "error");
-      return;
+    if (fb_result instanceof Error) {
+      openToasty(fb_result.message, "error");
+      didError = true;
     }
-    console.log("userCredential", result);
 
-    navigate(from, { replace: true });
+    // Handle our database side of the sign up process
+    if (type === "signup" && !(fb_result instanceof Error)) {
+      // Make a new user object
+      const newUserJSON = {
+        uuid: fb_result.user.uid,
+      };
+
+      try {
+        // Get the newly created firebase user's token. We can't use the one that useFetch would also
+        // try to obtain because it won't have had time to get it yet
+        const token = await fb_result.user.getIdToken();
+        const db_result = await backendFetch(
+          "POST",
+          "user/add",
+          JSON.stringify(newUserJSON),
+          token
+        );
+        // Problem on our api end of things...
+        if (db_result instanceof Error) {
+          throw db_result;
+        }
+        // Success...
+        openToasty(
+          "You are in! Get out there and find some resources!",
+          "success"
+        );
+      } catch (error) {
+        if (error instanceof Error) {
+          //! Toasting the errors for debug purposes...
+          openToasty(error.message, "error");
+        }
+        console.log(error);
+        didError = true;
+        // Rollback the new firebase user
+        // TODO new to try/catch here
+        await fb_result.user.delete();
+      }
+    }
+
+    //console.log("userCredential", fb_result);
+
+    // If no errors, navigate to where they were trying to go
+    if (!didError) {
+      navigate(from, { replace: true });
+    }
   };
 
   const getTitle = () => {

@@ -32,7 +32,7 @@ export const getRandomResource = async (
  * To accomplish this:
  * - Validate the input json against the ResourceModel's jsonSchema
  * - Create the resource (database query)
- * - Return the resource (ResourceType) to the caller
+ * - Return the resource (ResourceModel) to the caller
  *
  *
  * @param resourceJson The new resource's data in json object
