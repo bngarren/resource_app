@@ -305,4 +305,4 @@ MapWrapper.displayName = "MapWrapper";
 
 export default MapWrapper;
 
-MapWrapper.whyDidYouRender = true;
+//MapWrapper.whyDidYouRender = true;
