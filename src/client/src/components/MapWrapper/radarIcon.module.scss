@@ -30,12 +30,38 @@ $bxs: inset 0 0 200px;
       box-shadow: $bxs rgba($lb,.0);
       border: 1px solid rgba($lb,.0);
       border-radius: 50%;
-      animation: ping 2.5s ease infinite;
       z-index: 2;
+   }
+
+   .small {
+      animation: pingSmall 0.70s ease infinite;
+   }
+
+   .big {
+      animation: pingBig 2s ease infinite;
    }
 }
 
-@keyframes ping {
+@keyframes pingSmall {
+   0% {
+     @include box(0px,0px);
+     box-shadow: $bxs rgba($lb,.2);
+     border: 1px solid rgba($lb,.6);
+   }
+   60% {
+   @include box(4vmax,4vmax);
+     box-shadow: $bxs rgba($lb,.0);
+     border: 1px solid rgba($lb,.1);
+   }
+   90% {
+     
+     @include box(0px,0px);
+     box-shadow: $bxs rgba($lb,.0);
+     border: 1px solid rgba($lb,.0);
+   }
+ };
+
+@keyframes pingBig {
    0% {
      @include box(0px,0px);
      box-shadow: $bxs rgba($lb,.2);
@@ -54,3 +80,4 @@ $bxs: inset 0 0 200px;
      border: 1px solid rgba($lb,.0);
    }
  };
+
