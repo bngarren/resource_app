@@ -11,7 +11,7 @@ export const UserIcon = (
   const iconHTML = renderToStaticMarkup(
     <LocationOnIcon
       fontSize="large"
-      style={{ fill: color, opacity: 0.75, ...otherStyle }}
+      style={{ fill: color, opacity: 0.85, ...otherStyle }}
     />
   );
   return L.divIcon({

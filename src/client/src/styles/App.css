@@ -51,21 +51,3 @@ button:hover {
 }
 
 
-.radar {
-  position: relative;
-  top: 0;
-  left: 0;
-}
-
-@keyframes sweep { to { transform: rotate(360deg); } }
-
-@keyframes pulse{
-  from{
-    transform:scale(0);
-    opacity: 1;
-  }
-  to{
-    transform:scale(1);
-    opacity: 0;
-  }
-}

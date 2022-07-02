@@ -136,7 +136,7 @@ type UserMarkerProps = {
  */
 const UserMarker = ({ position, isScanning }: UserMarkerProps) => {
   if (position != null) {
-    const color = isScanning ? "green" : "blue";
+    const color = isScanning ? "#1d3aac" : "#780e0e";
     return (
       <>
         <Marker position={position} icon={UserIcon(color, {})}>
@@ -172,23 +172,12 @@ const RadarMarker = React.memo(({ position, visible }: RadarMarkerProps) => {
     );
     const zoomedIn = !map.getBounds().contains(l2);
 
-    console.log("zoomedIn", zoomedIn);
-
     return (
       <>
         <Marker
           position={position}
-          icon={RadarIcon(res, zoomedIn, map.getZoom())}
+          icon={RadarIcon(res, zoomedIn)}
           bubblingMouseEvents={true}
-        />
-        <Circle
-          center={position}
-          radius={SCAN_DISTANCE_METERS}
-          pathOptions={{
-            opacity: 0.3,
-            fill: false,
-            color: "green",
-          }}
         />
       </>
     );

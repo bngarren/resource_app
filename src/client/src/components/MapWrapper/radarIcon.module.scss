@@ -1,0 +1,56 @@
+
+
+$lb: #1d3aac;
+$test: #780e0e;
+
+$bxs: inset 0 0 200px;
+
+//mixin to absolutely center an element - always handy
+@mixin ab-center {
+   position: absolute;
+   top: 50%;
+   left: 50%;
+   transform: translate(-50%, -50%);
+}
+
+//mixin to create a box with a specified width and height - because I'm lazy
+@mixin box($w, $h) {
+   width: $w;
+   height: $h;
+}
+
+.stage {
+   @include ab-center();
+   //@include box(100vw,100vh);
+   z-index: 1;
+
+   .ping {
+      @include ab-center();
+      @include box(0px,0px); 
+      box-shadow: $bxs rgba($lb,.0);
+      border: 1px solid rgba($lb,.0);
+      border-radius: 50%;
+      animation: ping 2.5s ease infinite;
+      z-index: 2;
+   }
+}
+
+@keyframes ping {
+   0% {
+     @include box(0px,0px);
+     box-shadow: $bxs rgba($lb,.2);
+     border: 1px solid rgba($lb,.8);
+   }
+   30% {
+     box-shadow: $bxs rgba($lb,.3); 
+   }
+   60% {
+     box-shadow: $bxs rgba($lb,.0);
+     border: 1px solid rgba($lb,.1);
+   }
+   90% {
+     @include box(100%,100%);
+     box-shadow: $bxs rgba($lb,.0);
+     border: 1px solid rgba($lb,.0);
+   }
+ };
