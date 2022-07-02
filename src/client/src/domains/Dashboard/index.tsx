@@ -13,7 +13,7 @@ const Dashboard = () => {
 
   const scan = async (userPosition: [number, number]) => {
     try {
-      const res = await fetch(`${config.url}/scan`, {
+      const res = await fetch(`${config.api_url}/scan`, {
         method: "POST",
         body: JSON.stringify({
           userPosition,
