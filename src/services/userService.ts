@@ -18,10 +18,15 @@ export const handleCreateUser = async (
   userJson: Partial<UserModel>,
   trx?: TransactionOrKnex
 ) => {
+  const modifiedUserJson = { ...userJson };
+  if (!modifiedUserJson.inventory) {
+    modifiedUserJson.inventory = UserModel.getEmptyInventory();
+  }
+
   let inputUserModel: UserModel;
   let resultUser: UserModel | undefined;
   try {
-    inputUserModel = UserModel.fromJson(userJson);
+    inputUserModel = UserModel.fromJson(modifiedUserJson);
     resultUser = await addUser(inputUserModel, trx);
   } catch (error) {
     logger.error(error);
