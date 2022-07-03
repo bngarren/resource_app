@@ -72,31 +72,37 @@ const ScanController = () => {
     scanCount.current = scanCount.current + 1;
     setLastScannedLocation(userPosition);
 
-    console.log("sending:", userPosition);
-
-    const data = await backendFetch(
+    type ScanResult = {
+      interactableResources?: number[];
+    };
+    // Sending POST /scan request to backend
+    const data = await backendFetch<ScanResult>(
       "POST",
       "scan",
       JSON.stringify({
         userPosition,
-      }),
-      true
+      })
     );
 
-    const elapsedScanTime = new Date().getTime() - scanStartTime.current;
-    const remainingAnimationTime = 1500 - elapsedScanTime;
+    if (data instanceof Error) {
+      setScanStatus("error");
+    } else {
+      const elapsedScanTime = new Date().getTime() - scanStartTime.current;
+      const remainingAnimationTime = 1500 - elapsedScanTime;
 
-    scanAnimationTimer.current = setTimeout(
-      () => {
-        startWatcher(true); // reset the timer
-        setScanResult(data);
-        setScanStatus("complete");
-        setInteractableResources([...data.interactableResources]);
-        console.log("Scan completed.");
-        scanStartTime.current = null;
-      },
-      remainingAnimationTime > 0 ? remainingAnimationTime : 0
-    );
+      scanAnimationTimer.current = setTimeout(
+        () => {
+          const ir = [...(data.interactableResources as number[])];
+          startWatcher(true); // reset the timer
+          setScanResult(data);
+          setScanStatus("complete");
+          setInteractableResources(ir);
+          console.log("Scan completed.");
+          scanStartTime.current = null;
+        },
+        remainingAnimationTime > 0 ? remainingAnimationTime : 0
+      );
+    }
   }, [backendFetch, isWatching, location, startWatcher]);
 
   // Start the geo location watcher once on mount

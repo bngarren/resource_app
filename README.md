@@ -1,9 +1,10 @@
 # Project root
 
 ## npm scripts
-- `"dev": "clear && npm run migrate-latest && ts-node-dev --respawn --transpile-only ./src/main.ts | npx pino-pretty"`
+- `"dev": "clear && npm run migrate-latest && ts-node-dev --respawn --ignore-watch ./src/client --transpile-only ./src/main.ts | npx pino-pretty"`
    - First runs the knex migration to get the database schema up to date. If this errors, may need to rollback and then try to migrate up again
    - Restarts target process (main.ts) each time it sees file changes and uses ts-node to compile to Typescript between each run. Similar to running nodemon with ts-node
+   - `--ignore-watch ./src/client` tells it not to watch/restart on changes within client directory
 - `"test": "LOGGER_LEVEL=fatal jest --runInBand"`
    - We use the "--runInBand" flag to make jest run tests serially rather than in parallel (default) so that we don't have conflicts with multiple tests trying to operate on the test database at the same time
    - We set the LOGGER_LEVEL env variable to fatal to suppress any logs lower than this level during tests (complicates the output)
@@ -68,10 +69,16 @@
 
 - There is a client firebase implementation (for the user to sign up/login/sign out) with the Firebase server and receive ID tokens back to signify the authentication
 - There is a server firebase implementation (Admin SDK) which we use to verify the ID token sent within an HTTP request to one of the endpoints. This ensures that we know/trust/allow the client to access our endpoint
+- We are using a custom middleware `firebaseAuthentication.ts` that reads each request coming in to see if it contains an Authorization header in the "Bearer" pattern, meaning an authenticated request should have a valid JWT token in the header. Our backend uses firebase admin sdk to verify this token and allow the request to proceed to the handlers.
 
 ## JWT
+- Prounounced "jot"
 - ID tokens are what the modern client SDKs actually use to authenticate end users
 - ID tokens are short-lived JWTs, lasting for just one hour.
 - Firebase will refresh a user’s ID token on your behalf using a refresh token
    - When you authenticate, FB generates an ID token / refresh token pair and every hour continues to refresh the ID token on our behalf
 - To securely access our app's API endpoints, we will send our ID token within the HTTP request header
+
+# Current WIP 
+## 2022-07-02
+- Add create_user_table migration

@@ -1,12 +1,12 @@
 {
    "name": "resource-app",
    "private": true,
-   "version": "0.0.13",
+   "version": "0.0.14",
    "engines": {
       "node": "16.x"
    },
    "scripts": {
-      "dev": "clear && npm run migrate-latest && ts-node-dev --respawn --transpile-only ./src/main.ts | npx pino-pretty",
+      "dev": "clear && npm run migrate-latest && ts-node-dev --respawn --ignore-watch ./src/client --transpile-only ./src/main.ts | npx pino-pretty",
       "test": "LOGGER_LEVEL=fatal jest --runInBand",
       "test:error": "LOGGER_LEVEL=error jest --runInBand",
       "test:debugger": "LOGGER_LEVEL=fatal node --inspect-brk node_modules/.bin/jest --runInBand",
