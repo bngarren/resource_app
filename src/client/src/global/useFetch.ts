@@ -34,15 +34,15 @@ export const useFetch = (withAuthentication = true) => {
    * @param body Body of the request. If an object, should be JSON.stringified
    * @param customToken Use this JWT token instead of the one obtained by the hook
    * @param additionalHeaders Other headers to add to the request
-   * @returns
+   * @returns JSON result
    */
-  const backendFetch = async (
+  const backendFetch = async <T>(
     method: HTTPMethod,
     endpoint: string,
     body?: string,
     customToken?: string,
     additionalHeaders?: Record<string, string>
-  ): Promise<Error | Response> => {
+  ): Promise<Error | T> => {
     try {
       const res = await fetch(`${config.api_url}/${endpoint}`, {
         method: method,
