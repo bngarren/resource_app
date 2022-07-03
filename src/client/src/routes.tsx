@@ -41,14 +41,7 @@ const Routes = () => {
             </RedirectIfAuth>
           }
         />
-        <Route
-          path="/signup"
-          element={
-            <RedirectIfAuth>
-              <LoginOrSignup type="signup" />
-            </RedirectIfAuth>
-          }
-        />
+        <Route path="/signup" element={<LoginOrSignup type="signup" />} />
         <Route path="/debug" element={<AppDebug />} />
         <Route
           path="*"

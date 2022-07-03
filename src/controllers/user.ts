@@ -8,6 +8,11 @@ export const add = async (
 ) => {
   const { body } = req;
 
+  if (!body["uuid"]) {
+    res.status(400).send("Need a uuid to add a new user");
+    return;
+  }
+
   const result = await userService.handleCreateUser(body);
 
   if (!result) {

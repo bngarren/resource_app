@@ -27,7 +27,7 @@ const LoginOrSignup = (props: LoginOrSignupProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as LocationState;
-  const from = locationState?.from || "/app";
+  const from = locationState?.from || "/home";
 
   const { backendFetch } = useFetch();
 

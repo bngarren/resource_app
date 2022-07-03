@@ -58,7 +58,10 @@ export const useFetch = (withAuthentication = true) => {
         },
       });
       if (!res.ok) {
-        throw new Error(`Failed fetch. Return status ${res.status}`);
+        const text = await res.text();
+        throw new Error(
+          `Return status ${res.status} ${res.statusText} - ${text}`
+        );
       }
       return await res.json();
     } catch (error) {

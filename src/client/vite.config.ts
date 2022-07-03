@@ -4,9 +4,9 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    process.env.MODE !== "production" ?
-    react({
-    jsxImportSource: '@welldone-software/why-did-you-render',
-  }) : react(), tsconfigPaths()],
+  plugins: [react(), tsconfigPaths()],
+  // ! https://github.com/vitejs/vite/issues/8644
+  esbuild: {
+    logOverride: { "this-is-undefined-in-esm": "silent" },
+  },
 });

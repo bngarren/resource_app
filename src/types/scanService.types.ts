@@ -18,6 +18,9 @@ export type ScanResultResource = ResourceType & {
   userCanInteract: boolean;
 };
 
+/**
+ * This is returned to the client after a successful POST /scan
+ */
 export interface ScanResult {
   regions: RegionType[];
   resources: ScanResultResource[];
