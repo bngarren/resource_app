@@ -5,9 +5,9 @@ import GpsFixedIcon from "@mui/icons-material/GpsFixed";
 import GpsOffIcon from "@mui/icons-material/GpsOff";
 import * as React from "react";
 import MapWrapper from "../../../components/MapWrapper";
-import { useFetch } from "../../../global/useFetch";
 import { useGeoLocation } from "../../../global/useGeoLocation.new";
 import { UserPosition, ScanStatus } from "../../../types";
+import { useScanMutation } from "../../../global/state/apiSlice";
 
 const ScanController = () => {
   const { startWatcher, endWatcher, location, isWatching } = useGeoLocation();
@@ -31,16 +31,12 @@ const ScanController = () => {
   const [lastScannedLocation, setLastScannedLocation] =
     React.useState<UserPosition>();
   const scanCount = React.useRef<number>(0);
-  const [scanResult, setScanResult] = React.useState<any>();
   const [scanStatus, setScanStatus] = React.useState<ScanStatus>(null);
   const scanAnimationTimer = React.useRef<NodeJS.Timeout>();
-  const [interactableResources, setInteractableResources] = React.useState<
-    number[]
-  >([]);
 
-  const { backendFetch } = useFetch();
+  const [scan, { data: scanResult }] = useScanMutation();
 
-  const scan = React.useCallback(async () => {
+  const handleScan = React.useCallback(async () => {
     console.log("Scan started...");
     scanStartTime.current = new Date().getTime();
 
@@ -59,9 +55,6 @@ const ScanController = () => {
 
     setScanStatus("scanning");
 
-    setScanResult(null);
-    setInteractableResources([]);
-
     const userPosition: UserPosition = [location.latitude, location.longitude];
 
     if (!userPosition) {
@@ -72,38 +65,31 @@ const ScanController = () => {
     scanCount.current = scanCount.current + 1;
     setLastScannedLocation(userPosition);
 
-    type ScanResult = {
-      interactableResources?: number[];
-    };
-    // Sending POST /scan request to backend
-    const data = await backendFetch<ScanResult>(
-      "POST",
-      "scan",
-      JSON.stringify({
-        userPosition,
+    // RTK query
+    scan(userPosition)
+      .unwrap()
+      .then((fulfilled) => {
+        console.log(fulfilled);
+
+        const elapsedScanTime =
+          new Date().getTime() - (scanStartTime.current as number);
+        const remainingAnimationTime = 1500 - elapsedScanTime;
+
+        scanAnimationTimer.current = setTimeout(
+          () => {
+            startWatcher(true); // reset the timer
+            setScanStatus("complete");
+            console.log("Scan completed.");
+            scanStartTime.current = null;
+          },
+          remainingAnimationTime > 0 ? remainingAnimationTime : 0
+        );
       })
-    );
-
-    if (data instanceof Error) {
-      setScanStatus("error");
-    } else {
-      const elapsedScanTime = new Date().getTime() - scanStartTime.current;
-      const remainingAnimationTime = 1500 - elapsedScanTime;
-
-      scanAnimationTimer.current = setTimeout(
-        () => {
-          const ir = [...(data.interactableResources as number[])];
-          startWatcher(true); // reset the timer
-          setScanResult(data);
-          setScanStatus("complete");
-          setInteractableResources(ir);
-          console.log("Scan completed.");
-          scanStartTime.current = null;
-        },
-        remainingAnimationTime > 0 ? remainingAnimationTime : 0
-      );
-    }
-  }, [backendFetch, isWatching, location, startWatcher]);
+      .catch((error) => {
+        setScanStatus(error.message || error);
+        console.error(error);
+      });
+  }, [scan, isWatching, location, startWatcher]);
 
   // Start the geo location watcher once on mount
   React.useEffect(() => {
@@ -119,9 +105,9 @@ const ScanController = () => {
   React.useEffect(() => {
     if (scanStatus === "awaiting" && location) {
       console.log("Restarting scan with new location");
-      scan();
+      handleScan();
     }
-  }, [scanStatus, location, scan]);
+  }, [scanStatus, location, handleScan]);
 
   // Clean up
   React.useEffect(() => {
@@ -148,7 +134,7 @@ const ScanController = () => {
 
       <div>
         <Button
-          onClick={scan}
+          onClick={handleScan}
           size="large"
           variant="contained"
           startIcon={<RadarIcon />}
@@ -159,9 +145,10 @@ const ScanController = () => {
       </div>
 
       <div id="actions">
+        {scanStatus}
         <List>
           {scanResult &&
-            interactableResources.map((r) => {
+            scanResult.interactableResources.map((r) => {
               const resource = scanResult?.resources?.find(
                 (f: any) => f.id === r
               );

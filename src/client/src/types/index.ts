@@ -48,4 +48,22 @@ export type LocationState = {
   from: { pathname: string };
 };
 
+export type ScanResult = {
+  interactableResources: number[];
+  resources: Resource[];
+};
+
 export type ScanStatus = "scanning" | "awaiting" | "complete" | "error" | null;
+
+export type UserInventory = {
+  metadata: Record<string, unknown>;
+  items: Record<string, unknown>;
+};
+
+/**
+ * The authenticated user
+ */
+export type User = {
+  uuid: string;
+  email: string | null;
+};
