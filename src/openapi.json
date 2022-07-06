@@ -1,14 +1,11 @@
 {
   "openapi" : "3.0.3",
   "info" : {
-    "title" : "Resource App",
     "description" : "This is for the Resource App server\n",
-    "termsOfService" : "http://swagger.io/terms/",
-    "version" : "1.0.1"
+    "version" : "1.0.1",
+    "title" : "Resource App",
+    "termsOfService" : "http://swagger.io/terms/"
   },
-  "servers" : [ {
-    "url" : "https://virtserver.swaggerhub.com/BNGARREN_1/resource-app/1.0.1"
-  } ],
   "tags" : [ {
     "name" : "Scan",
     "description" : "Scanning for resources and interactables"
@@ -26,14 +23,20 @@
         "description" : "A user (at a GPS location) scans and receives data about nearby resources and interactables",
         "operationId" : "scan",
         "requestBody" : {
+          "required" : true,
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/scan_body"
+                "type" : "object",
+                "required" : [ "userPosition" ],
+                "properties" : {
+                  "userPosition" : {
+                    "$ref" : "#/components/schemas/Coordinate"
+                  }
+                }
               }
             }
-          },
-          "required" : true
+          }
         },
         "responses" : {
           "200" : {
@@ -41,49 +44,55 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/inline_response_200"
+                  "type" : "object",
+                  "required" : [ "metadata", "interactables" ],
+                  "properties" : {
+                    "metadata" : {
+                      "type" : "object"
+                    },
+                    "interactables" : {
+                      "type" : "object",
+                      "properties" : {
+                        "scannedResources" : {
+                          "type" : "array",
+                          "items" : {
+                            "$ref" : "#/components/schemas/ScannedResource"
+                          }
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
           },
           "400" : {
-            "description" : "The request was invalid",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/400BadRequest"
           },
           "403" : {
-            "description" : "Not authorized",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Error"
-                }
-              }
-            }
+            "$ref" : "#/components/responses/403NotAuthorized"
           }
         }
       }
     }
   },
+  "servers" : [ {
+    "url" : "https://virtserver.swaggerhub.com/BNGARREN_1/resource-app/1.0.1"
+  } ],
   "components" : {
     "schemas" : {
       "Coordinate" : {
-        "maxItems" : 2,
-        "minItems" : 2,
         "type" : "array",
+        "minItems" : 2,
+        "maxItems" : 2,
         "items" : {
           "type" : "number",
           "format" : "double"
         }
       },
       "Resource" : {
-        "required" : [ "h3Index", "id", "name", "region_id" ],
         "type" : "object",
+        "required" : [ "id", "name", "region_id", "h3Index" ],
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -101,21 +110,21 @@
         }
       },
       "Interactable" : {
-        "required" : [ "distanceFromUser", "position", "userCanInteract" ],
         "type" : "object",
+        "description" : "An Interactable represents an object in the environment which a user can interact. \n\nThis could include a resource or a machine, for instance.\n\nAn Interactable object details:\n  - Where it is located (latitude, longitude)\n  - How far it is from the user (scan location)\n  - Whether the user can interact with it (i.e. is the user within range?)\n",
+        "required" : [ "position", "distanceFromUser", "userCanInteract" ],
         "properties" : {
           "position" : {
             "$ref" : "#/components/schemas/Coordinate"
           },
           "distanceFromUser" : {
-            "minimum" : 0,
-            "type" : "integer"
+            "type" : "integer",
+            "minimum" : 0
           },
           "userCanInteract" : {
             "type" : "boolean"
           }
-        },
-        "description" : "An Interactable represents an object in the environment which a user can interact. \n\nThis could include a resource or a machine, for instance.\n\nAn Interactable object details:\n  - Where it is located (latitude, longitude)\n  - How far it is from the user (scan location)\n  - Whether the user can interact with it (i.e. is the user within range?)\n"
+        }
       },
       "ScannedResource" : {
         "allOf" : [ {
@@ -138,7 +147,6 @@
         } ]
       },
       "Error" : {
-        "required" : [ "code", "message" ],
         "type" : "object",
         "properties" : {
           "code" : {
@@ -147,40 +155,8 @@
           "message" : {
             "type" : "string"
           }
-        }
-      },
-      "scan_body" : {
-        "required" : [ "userPosition" ],
-        "type" : "object",
-        "properties" : {
-          "userPosition" : {
-            "$ref" : "#/components/schemas/Coordinate"
-          }
-        }
-      },
-      "inline_response_200" : {
-        "required" : [ "interactables", "metadata" ],
-        "type" : "object",
-        "properties" : {
-          "metadata" : {
-            "type" : "object"
-          },
-          "interactables" : {
-            "$ref" : "#/components/schemas/inline_response_200_interactables"
-          }
-        }
-      },
-      "inline_response_200_interactables" : {
-        "type" : "object",
-        "properties" : {
-          "scannedResources" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/ScannedResource"
-            }
-          }
         },
-        "example" : null
+        "required" : [ "code", "message" ]
       }
     },
     "responses" : {
