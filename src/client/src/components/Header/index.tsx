@@ -17,9 +17,10 @@ import AdbIcon from "@mui/icons-material/Adb";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useAuth } from "../../global/auth";
+import { signOut } from "../../global/auth/firebase";
 
 const Header = () => {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
     null
   );
@@ -103,9 +104,9 @@ const Header = () => {
             <Divider />
             <MenuItem>
               <IconButton
-                onClick={() => {
-                  signOut();
+                onClick={async () => {
                   handleCloseNavMenu();
+                  await signOut();
                 }}
               >
                 <LogoutIcon />

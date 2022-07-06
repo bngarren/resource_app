@@ -1,29 +1,28 @@
+import * as React from "react";
 import { useGetUserInventoryQuery } from "../../global/state/apiSlice";
-import ScanController from "./ScanController";
+import GatherController from "./GatherController";
 import { useAuth } from "../../global/auth";
+import { Box, Paper } from "@mui/material";
+import Navigation from "./Navigation";
+import { Outlet } from "react-router-dom";
+
+export type PlayerHomeView = "GATHER" | "INVENTORY" | "CRAFT";
 
 const PlayerHome = () => {
-  const { user } = useAuth();
-  const {
-    data: userInventory,
-    error,
-    isLoading,
-  } = useGetUserInventoryQuery(user?.uuid || "", {
-    skip: !user,
-  });
+  const [currentView, setCurrentView] =
+    React.useState<PlayerHomeView>("GATHER");
 
   return (
     <>
-      <ScanController />
-      {error ? (
-        <>Oh no, there was an error getting your inventory.</>
-      ) : isLoading ? (
-        <>Updating inventory...</>
-      ) : userInventory ? (
-        <>
-          <pre>{JSON.stringify(userInventory, null, 2)}</pre>
-        </>
-      ) : null}
+      <Outlet />
+
+      <Paper
+        sx={{ position: "fixed", bottom: 0, left: 0, right: 0 }}
+        elevation={2}
+        component="nav"
+      >
+        <Navigation currentView={currentView} onChange={setCurrentView} />
+      </Paper>
     </>
   );
 };

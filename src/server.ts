@@ -22,7 +22,7 @@ app.options("*", cors<Request>());
 
 app.get("/", (req, res) => res.send(`Backend is working!`));
 
-// Firebase authentication middleware
+// Firebase authentication middleware. Must go before our /api routes
 app.use(firebaseAuthentication);
 
 app.use("/api", routes);

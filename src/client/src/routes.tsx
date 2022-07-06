@@ -1,3 +1,4 @@
+import { Box, CircularProgress } from "@mui/material";
 import {
   Routes as RouterRoutes,
   Route,
@@ -9,8 +10,12 @@ import AppDebug from "./AppDebug";
 import Dashboard from "./domains/Dashboard";
 import LoginOrSignup from "./domains/LoginOrSignup";
 import PlayerHome from "./domains/PlayerHome";
+import CraftingController from "./domains/PlayerHome/CraftingController";
+import InventoryController from "./domains/PlayerHome/InventoryController";
+import GatherController from "./domains/PlayerHome/GatherController";
 import PublicLanding from "./domains/PublicLanding";
 import { useAuth } from "./global/auth";
+import { useAppSelector } from "./global/state/store";
 
 const Routes = () => {
   return (
@@ -24,7 +29,19 @@ const Routes = () => {
               <PlayerHome />
             </RequireAuth>
           }
-        />
+        >
+          <Route
+            index
+            element={
+              <main>
+                <p>Select a choice below to get started.</p>
+              </main>
+            }
+          />
+          <Route path="gather" element={<GatherController />} />
+          <Route path="inventory" element={<InventoryController />} />
+          <Route path="craft" element={<CraftingController />} />
+        </Route>
         <Route
           path="/dashboard"
           element={
@@ -57,8 +74,15 @@ const Routes = () => {
 };
 
 function RequireAuth({ children }: { children: JSX.Element }) {
+  const doneAuthenticating = useAppSelector(
+    (state) => state.app.isAuthenticationLoaded
+  );
   const auth = useAuth();
   const location = useLocation();
+
+  if (!doneAuthenticating) {
+    return <></>;
+  }
 
   if (!auth.user) {
     // Redirect them to the /login page, but save the current location they were

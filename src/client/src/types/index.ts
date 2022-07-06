@@ -53,7 +53,12 @@ export type ScanResult = {
   resources: Resource[];
 };
 
-export type ScanStatus = "scanning" | "awaiting" | "complete" | "error" | null;
+export type ScanStatus =
+  | "STARTED"
+  | "AWAITING_GPS"
+  | "COMPLETED"
+  | "ERRORED"
+  | null;
 
 export type UserInventory = {
   metadata: Record<string, unknown>;

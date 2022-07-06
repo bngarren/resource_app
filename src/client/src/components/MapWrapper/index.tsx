@@ -227,7 +227,8 @@ const MapWrapper = React.memo(
     const initLatLng = initLocation
       ? ([initLocation.latitude, initLocation.longitude] as LatLngTuple)
       : null;
-    const isScanning = scanStatus === "scanning" || scanStatus === "awaiting";
+    const isScanning =
+      scanStatus === "STARTED" || scanStatus === "AWAITING_GPS";
 
     return (
       <Box
@@ -237,7 +238,7 @@ const MapWrapper = React.memo(
         }}
       >
         <Backdrop
-          open={!initLocation || scanStatus === "awaiting"}
+          open={!initLocation || scanStatus === "AWAITING_GPS"}
           sx={{
             position: "absolute",
             zIndex: 1000,
@@ -271,10 +272,10 @@ const MapWrapper = React.memo(
 
           <RadarMarker
             position={userPosition || initLatLng || null}
-            visible={scanStatus === "scanning"}
+            visible={scanStatus === "STARTED"}
           />
 
-          {scanStatus === "complete" && (
+          {scanStatus === "COMPLETED" && (
             <LayerGroup>
               <ScanArea position={userPosition || null} />
 

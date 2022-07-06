@@ -1,4 +1,12 @@
-import { Button, List, ListItem, Stack, Typography } from "@mui/material";
+import {
+  Alert,
+  AlertColor,
+  Button,
+  List,
+  ListItem,
+  Stack,
+  Typography,
+} from "@mui/material";
 import RadarIcon from "@mui/icons-material/Radar";
 import HardwareIcon from "@mui/icons-material/Hardware";
 import GpsFixedIcon from "@mui/icons-material/GpsFixed";
@@ -9,7 +17,7 @@ import { useGeoLocation } from "../../../global/useGeoLocation.new";
 import { UserPosition, ScanStatus } from "../../../types";
 import { useScanMutation } from "../../../global/state/apiSlice";
 
-const ScanController = () => {
+const GatherController = () => {
   const { startWatcher, endWatcher, location, isWatching } = useGeoLocation();
 
   /**
@@ -37,28 +45,28 @@ const ScanController = () => {
   const [scan, { data: scanResult }] = useScanMutation();
 
   const handleScan = React.useCallback(async () => {
-    console.log("Scan started...");
     scanStartTime.current = new Date().getTime();
+    setScanStatus(null);
 
     if (!isWatching) {
       console.log("Scan aborted, awaiting GPS location.");
-      setScanStatus("awaiting");
+      setScanStatus("AWAITING_GPS");
       startWatcher();
       return;
     }
 
     if (!location) {
       console.error("Did not have GPS location to scan");
-      setScanStatus("error");
+      setScanStatus("ERRORED");
       return;
     }
 
-    setScanStatus("scanning");
+    setScanStatus("STARTED");
 
     const userPosition: UserPosition = [location.latitude, location.longitude];
 
     if (!userPosition) {
-      setScanStatus("error");
+      setScanStatus("ERRORED");
       return;
     }
 
@@ -66,11 +74,11 @@ const ScanController = () => {
     setLastScannedLocation(userPosition);
 
     // RTK query
+    // Perform the scan query then use unwrap() to get the promised result
     scan(userPosition)
       .unwrap()
-      .then((fulfilled) => {
-        console.log(fulfilled);
-
+      .then(() => {
+        // Calculate remaining animation time
         const elapsedScanTime =
           new Date().getTime() - (scanStartTime.current as number);
         const remainingAnimationTime = 1500 - elapsedScanTime;
@@ -78,16 +86,16 @@ const ScanController = () => {
         scanAnimationTimer.current = setTimeout(
           () => {
             startWatcher(true); // reset the timer
-            setScanStatus("complete");
-            console.log("Scan completed.");
+            setScanStatus("COMPLETED");
             scanStartTime.current = null;
+            console.log("Scan completed.");
           },
           remainingAnimationTime > 0 ? remainingAnimationTime : 0
         );
       })
       .catch((error) => {
-        setScanStatus(error.message || error);
-        console.error(error);
+        setScanStatus("ERRORED");
+        console.error(error.data);
       });
   }, [scan, isWatching, location, startWatcher]);
 
@@ -103,7 +111,7 @@ const ScanController = () => {
   // This watches for new locations while we are in the "awaiting" state
   // E.g. the user clicked scan but no watcher session active, so we waited for a new one to boot up and give us a location
   React.useEffect(() => {
-    if (scanStatus === "awaiting" && location) {
+    if (scanStatus === "AWAITING_GPS" && location) {
       console.log("Restarting scan with new location");
       handleScan();
     }
@@ -117,6 +125,13 @@ const ScanController = () => {
     };
   }, [endWatcher]);
 
+  const alertSeverity = {
+    COMPLETED: "success",
+    AWAITING_GPS: "info",
+    STARTED: "info",
+    ERRORED: "error",
+  };
+
   return (
     <>
       <MapWrapper
@@ -125,6 +140,11 @@ const ScanController = () => {
         scanStatus={scanStatus}
         resources={scanResult?.resources}
       />
+      {scanStatus && (
+        <Alert severity={alertSeverity[scanStatus] as AlertColor}>
+          {scanStatus}
+        </Alert>
+      )}
       {isWatching ? (
         <GpsFixedIcon sx={{ color: "darkgreen" }} />
       ) : (
@@ -138,14 +158,13 @@ const ScanController = () => {
           size="large"
           variant="contained"
           startIcon={<RadarIcon />}
-          disabled={scanStatus === "scanning" || scanStatus === "awaiting"}
+          disabled={scanStatus === "STARTED" || scanStatus === "AWAITING_GPS"}
         >
           Scan
         </Button>
       </div>
 
       <div id="actions">
-        {scanStatus}
         <List>
           {scanResult &&
             scanResult.interactableResources.map((r) => {
@@ -174,40 +193,13 @@ const ScanController = () => {
             })}
         </List>
       </div>
-
-      {scanResult && (
-        <div>
-          <List>
-            {scanResult.resources
-              ?.sort((a: any, b: any) => {
-                return a.distanceFromUser - b.distanceFromUser;
-              })
-              .map((r: any) => {
-                const shouldBold = r.distanceFromUser <= 100;
-                return (
-                  <ListItem
-                    key={r.id}
-                    style={{
-                      fontWeight: shouldBold ? "bold" : "normal",
-                      backgroundColor: r.userCanInteract
-                        ? "#2AFB09"
-                        : getDistanceColor(r.distanceFromUser),
-                    }}
-                  >
-                    {r.id} - {r.name} - {Math.round(r.distanceFromUser)}m away
-                  </ListItem>
-                );
-              })}
-          </List>
-        </div>
-      )}
     </>
   );
 };
 
-export default ScanController;
+export default GatherController;
 
-function getDistanceColor(dist: number) {
+/* function getDistanceColor(dist: number) {
   if (dist > 500) {
     return "#FFC285";
   } else if (dist > 400) {
@@ -223,4 +215,4 @@ function getDistanceColor(dist: number) {
   } else if (dist <= 75) {
     return "#B5FF85";
   }
-}
+} */

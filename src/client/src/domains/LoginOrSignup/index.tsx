@@ -1,5 +1,4 @@
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { useAuth } from "../../global/auth";
 import {
   Avatar,
   Box,
@@ -16,6 +15,7 @@ import { useToasty } from "../../components/Toasty";
 import { UserCredential } from "firebase/auth";
 import { LocationState } from "../../types";
 import { useFetch } from "../../global/useFetch";
+import { signIn, createUser } from "../../global/auth/firebase";
 
 type LoginOrSignupProps = {
   type: "login" | "signup";
@@ -23,7 +23,6 @@ type LoginOrSignupProps = {
 
 const LoginOrSignup = (props: LoginOrSignupProps) => {
   const { type } = props;
-  const { createUser, signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as LocationState;

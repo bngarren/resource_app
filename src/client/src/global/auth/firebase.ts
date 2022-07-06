@@ -6,6 +6,7 @@ import {
   signInWithEmailAndPassword,
   signOut as fbSignOut,
   onAuthStateChanged,
+  onIdTokenChanged,
   User,
   NextFn,
 } from "firebase/auth";
@@ -93,4 +94,8 @@ export const signOut = async () => {
 
 export const onAuthChange = (cb: NextFn<User | null>) => {
   return onAuthStateChanged(auth, cb);
+};
+
+export const onTokenChanged = (cb: NextFn<User | null>) => {
+  return onIdTokenChanged(auth, cb);
 };
