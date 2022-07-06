@@ -1,0 +1,130 @@
+{
+  "openapi" : "3.0.3",
+  "info" : {
+    "title" : "Resource App",
+    "description" : "This is for the Resource App server\n",
+    "termsOfService" : "http://swagger.io/terms/",
+    "version" : "1.0.1"
+  },
+  "servers" : [ {
+    "url" : "https://virtserver.swaggerhub.com/BNGARREN_1/resource-app/1.0.0"
+  } ],
+  "tags" : [ {
+    "name" : "Scan",
+    "description" : "Scanning for resources and interactables"
+  }, {
+    "name" : "Resources",
+    "description" : "Access to Resources"
+  }, {
+    "name" : "Users",
+    "description" : "Operations for users"
+  } ],
+  "paths" : {
+    "/scan" : {
+      "post" : {
+        "tags" : [ "Scan" ],
+        "summary" : "Performs the scan action for a user",
+        "description" : "A user (at a GPS location) scans and receives data about nearby resources and interactables",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/scan_body"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "A successful scan",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/inline_response_200"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "Coordinate" : {
+        "maxItems" : 2,
+        "minItems" : 2,
+        "type" : "array",
+        "items" : {
+          "oneOf" : [ {
+            "maximum" : 90,
+            "exclusiveMaximum" : true,
+            "minimum" : -90,
+            "exclusiveMinimum" : true,
+            "type" : "number",
+            "format" : "double"
+          }, {
+            "maximum" : 180,
+            "exclusiveMaximum" : true,
+            "minimum" : -180,
+            "exclusiveMinimum" : true,
+            "type" : "number",
+            "format" : "double"
+          } ]
+        }
+      },
+      "Resource" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "Region" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "scan_body" : {
+        "required" : [ "userPosition" ],
+        "type" : "object",
+        "properties" : {
+          "userPosition" : {
+            "$ref" : "#/components/schemas/Coordinate"
+          }
+        }
+      },
+      "inline_response_200" : {
+        "required" : [ "interactableResources", "regions", "resources" ],
+        "type" : "object",
+        "properties" : {
+          "resources" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Resource"
+            }
+          },
+          "regions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Region"
+            }
+          },
+          "interactableResources" : {
+            "type" : "array",
+            "items" : {
+              "type" : "number"
+            }
+          }
+        }
+      }
+    }
+  }
+}
