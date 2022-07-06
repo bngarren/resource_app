@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useGetUserInventoryQuery } from "../../global/state/apiSlice";
+import { useGetUserInventoryQuery } from "../../global/state/apiSlice.old";
 import GatherController from "./GatherController";
 import { useAuth } from "../../global/auth";
 import { Box, Paper } from "@mui/material";

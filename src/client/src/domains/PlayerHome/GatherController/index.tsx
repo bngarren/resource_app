@@ -15,7 +15,7 @@ import * as React from "react";
 import MapWrapper from "../../../components/MapWrapper";
 import { useGeoLocation } from "../../../global/useGeoLocation.new";
 import { UserPosition, ScanStatus } from "../../../types";
-import { useScanMutation } from "../../../global/state/apiSlice";
+import { useScanMutation } from "../../../global/state/apiSlice.old";
 
 const GatherController = () => {
   const { startWatcher, endWatcher, location, isWatching } = useGeoLocation();
