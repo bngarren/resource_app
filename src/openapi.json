@@ -7,7 +7,7 @@
     "version" : "1.0.1"
   },
   "servers" : [ {
-    "url" : "https://virtserver.swaggerhub.com/BNGARREN_1/resource-app/1.0.0"
+    "url" : "https://virtserver.swaggerhub.com/BNGARREN_1/resource-app/1.0.1"
   } ],
   "tags" : [ {
     "name" : "Scan",
@@ -57,21 +57,8 @@
         "minItems" : 2,
         "type" : "array",
         "items" : {
-          "oneOf" : [ {
-            "maximum" : 90,
-            "exclusiveMaximum" : true,
-            "minimum" : -90,
-            "exclusiveMinimum" : true,
-            "type" : "number",
-            "format" : "double"
-          }, {
-            "maximum" : 180,
-            "exclusiveMaximum" : true,
-            "minimum" : -180,
-            "exclusiveMinimum" : true,
-            "type" : "number",
-            "format" : "double"
-          } ]
+          "type" : "number",
+          "format" : "double"
         }
       },
       "Resource" : {
