@@ -1,5 +1,5 @@
 import { TransactionOrKnex } from "objection";
-import { addUser } from "../data/queries/queryUser";
+import { addUser, getInventoryItems } from "../data/queries/queryUser";
 import { logger } from "../logger";
 import UserModel from "../models/User";
 
@@ -36,4 +36,13 @@ export const handleCreateUser = async (
     return null;
   }
   return resultUser;
+};
+
+export const getInventoryItemsForUser = async (uuid: string) => {
+  try {
+    return await getInventoryItems(uuid);
+  } catch (error) {
+    logger.error(error);
+    return null;
+  }
 };

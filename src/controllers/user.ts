@@ -21,3 +21,23 @@ export const add = async (
     res.send(result);
   }
 };
+
+export const getInventoryItemsForUser = async (
+  req: Request<{ uuid: string }, unknown, unknown>,
+  res: Response
+) => {
+  const { uuid } = req.params;
+
+  if (!uuid) {
+    res.status(400).send("Need a user uuid to get the inventory");
+    return;
+  }
+
+  const result = await userService.getInventoryItemsForUser(uuid);
+
+  if (!result) {
+    res.sendStatus(500);
+  } else {
+    res.send(result);
+  }
+};

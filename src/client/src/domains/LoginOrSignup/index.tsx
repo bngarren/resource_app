@@ -69,7 +69,7 @@ const LoginOrSignup = (props: LoginOrSignupProps) => {
         const token = await fb_result.user.getIdToken();
         const db_result = await backendFetch(
           "POST",
-          "user/add",
+          "users/add",
           JSON.stringify(newUserJSON),
           token
         );

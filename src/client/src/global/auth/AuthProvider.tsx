@@ -19,6 +19,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = firebase.onAuthChange((user) => {
       if (user) {
         setUser(user);
+        console.log(user);
         // ...
       } else {
         setUser(null);
