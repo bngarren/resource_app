@@ -39,6 +39,26 @@
 
 # Project architecture
 
+## OpenApi
+- We are using OpenAPI to define our API's endpoints, operations on each endpoint, and schema for requests and responses to/from the API.
+   - See https://swagger.io/docs/specification/about/
+- Our API specification is now the **source of truth** for our backend (how each route should ultimately be handled) and frontend (how RTK query should make requests and receive responses in a typesafe way).
+- We also use **Swagger** which is a set of tools built around OpenAPI. Currently we are building the OpenApi spec on Swagger Hub and syncing this through GitHub to a `swaggerhub` branch which we can then merge with our develop branch to get the latest API specs.
+
+### Swagger/OpenAPI workflow
+> updated: 2022-07-06
+   - Use SwaggerHub to edit our API specification. This includes all endpoints, parameters, request bodies, responses, and HTTP error codes that the API should receive/send
+   - This will automatically sync (push to `swaggerhub` branch) a new openapi.json definition (`/src/openapi.json`)
+   - This branch can then be merged with `develop` to get this fresh API spec
+   - Then we can use the command `"npx @rtk-query/codegen-openapi openapi-config.ts"` within the /src directory to generate a new RTKQ API file from this API .json file.
+      - This codegen uses a config file, currently /src/openapi/openapi-config.ts, to determine which schema to use, which base API (skeleton createAPI from RTKQ) to build on, and where to output the generated file
+      - Ultimately this creates a openAPIGenerated.ts file, which is an RTKQ api (essentially an RTK slice that can be use in store)
+      - It also exports type definitions used in any schema
+   - Lastly from a client standpoint, we edit our appSlice.ts file which "enhances" the api by adding tags (ie caching invalidation), and exports our custom hooks (see RTKQ website for the naming convention)
+   - Now our client should have a fully typed RTK queries/mutations that hit our API endpoints with typed requests and responses based on our source of truth (OpenAPI spec)
+   - On the backend side, we can use the same OpenAPI spec and a run `"npx openapi-typescript openapi.json --output ./types/openapi.ts --support-array-length true --prettier-config ../.prettierrc"` to generate the same types for our backend
+      - See https://www.npmjs.com/package/openapi-typescript
+
 ## ORM, validation, and type safety
 - We are using **Objection.js** as our ORM (built on top of **Knex** query builder)
 - An Objection model (e.g. ResourceModel) defines the properties of the database row and provides a jsonSchema to validate the model data before any insert/update operation
@@ -79,6 +99,8 @@
    - When you authenticate, FB generates an ID token / refresh token pair and every hour continues to refresh the ID token on our behalf
 - To securely access our app's API endpoints, we will send our ID token within the HTTP request header
 
+
+
 # Current WIP 
-## 2022-07-02
-- Add create_user_table migration
+## 2022-07-06
+- Working on OpenApi spec for backend, using SwaggerHub and then RTK query codegen to make the api with typescript types
