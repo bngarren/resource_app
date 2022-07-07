@@ -21,15 +21,26 @@
       "post" : {
         "summary" : "Performs the scan action for a user",
         "description" : "A user (at a GPS location) scans and receives data about nearby resources and interactables",
+        "tags" : [ "Scan" ],
         "operationId" : "scan",
         "requestBody" : {
           "required" : true,
+          "description" : "A user position (latitude/longitude coordinates) is required to perform the scan.\nThis should be in the form of a tuple: [latitude, longitude]\n\nA user property with user data is optional (a scan doesn't have to be performed by an app user per se)\n",
           "content" : {
             "application/json" : {
               "schema" : {
                 "type" : "object",
                 "required" : [ "userPosition" ],
                 "properties" : {
+                  "user" : {
+                    "type" : "object",
+                    "required" : [ "uuid" ],
+                    "properties" : {
+                      "uuid" : {
+                        "type" : "string"
+                      }
+                    }
+                  },
                   "userPosition" : {
                     "$ref" : "#/components/schemas/Coordinate"
                   }
@@ -40,7 +51,7 @@
         },
         "responses" : {
           "200" : {
-            "description" : "A successful scan returns metadata and interactables.\n\n**Metadata** includes where the scan location occurred, timestamp, etc.\n\n**Interactables** can include resources, machines, etc. Each of which is an object that provides info on the position, distance from user, and whether the user can interact with it (i.e. is close enough to it)\n",
+            "description" : "A successful scan returns metadata and interactables.\n\nMetadata includes where the scan location occurred, timestamp, etc.\n\nInteractables can include resources, machines, etc. Each of which is an object\nthat provides info on the position, distance from user, and whether the user can\ninteract with it (i.e. is close enough to it)\n",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -48,7 +59,15 @@
                   "required" : [ "metadata", "interactables" ],
                   "properties" : {
                     "metadata" : {
-                      "type" : "object"
+                      "type" : "object",
+                      "properties" : {
+                        "scannedLocation" : {
+                          "$ref" : "#/components/schemas/Coordinate"
+                        },
+                        "timestamp" : {
+                          "type" : "string"
+                        }
+                      }
                     },
                     "interactables" : {
                       "type" : "object",
@@ -92,6 +111,7 @@
       },
       "Resource" : {
         "type" : "object",
+        "description" : "A Resource representation for server/client. It may mirror the ResourceModel and json schema used\nin the data access layer/ORM, but is separately defined here for the API.\n",
         "required" : [ "id", "name", "region_id", "h3Index" ],
         "properties" : {
           "id" : {
@@ -111,7 +131,7 @@
       },
       "Interactable" : {
         "type" : "object",
-        "description" : "An Interactable represents an object in the environment which a user can interact. \n\nThis could include a resource or a machine, for instance.\n\nAn Interactable object details:\n  - Where it is located (latitude, longitude)\n  - How far it is from the user (scan location)\n  - Whether the user can interact with it (i.e. is the user within range?)\n",
+        "description" : "An Interactable represents an object in the environment which a user can interact. \n\nThis could include a resource or a machine, for instance.\n\nAn Interactable object describes:\n  - Where it is located (latitude, longitude)\n  - How far it is from the user (scan location)\n  - Whether the user can interact with it (i.e. is the user within range?)\n",
         "required" : [ "position", "distanceFromUser", "userCanInteract" ],
         "properties" : {
           "position" : {
@@ -127,6 +147,7 @@
         }
       },
       "ScannedResource" : {
+        "description" : "An array of ScannedResources is returned to the client after a successful scan operation.\nThis object includes the properties of a Resource and additional information, e.g.,\nthe vertices of the hexagon for drawing.\n",
         "allOf" : [ {
           "$ref" : "#/components/schemas/Interactable"
         }, {
