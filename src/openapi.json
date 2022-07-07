@@ -90,6 +90,16 @@
           },
           "403" : {
             "$ref" : "#/components/responses/403NotAuthorized"
+          },
+          "default" : {
+            "description" : "Unexpected error",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
