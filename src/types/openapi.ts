@@ -6,46 +6,103 @@
 export interface paths {
   "/scan": {
     /** A user (at a GPS location) scans and receives data about nearby resources and interactables */
-    post: {
-      responses: {
-        /** A successful scan */
-        200: {
-          content: {
-            "application/json": components["schemas"]["inline_response_200"];
-          };
-        };
-      };
-      requestBody: {
-        content: {
-          "application/json": components["schemas"]["scan_body"];
-        };
-      };
-    };
+    post: operations["scan"];
   };
 }
 
 export interface components {
   schemas: {
-    Coordinate: [number | number, number | number];
+    Coordinate: [number, number];
     Resource: {
-      /** Format: int64 */
-      id?: number;
+      id: number;
+      name: string;
+      region_id: string;
+      h3Index: string;
     };
-    Region: {
-      /** Format: int64 */
-      id?: number;
+    /**
+     * @description An Interactable represents an object in the environment which a user can interact.
+     *
+     * This could include a resource or a machine, for instance.
+     *
+     * An Interactable object details:
+     *   - Where it is located (latitude, longitude)
+     *   - How far it is from the user (scan location)
+     *   - Whether the user can interact with it (i.e. is the user within range?)
+     */
+    Interactable: {
+      position: components["schemas"]["Coordinate"];
+      distanceFromUser: number;
+      userCanInteract: boolean;
+    };
+    ScannedResource: components["schemas"]["Interactable"] &
+      components["schemas"]["Resource"] & {
+        vertices?: number[][];
+      };
+    Error: {
+      code: string;
+      message: string;
     };
     scan_body: {
       userPosition: components["schemas"]["Coordinate"];
     };
     inline_response_200: {
-      resources: components["schemas"]["Resource"][];
-      regions: components["schemas"]["Region"][];
-      interactableResources: number[];
+      metadata: { [key: string]: unknown };
+      interactables: components["schemas"]["inline_response_200_interactables"];
+    };
+    /** @example null */
+    inline_response_200_interactables: {
+      scannedResources?: components["schemas"]["ScannedResource"][];
+    };
+  };
+  responses: {
+    /** The request was invalid */
+    "400BadRequest": {
+      content: {
+        "application/json": components["schemas"]["Error"];
+      };
+    };
+    /** Not authorized */
+    "403NotAuthorized": {
+      content: {
+        "application/json": components["schemas"]["Error"];
+      };
     };
   };
 }
 
-export interface operations {}
-
-export interface external {}
+export interface operations {
+  /** A user (at a GPS location) scans and receives data about nearby resources and interactables */
+  scan: {
+    responses: {
+      /**
+       * A successful scan returns metadata and interactables.
+       *
+       * **Metadata** includes where the scan location occurred, timestamp, etc.
+       *
+       * **Interactables** can include resources, machines, etc. Each of which is an object that provides info on the position, distance from user, and whether the user can interact with it (i.e. is close enough to it)
+       */
+      200: {
+        content: {
+          "application/json": components["schemas"]["inline_response_200"];
+        };
+      };
+      /** The request was invalid */
+      400: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** Not authorized */
+      403: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["scan_body"];
+      };
+    };
+  };
+}
