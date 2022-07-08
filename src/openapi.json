@@ -124,7 +124,7 @@
             "type" : "string"
           },
           "region_id" : {
-            "type" : "string"
+            "type" : "number"
           },
           "h3Index" : {
             "type" : "string"
@@ -160,7 +160,6 @@
           },
           "scannedRegions" : {
             "type" : "array",
-            "minItems" : 7,
             "items" : {
               "$ref" : "#/components/schemas/ScannedRegion"
             }
