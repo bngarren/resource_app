@@ -96,6 +96,12 @@ export interface operations {
       };
       400: components["responses"]["400BadRequest"];
       403: components["responses"]["403NotAuthorized"];
+      /** Unexpected error */
+      default: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
     };
     /**
      * A user position (latitude/longitude coordinates) is required to perform the scan.

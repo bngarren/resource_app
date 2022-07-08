@@ -30,6 +30,12 @@
 - `"seed": "knex seed:run --knexfile src/knexfile.ts"`
    - Seeds the database
 
+## custom sh scripts
+> updated: 2022-07-07
+- `generateTypes.sh`
+   - This script uses an OpenAPI spec to generate backend types and frontend RTK Query api and types. The former uses 'openapi-typescript' and the latter uses '@rtk-query/codegen-openapi'.
+   - File paths are defined within the script
+
 ## Project root files
 - **Procfile** - this is a file that Heroku uses to know how to start our app. It points to our entry point, i.e. dist/main.js
    - It also defines a release process which is run after the build is complete and can be used to run database migration
@@ -40,13 +46,15 @@
 # Project architecture
 
 ## OpenApi
+> updated: 2022-07-07
 - We are using OpenAPI to define our API's endpoints, operations on each endpoint, and schema for requests and responses to/from the API.
    - See https://swagger.io/docs/specification/about/
 - Our API specification is now the **source of truth** for our backend (how each route should ultimately be handled) and frontend (how RTK query should make requests and receive responses in a typesafe way).
 - We also use **Swagger** which is a set of tools built around OpenAPI. Currently we are building the OpenApi spec on Swagger Hub and syncing this through GitHub to a `swaggerhub` branch which we can then merge with our develop branch to get the latest API specs.
+- Typescript types can be automatically generated using CLI's from our OpenAPI spec for both backend and frontent (see below)
 
 ### Swagger/OpenAPI workflow
-> updated: 2022-07-06
+> updated: 2022-07-07
    - Use SwaggerHub to edit our API specification. This includes all endpoints, parameters, request bodies, responses, and HTTP error codes that the API should receive/send
    - This will automatically sync (push to `swaggerhub` branch) a new openapi.json definition (`/src/openapi.json`)
    - This branch can then be merged with `develop` to get this fresh API spec

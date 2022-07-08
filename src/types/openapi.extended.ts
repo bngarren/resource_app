@@ -3,6 +3,7 @@
 import { Request } from "express";
 import { Response } from "express-serve-static-core";
 import { operations } from "./openapi";
+import { StatusCodes } from "http-status-codes";
 
 /*
 This is not a generated file. We manually add types here to help use the generated types
@@ -38,19 +39,21 @@ type PayloadType<
  *
  * @param res Express Response object
  * @param _operationId OpenAPI's operation id
- * @param code HTTP code
+ * @param code HTTP code or "default"
  * @param payload response payload
  */
 export function resSendJson<
   operationType extends ApiOperations & string,
-  codeType extends keyof operations[operationType]["responses"] & number,
+  codeType extends keyof operations[operationType]["responses"] &
+    (number | "default" | StatusCodes),
   payloadType extends PayloadType<operationType, codeType>
 >(
   res: TypedResponse<operationType>,
   code: codeType,
   payload: payloadType
 ): Response {
-  return res.status(code).json(payload as unknown as any);
+  const sendCode = code === "default" ? 500 : code;
+  return res.status(sendCode).json(payload as unknown as any);
 }
 
 /**
@@ -62,9 +65,11 @@ export function resSendJson<
  */
 export function resSendStatus<
   operationType extends ApiOperations & string,
-  codeType extends keyof operations[operationType]["responses"] & number
+  codeType extends keyof operations[operationType]["responses"] &
+    (number | "default" | StatusCodes)
 >(res: TypedResponse<operationType>, code: codeType): Response {
-  return res.sendStatus(code);
+  const sendCode = code === "default" ? 500 : code;
+  return res.sendStatus(sendCode);
 }
 
 // REQUESTS

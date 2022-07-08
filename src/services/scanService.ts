@@ -18,11 +18,6 @@ import { ScanResult, ScanResultResource } from "../types/scanService.types";
 import { getAllSettled } from "../util/getAllSettled";
 import { handleCreateRegion, updateRegion } from "./regionService";
 
-//! TESTING ONLY
-export const handleScan = async () => {
-  return await getResourceById(1);
-};
-
 /**
  * Given a set of regions (from the scanned area) and a user position, this
  * function will generate subsequent data for each resource, such as,
@@ -63,35 +58,28 @@ const getResourceDataFromScannedRegions = async (
 };
 
 /**
- *
- * - Get the user's h3 index (resolution 9)
- * - Get kRing neighbors
+ * @description
+ * ### handleScan
+ * - Get the h3 index (resolution 9) of the scanned location (position)
+ * - Get kRing neighbors (essentially the scan distance)
  * - Server should create new regions, if needed
  * - Update each region (and repopulate resources, if needed)
- * - Determine if user's position is currently within a resource h3 hexagon (resolution 11)
- * - Find user equipment within the scanned regions
- * - Determine if user's position is currently within an equipment h3 hexagon
+ * - Determine if the scanned position is currently within range of any interactables (resources, equipment, etc.)
  *
- * Return to the user: List of scanned resources, distances/direction to each, option to mine resource,
- * option to pick up equipment
  *
  * @param userId
- * @param userPosition
- * @returns A ScanResult, or -1 if there was an error
+ * @param position
+ * @returns A ScanResult
  */
-export const handleScanByUserAtLocation = async (
-  userId: number,
-  userPosition: UserPosition,
-  scanDistance = 1
+export const handleScan = async (
+  position: UserPosition,
+  scanDistance = 1,
+  userId?: string
 ) => {
   // Get the h3 index based on the user's position
-  const h3Index = h3.geoToH3(
-    userPosition[0],
-    userPosition[1],
-    REGION_H3_RESOLUTION
-  );
+  const h3Index = h3.geoToH3(position[0], position[1], REGION_H3_RESOLUTION);
 
-  logger.debug("userPosition: %o", userPosition);
+  logger.debug("userPosition: %o", position);
 
   // Get the 6 neighbors plus the user's h3 (7 total)
   const h3Group = h3.kRing(h3Index, scanDistance);
@@ -142,7 +130,7 @@ export const handleScanByUserAtLocation = async (
     // - - - - - Get the resources of the scan - - - - -
     const resourceData = await getResourceDataFromScannedRegions(
       regions,
-      userPosition
+      position
     );
 
     // Which resources can be interacted with?
@@ -161,6 +149,6 @@ export const handleScanByUserAtLocation = async (
     return scanResult;
   } catch (error) {
     if (error instanceof Error) logger.error(error.message);
-    return -1;
+    throw error;
   }
 };
