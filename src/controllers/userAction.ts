@@ -1,9 +1,10 @@
+import { logger } from "./../logger/index";
 import {
   resSendJson,
   resSendStatus,
   TypedRequest,
   TypedResponse,
-} from "./../types/openapi.extended";
+} from "../types/openapi.extended";
 import { SCAN_DISTANCE } from "../constants";
 import { scanService } from "../services";
 import { StatusCodes } from "http-status-codes";
@@ -29,13 +30,15 @@ export const scan = async (
   const uuid = user?.uuid;
 
   try {
-    const result = await scanService.handleScan(
+    const scanResult = await scanService.handleScan(
       userPosition,
       SCAN_DISTANCE,
       uuid
     );
-    resSendStatus(res, StatusCodes.OK);
+    logger.info("sending successful scan result back to client");
+    resSendJson(res, StatusCodes.OK, scanResult);
   } catch (error) {
+    logger.error(error, "status 500 unexpected error");
     resSendJson(res, "default", {
       code: "500",
       message: "Unexpected server error during /scan",

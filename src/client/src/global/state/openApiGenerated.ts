@@ -20,15 +20,7 @@ Metadata includes where the scan location occurred, timestamp, etc.
 Interactables can include resources, machines, etc. Each of which is an object
 that provides info on the position, distance from user, and whether the user can
 interact with it (i.e. is close enough to it)
- */ {
-    metadata: {
-      scannedLocation?: Coordinate;
-      timestamp?: string;
-    };
-    interactables: {
-      scannedResources?: ScannedResource[];
-    };
-  };
+ */ ScanResult;
 export type ScanArg = {
   /** A user position (latitude/longitude coordinates) is required to perform the scan.
     This should be in the form of a tuple: [latitude, longitude]
@@ -51,13 +43,29 @@ export type Interactable = {
 export type Resource = {
   id: number;
   name: string;
-  region_id: string;
+  region_id: number;
   h3Index: string;
 };
 export type ScannedResource = Interactable &
   Resource & {
     vertices?: number[][];
   };
+export type Region = {
+  id: number;
+  h3Index: string;
+  reset_date: string;
+};
+export type ScannedRegion = Region;
+export type ScanResult = {
+  metadata: {
+    scannedLocation?: Coordinate;
+    timestamp?: string;
+  };
+  interactables: {
+    scannedResources: ScannedResource[];
+  };
+  scannedRegions: ScannedRegion[];
+};
 export type Error = {
   code: string;
   message: string;

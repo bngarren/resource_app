@@ -57,7 +57,7 @@ export function resSendJson<
 }
 
 /**
- * Send response with status code 204, without payload.
+ * Send response with status code, without payload.
  *
  * @param res Express Response object
  * @param _operationId OpenAPI's operation id

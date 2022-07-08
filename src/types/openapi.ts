@@ -14,14 +14,33 @@ export interface components {
   schemas: {
     Coordinate: [number, number];
     /**
+     * @description A Region representation for server/client. It may mirror the RegionModel and json schema used
+     * in the data access layer/ORM, but is separately defined here for the API.
+     */
+    Region: {
+      id: number;
+      h3Index: string;
+      reset_date: string;
+    };
+    /**
      * @description A Resource representation for server/client. It may mirror the ResourceModel and json schema used
      * in the data access layer/ORM, but is separately defined here for the API.
      */
     Resource: {
       id: number;
       name: string;
-      region_id: string;
+      region_id: number;
       h3Index: string;
+    };
+    ScanResult: {
+      metadata: {
+        scannedLocation?: components["schemas"]["Coordinate"];
+        timestamp?: string;
+      };
+      interactables: {
+        scannedResources: components["schemas"]["ScannedResource"][];
+      };
+      scannedRegions: components["schemas"]["ScannedRegion"][];
     };
     /**
      * @description An Interactable represents an object in the environment which a user can interact.
@@ -47,6 +66,11 @@ export interface components {
       components["schemas"]["Resource"] & {
         vertices?: number[][];
       };
+    /**
+     * @description An array of ScannedRegions is returned to the client after a successful scan operation.
+     * The ScannedRegion object contains properties of the Region in the scan area
+     */
+    ScannedRegion: components["schemas"]["Region"];
     Error: {
       code: string;
       message: string;
@@ -83,15 +107,7 @@ export interface operations {
        */
       200: {
         content: {
-          "application/json": {
-            metadata: {
-              scannedLocation?: components["schemas"]["Coordinate"];
-              timestamp?: string;
-            };
-            interactables: {
-              scannedResources?: components["schemas"]["ScannedResource"][];
-            };
-          };
+          "application/json": components["schemas"]["ScanResult"];
         };
       };
       400: components["responses"]["400BadRequest"];

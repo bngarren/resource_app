@@ -95,7 +95,7 @@ const GatherController = () => {
       })
       .catch((error) => {
         setScanStatus("ERRORED");
-        console.error(error.data);
+        console.error(error);
       });
   }, [scan, isWatching, location, startWatcher]);
 

@@ -1,5 +1,4 @@
 import { handleScan } from "../src/services/scanService";
-import { UserPosition } from "../src/types";
 import { setupDB } from "../src/data/db";
 import { Knex } from "knex";
 import config from "../src/config";
@@ -11,6 +10,7 @@ import ResourceModel from "../src/models/Resource";
 import { handleCreateResource } from "../src/services/resourceService";
 import RegionModel from "../src/models/Region";
 import { handleCreateRegion } from "../src/services/regionService";
+import { Coordinate } from "../src/types";
 
 // externally validated h3Index's (resolution 9) with
 // kRing distance of 1 (first element is center)
@@ -25,7 +25,7 @@ const MOCK_DATA = {
     "892830829dbffff",
     "892830828afffff",
   ],
-  userPosition: [37.777493908651344, -122.42904243437428] as UserPosition,
+  userPosition: [37.777493908651344, -122.42904243437428] as Coordinate,
 };
 
 let db: Knex;
@@ -46,11 +46,11 @@ afterEach(async () => {
 });
 
 // TODO Some big side effects
-// Since no resources are seeded, each time that handleScanByUserAtLocation
+// Since no resources are seeded, each time that handleScan
 // fires it also calls updateRegion on region's that have
 // no resources, so they are created
 // * We could mock the create resource function??
-describe("handleScanByUserAtLocation()", () => {
+describe("handleScan()", () => {
   //
   describe("when no associated regions exist in the database", () => {
     //
@@ -58,7 +58,7 @@ describe("handleScanByUserAtLocation()", () => {
       expect(getRegionsFromH3Array(MOCK_DATA.h3Group)).resolves.toHaveLength(0);
 
       try {
-        await handleScan(MOCK_DATA.userPosition);
+        await handleScan(MOCK_DATA.userPosition, 1);
 
         const regions = await getRegionsFromH3Array(MOCK_DATA.h3Group);
         expect(regions).toHaveLength(7);
@@ -94,19 +94,18 @@ describe("handleScanByUserAtLocation()", () => {
   });
   describe("when the scan result is returned", () => {
     //
-    it("includes `regions` with each region having an `updated_at` of now", async () => {
+    it("includes `scannedRegions` with each region having an `id'", async () => {
       try {
         const result = await handleScan(MOCK_DATA.userPosition);
-        const region1 = result.regions[0];
-        const now = new Date();
-        const updated_at = new Date(region1.updated_at || 1);
-        expectDatesAreCloseEnough(now, updated_at);
+        const region1 = result.scannedRegions[0];
+        expect(region1).toBeTruthy();
+        expect(region1.id).not.toBeUndefined();
       } catch (err) {
         return false;
       }
     });
     it("includes the number of regions equal to the number of h3 indexes in the scan area", async () => {
-      const scanDistance = 1;
+      const scanDistance = 1; // should produced 7 regions
       try {
         const scanResult = await handleScan(
           MOCK_DATA.userPosition,
@@ -118,7 +117,7 @@ describe("handleScanByUserAtLocation()", () => {
           REGION_H3_RESOLUTION
         );
         const h3Group = h3.kRing(h3Index, scanDistance);
-        expect(scanResult.regions).toHaveLength(h3Group.length);
+        expect(scanResult.scannedRegions).toHaveLength(h3Group.length);
       } catch (err) {
         return false;
       }
@@ -136,9 +135,9 @@ describe("handleScanByUserAtLocation()", () => {
         .$relatedQuery<ResourceModel>("resources")
         .first();
       if (resource == null) return false;
-      const userPosition = h3.h3ToGeo(resource.h3Index);
-      // the user scans and is not near the resource
+      const userPosition = h3.h3ToGeo(resource.h3Index) as Coordinate;
       try {
+        // the user scans and is not near the resource
         const scanResult_far = await handleScan(MOCK_DATA.userPosition, 1);
         // the user scans and is within the resource
         const scanResult_close = await handleScan(userPosition, 1);
