@@ -5,7 +5,7 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/scan`,
         method: "POST",
-        body: queryArg.scanBody,
+        body: queryArg.body,
       }),
     }),
   }),
@@ -18,9 +18,16 @@ export type ScanResponse =
 **Metadata** includes where the scan location occurred, timestamp, etc.
 
 **Interactables** can include resources, machines, etc. Each of which is an object that provides info on the position, distance from user, and whether the user can interact with it (i.e. is close enough to it)
- */ InlineResponse200;
+ */ {
+    metadata: object;
+    interactables: {
+      scannedResources?: ScannedResource[];
+    };
+  };
 export type ScanArg = {
-  scanBody: ScanBody;
+  body: {
+    userPosition: Coordinate;
+  };
 };
 export type Coordinate = number[];
 export type Interactable = {
@@ -38,17 +45,7 @@ export type ScannedResource = Interactable &
   Resource & {
     vertices?: number[][];
   };
-export type InlineResponse200Interactables = {
-  scannedResources?: ScannedResource[];
-};
-export type InlineResponse200 = {
-  metadata: object;
-  interactables: InlineResponse200Interactables;
-};
 export type Error = {
   code: string;
   message: string;
-};
-export type ScanBody = {
-  userPosition: Coordinate;
 };

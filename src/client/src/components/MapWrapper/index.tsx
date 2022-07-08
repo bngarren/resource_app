@@ -12,7 +12,7 @@ import { UserIcon } from "./userIcon";
 import { RadarIcon } from "./radarIcon";
 import { MapContainer, ZoomControl } from "react-leaflet";
 import { SCAN_DISTANCE_METERS } from "@backend/constants";
-import { Resource, ScanStatus, UserPosition } from "../../types";
+import { APITypes, ScanStatus, UserPosition } from "../../types";
 import {
   Backdrop,
   Box,
@@ -124,7 +124,7 @@ const MapInitialization = ({ position }: MapInitializationProps) => {
 };
 
 type UserMarkerProps = {
-  position: LatLngExpression | null;
+  position: LatLngTuple | null;
   isScanning: boolean;
 };
 
@@ -188,7 +188,7 @@ const RadarMarker = React.memo(({ position, visible }: RadarMarkerProps) => {
 RadarMarker.displayName = "RadarMarker";
 
 type ScanAreaProps = {
-  position: LatLngExpression | null;
+  position: LatLngTuple | null;
 };
 
 /**
@@ -219,7 +219,7 @@ type MapWrapperProps = {
   initLocation?: GeolocationCoordinates | null;
   userPosition?: UserPosition;
   scanStatus?: ScanStatus;
-  resources?: Resource[];
+  resources?: APITypes.ScannedResource[];
 };
 
 const MapWrapper = React.memo(
@@ -283,7 +283,7 @@ const MapWrapper = React.memo(
                 resources.map((r) => {
                   return (
                     <Polygon
-                      positions={r.vertices}
+                      positions={r.vertices as [number, number][]}
                       pathOptions={{
                         color: r.userCanInteract ? "#2AFB09" : "purple",
                       }}

@@ -14,7 +14,6 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useToasty } from "../../components/Toasty";
 import { UserCredential } from "firebase/auth";
 import { LocationState } from "../../types";
-import { useFetch } from "../../global/useFetch";
 import { signIn, createUser } from "../../global/auth/firebase";
 
 type LoginOrSignupProps = {
@@ -27,8 +26,6 @@ const LoginOrSignup = (props: LoginOrSignupProps) => {
   const location = useLocation();
   const locationState = location.state as LocationState;
   const from = locationState?.from || "/home";
-
-  const { backendFetch } = useFetch();
 
   const { openToasty } = useToasty();
 
@@ -63,19 +60,7 @@ const LoginOrSignup = (props: LoginOrSignupProps) => {
       };
 
       try {
-        // Get the newly created firebase user's token. We can't use the one that useFetch would also
-        // try to obtain because it won't have had time to get it yet
-        const token = await fb_result.user.getIdToken();
-        const db_result = await backendFetch(
-          "POST",
-          "users/add",
-          JSON.stringify(newUserJSON),
-          token
-        );
-        // Problem on our api end of things...
-        if (db_result instanceof Error) {
-          throw db_result;
-        }
+        //! TODO
         // Success...
         openToasty(
           "You are in! Get out there and find some resources!",

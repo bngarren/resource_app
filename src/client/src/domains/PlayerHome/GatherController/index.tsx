@@ -14,8 +14,8 @@ import GpsOffIcon from "@mui/icons-material/GpsOff";
 import * as React from "react";
 import MapWrapper from "../../../components/MapWrapper";
 import { useGeoLocation } from "../../../global/useGeoLocation.new";
-import { UserPosition, ScanStatus } from "../../../types";
-import { useScanMutation } from "../../../global/state/apiSlice.old";
+import { UserPosition, ScanStatus, APITypes } from "../../../types";
+import { useScanMutation } from "../../../global/state/apiSlice";
 
 const GatherController = () => {
   const { startWatcher, endWatcher, location, isWatching } = useGeoLocation();
@@ -75,7 +75,7 @@ const GatherController = () => {
 
     // RTK query
     // Perform the scan query then use unwrap() to get the promised result
-    scan(userPosition)
+    scan({ body: { userPosition } })
       .unwrap()
       .then(() => {
         // Calculate remaining animation time
@@ -138,7 +138,7 @@ const GatherController = () => {
         initLocation={initLocation.current}
         userPosition={lastScannedLocation}
         scanStatus={scanStatus}
-        resources={scanResult?.resources}
+        resources={scanResult?.interactables.scannedResources}
       />
       {scanStatus && (
         <Alert severity={alertSeverity[scanStatus] as AlertColor}>
@@ -162,36 +162,6 @@ const GatherController = () => {
         >
           Scan
         </Button>
-      </div>
-
-      <div id="actions">
-        <List>
-          {scanResult &&
-            scanResult.interactableResources.map((r) => {
-              const resource = scanResult?.resources?.find(
-                (f: any) => f.id === r
-              );
-
-              if (resource != null)
-                return (
-                  <ListItem key={resource.id}>
-                    <Stack direction="row" spacing={2} alignItems="center">
-                      <Typography variant="body1">
-                        You have found <b>{resource.name}</b>!
-                      </Typography>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="success"
-                        startIcon={<HardwareIcon />}
-                      >
-                        Harvest
-                      </Button>
-                    </Stack>
-                  </ListItem>
-                );
-            })}
-        </List>
       </div>
     </>
   );
