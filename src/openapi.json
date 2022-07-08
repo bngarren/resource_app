@@ -71,7 +71,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Error"
+                  "$ref" : "#/components/schemas/HttpError"
                 }
               }
             }
@@ -222,7 +222,7 @@
           "$ref" : "#/components/schemas/Region"
         } ]
       },
-      "Error" : {
+      "HttpError" : {
         "type" : "object",
         "properties" : {
           "code" : {
@@ -241,7 +241,7 @@
         "content" : {
           "application/json" : {
             "schema" : {
-              "$ref" : "#/components/schemas/Error"
+              "$ref" : "#/components/schemas/HttpError"
             }
           }
         }
@@ -251,7 +251,7 @@
         "content" : {
           "application/json" : {
             "schema" : {
-              "$ref" : "#/components/schemas/Error"
+              "$ref" : "#/components/schemas/HttpError"
             }
           }
         }
