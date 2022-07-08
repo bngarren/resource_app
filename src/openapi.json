@@ -71,7 +71,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/HttpError"
+                  "$ref" : "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -222,7 +222,7 @@
           "$ref" : "#/components/schemas/Region"
         } ]
       },
-      "HttpError" : {
+      "ErrorResponse" : {
         "type" : "object",
         "properties" : {
           "code" : {
@@ -241,7 +241,7 @@
         "content" : {
           "application/json" : {
             "schema" : {
-              "$ref" : "#/components/schemas/HttpError"
+              "$ref" : "#/components/schemas/ErrorResponse"
             }
           }
         }
@@ -251,7 +251,7 @@
         "content" : {
           "application/json" : {
             "schema" : {
-              "$ref" : "#/components/schemas/HttpError"
+              "$ref" : "#/components/schemas/ErrorResponse"
             }
           }
         }
