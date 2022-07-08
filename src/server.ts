@@ -5,6 +5,7 @@ import routes from "./routes";
 import config from "./config";
 import { logRequest } from "./middleware/logRequest";
 import firebaseAuthentication from "./middleware/firebaseAuthentication";
+import { errorHandler } from "./middleware/errorHandler";
 
 const CORS_OPTIONS = {
   origin: config.cors_allowed_origins,
@@ -26,5 +27,7 @@ app.get("/", (req, res) => res.send(`Backend is working!`));
 app.use(firebaseAuthentication);
 
 app.use("/api", routes);
+
+app.use(errorHandler);
 
 export default app;

@@ -1,9 +1,10 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-nocheck Still some type errors in this file that need to be worked out
+@ts-nocheck Still some type errors in this file that need to be worked out
 import { Request } from "express";
 import { Response } from "express-serve-static-core";
 import { operations } from "./openapi";
 import { StatusCodes } from "http-status-codes";
+import { HttpError } from "../util/errors"
 
 /*
 This is not a generated file. We manually add types here to help use the generated types
@@ -27,7 +28,7 @@ export type TypedResponse<T extends ApiOperations> = Response<ResponseType<T>>;
 
 type PayloadType<
   operationType extends ApiOperations & string,
-  codeType extends keyof operations[operationType]["responses"] & number
+  codeType extends keyof operations[operationType]["responses"] & (number | "default" | StatusCodes)
 > = "content" extends keyof operations[operationType]["responses"][codeType]
   ? "application/json" extends keyof operations[operationType]["responses"][codeType]["content"]
     ? operations[operationType]["responses"][codeType]["content"]["application/json"]
@@ -52,8 +53,11 @@ export function resSendJson<
   code: codeType,
   payload: payloadType
 ): Response {
-  const sendCode = code === "default" ? 500 : code;
-  return res.status(sendCode).json(payload as unknown as any);
+  if (code === "default"){
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(payload as unknown as any);
+  } else {
+    return res.status(code).json(payload as unknown as any);
+  }
 }
 
 /**
@@ -68,9 +72,29 @@ export function resSendStatus<
   codeType extends keyof operations[operationType]["responses"] &
     (number | "default" | StatusCodes)
 >(res: TypedResponse<operationType>, code: codeType): Response {
-  const sendCode = code === "default" ? 500 : code;
-  return res.sendStatus(sendCode);
+  if (code === "default") {
+    return res.sendStatus(StatusCodes.INTERNAL_SERVER_ERROR);
+  } else {
+    return res.sendStatus(code);
+  }
 }
+
+// ERRORS
+export const newTypedHttpError = <
+  operationType extends ApiOperations & string,
+  codeType extends keyof operations[operationType]["responses"] &
+    (number | "default" | StatusCodes),
+  payloadType extends PayloadType<operationType, codeType>
+>(
+  code: codeType,
+  payload: payloadType
+): HttpError => {
+  if (code === "default") {
+    return new HttpError(StatusCodes.INTERNAL_SERVER_ERROR, payload)
+  } else {
+    return new HttpError(code, payload)
+  }
+};
 
 // REQUESTS
 

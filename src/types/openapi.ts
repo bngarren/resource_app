@@ -40,6 +40,10 @@ export interface components {
       interactables: {
         scannedResources: components["schemas"]["ScannedResource"][];
       };
+      canInteractWith: {
+        /** @description An array of Resource id's that satisfy the userCanInteract boolean, i.e. the user is close enough */
+        scannedResources?: number[];
+      };
       scannedRegions: components["schemas"]["ScannedRegion"][];
     };
     /**
@@ -71,7 +75,7 @@ export interface components {
      * The ScannedRegion object contains properties of the Region in the scan area
      */
     ScannedRegion: components["schemas"]["Region"];
-    Error: {
+    HttpError: {
       code: string;
       message: string;
     };
@@ -80,13 +84,13 @@ export interface components {
     /** The request was invalid */
     "400BadRequest": {
       content: {
-        "application/json": components["schemas"]["Error"];
+        "application/json": components["schemas"]["HttpError"];
       };
     };
     /** Not authorized */
     "403NotAuthorized": {
       content: {
-        "application/json": components["schemas"]["Error"];
+        "application/json": components["schemas"]["HttpError"];
       };
     };
   };
@@ -115,7 +119,7 @@ export interface operations {
       /** Unexpected error */
       default: {
         content: {
-          "application/json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["HttpError"];
         };
       };
     };

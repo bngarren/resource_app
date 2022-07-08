@@ -3,6 +3,9 @@ import { getAuth, signInWithCustomToken, Auth } from "firebase/auth";
 import request from "supertest";
 import app from "../src/server";
 import { fbAuth as fbAdminAuth } from "../src/auth/firebase-admin";
+import { Knex } from "knex";
+import { setupDB } from "../src/data/db";
+import config from "../src/config";
 
 describe("GET /", () => {
   //
@@ -18,6 +21,24 @@ describe("GET /api", () => {
     const result = await request(app).get("/api");
     expect(result.statusCode).toEqual(401);
   });
+});
+
+// For the below tests, since we are hitting the real API, we need to setup a database connection for our tests
+let db: Knex;
+
+beforeAll(async () => {
+  db = setupDB(config.node_env || "test", true) as Knex;
+  await db.migrate.rollback();
+  await db.migrate.latest();
+});
+
+afterAll(async () => {
+  await db.destroy();
+});
+
+afterEach(async () => {
+  await db("resources").del();
+  await db("regions").del();
 });
 
 describe("for authorized requests", () => {
@@ -44,11 +65,11 @@ describe("for authorized requests", () => {
 
   describe("POST /scan", () => {
     //
-    it.skip("should return status 200 (OK) if succesful", async () => {
+    it("should return status 200 (OK) if succesful", async () => {
       await request(app)
         .post("/api/scan")
         .send({
-          userPosition: [71, -100],
+          userPosition: [42.3385453, -71.1193614],
         })
         .set("Authorization", `Bearer ${token}`)
         .expect(200);

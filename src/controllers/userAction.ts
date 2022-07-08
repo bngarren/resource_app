@@ -1,7 +1,8 @@
+import { HttpError } from "./../util/errors";
+import { NextFunction } from "express";
 import { logger } from "./../logger/index";
 import {
   resSendJson,
-  resSendStatus,
   TypedRequest,
   TypedResponse,
 } from "../types/openapi.extended";
@@ -14,16 +15,16 @@ import { StatusCodes } from "http-status-codes";
  */
 export const scan = async (
   req: TypedRequest<"scan">,
-  res: TypedResponse<"scan">
+  res: TypedResponse<"scan">,
+  next: NextFunction
 ) => {
   const { user, userPosition } = req.body;
 
   // Validate request
   if (!userPosition || userPosition.length !== 2) {
-    resSendJson(res, StatusCodes.BAD_REQUEST, {
-      code: "400",
-      message: "Invalid or missing user position",
-    });
+    next(
+      new HttpError(StatusCodes.BAD_REQUEST, "Invalid or missing user position")
+    );
     return;
   }
 
@@ -35,13 +36,9 @@ export const scan = async (
       SCAN_DISTANCE,
       uuid
     );
-    logger.info("sending successful scan result back to client");
     resSendJson(res, StatusCodes.OK, scanResult);
   } catch (error) {
-    logger.error(error, "status 500 unexpected error");
-    resSendJson(res, "default", {
-      code: "500",
-      message: "Unexpected server error during /scan",
-    });
+    logger.error(error, "Sending a status 500 unexpected error");
+    next(error);
   }
 };

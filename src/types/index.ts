@@ -13,3 +13,4 @@ export type Interactable = APISchemas["Interactable"];
 export type ScannedResource = APISchemas["ScannedResource"];
 export type ScannedRegion = APISchemas["ScannedRegion"];
 export type ScanResult = APISchemas["ScanResult"];
+export type HttpError = APISchemas["HttpError"];

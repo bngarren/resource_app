@@ -115,6 +115,8 @@ export const handleScan = async (
   // If empty, should return [], not undefined
   const existingRegions = await getRegionsFromH3Array(h3Group);
 
+  console.log(existingRegions);
+
   if (existingRegions == null) {
     throw new Error("Could not get regions from h3 array");
   }
@@ -168,6 +170,9 @@ export const handleScan = async (
     scannedRegions: [],
     interactables: {
       scannedResources: resourceData,
+    },
+    canInteractWith: {
+      scannedResources: interactableResources,
     },
   };
 

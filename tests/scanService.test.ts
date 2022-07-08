@@ -122,7 +122,7 @@ describe("handleScan()", () => {
         return false;
       }
     });
-    it("includes an array of interactable resources (by id) if the user is close enough to a resource", async () => {
+    it("includes a 'canInteractWith' object that includes interactable scanned resources (by id) if the user is close enough to a resource", async () => {
       // Create region with resources
       const region = await handleCreateRegion(
         {
@@ -141,10 +141,10 @@ describe("handleScan()", () => {
         const scanResult_far = await handleScan(MOCK_DATA.userPosition, 1);
         // the user scans and is within the resource
         const scanResult_close = await handleScan(userPosition, 1);
-        expect(scanResult_close.interactableResources).toEqual(
+        expect(scanResult_close.canInteractWith.scannedResources).toEqual(
           expect.arrayContaining([resource.id])
         );
-        expect(scanResult_far.interactableResources).not.toEqual(
+        expect(scanResult_far.canInteractWith.scannedResources).not.toEqual(
           expect.arrayContaining([resource.id])
         );
       } catch (err) {

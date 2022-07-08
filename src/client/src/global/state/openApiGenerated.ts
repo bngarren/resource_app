@@ -64,9 +64,12 @@ export type ScanResult = {
   interactables: {
     scannedResources: ScannedResource[];
   };
+  canInteractWith: {
+    scannedResources?: number[];
+  };
   scannedRegions: ScannedRegion[];
 };
-export type Error = {
+export type HttpError = {
   code: string;
   message: string;
 };
