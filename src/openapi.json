@@ -133,7 +133,7 @@
       },
       "ScanResult" : {
         "type" : "object",
-        "required" : [ "metadata", "interactables", "scannedRegions" ],
+        "required" : [ "metadata", "interactables", "canInteractWith", "scannedRegions" ],
         "properties" : {
           "metadata" : {
             "type" : "object",
@@ -154,6 +154,18 @@
                 "type" : "array",
                 "items" : {
                   "$ref" : "#/components/schemas/ScannedResource"
+                }
+              }
+            }
+          },
+          "canInteractWith" : {
+            "type" : "object",
+            "properties" : {
+              "scannedResources" : {
+                "description" : "An array of Resource id's that satisfy the userCanInteract boolean, i.e. the user is close enough",
+                "type" : "array",
+                "items" : {
+                  "type" : "number"
                 }
               }
             }
