@@ -55,32 +55,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "object",
-                  "required" : [ "metadata", "interactables" ],
-                  "properties" : {
-                    "metadata" : {
-                      "type" : "object",
-                      "properties" : {
-                        "scannedLocation" : {
-                          "$ref" : "#/components/schemas/Coordinate"
-                        },
-                        "timestamp" : {
-                          "type" : "string"
-                        }
-                      }
-                    },
-                    "interactables" : {
-                      "type" : "object",
-                      "properties" : {
-                        "scannedResources" : {
-                          "type" : "array",
-                          "items" : {
-                            "$ref" : "#/components/schemas/ScannedResource"
-                          }
-                        }
-                      }
-                    }
-                  }
+                  "$ref" : "#/components/schemas/ScanResult"
                 }
               }
             }
@@ -119,6 +94,23 @@
           "format" : "double"
         }
       },
+      "Region" : {
+        "type" : "object",
+        "description" : "A Region representation for server/client. It may mirror the RegionModel and json schema used\nin the data access layer/ORM, but is separately defined here for the API.\n",
+        "required" : [ "id", "h3Index", "reset_date" ],
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "readOnly" : true
+          },
+          "h3Index" : {
+            "type" : "string"
+          },
+          "reset_date" : {
+            "type" : "string"
+          }
+        }
+      },
       "Resource" : {
         "type" : "object",
         "description" : "A Resource representation for server/client. It may mirror the ResourceModel and json schema used\nin the data access layer/ORM, but is separately defined here for the API.\n",
@@ -136,6 +128,42 @@
           },
           "h3Index" : {
             "type" : "string"
+          }
+        }
+      },
+      "ScanResult" : {
+        "type" : "object",
+        "required" : [ "metadata", "interactables", "scannedRegions" ],
+        "properties" : {
+          "metadata" : {
+            "type" : "object",
+            "properties" : {
+              "scannedLocation" : {
+                "$ref" : "#/components/schemas/Coordinate"
+              },
+              "timestamp" : {
+                "type" : "string"
+              }
+            }
+          },
+          "interactables" : {
+            "type" : "object",
+            "required" : [ "scannedResources" ],
+            "properties" : {
+              "scannedResources" : {
+                "type" : "array",
+                "items" : {
+                  "$ref" : "#/components/schemas/ScannedResource"
+                }
+              }
+            }
+          },
+          "scannedRegions" : {
+            "type" : "array",
+            "minItems" : 7,
+            "items" : {
+              "$ref" : "#/components/schemas/ScannedRegion"
+            }
           }
         }
       },
@@ -175,6 +203,12 @@
               }
             }
           }
+        } ]
+      },
+      "ScannedRegion" : {
+        "description" : "An array of ScannedRegions is returned to the client after a successful scan operation.\nThe ScannedRegion object contains properties of the Region in the scan area\n",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Region"
         } ]
       },
       "Error" : {
