@@ -1,20 +1,27 @@
-import { Request, Response } from "express";
+import {
+  resSendJson,
+  TypedRequest,
+  TypedResponse,
+} from "./../types/openapi.extended";
 import httpStatus from "http-status";
 import { SCAN_DISTANCE } from "../constants";
 import { scanService } from "../services";
-import { ScanRequest } from "../types";
 
+/**
+ * POST /scan
+ */
 export const scan = async (
-  req: Request<unknown, unknown, ScanRequest>,
-  res: Response
+  req: TypedRequest<"scan">,
+  res: TypedResponse<"scan">
 ) => {
   const { userPosition } = req.body;
 
   // Validate request
   if (!userPosition) {
-    res
-      .status(httpStatus.BAD_REQUEST)
-      .json({ message: `Invalid userPosition: ${userPosition}` });
+    resSendJson(res, 400, {
+      code: "400",
+      message: "Invalid or missing user position",
+    });
     return;
   }
 
