@@ -59,6 +59,7 @@
       - It also exports type definitions used in any schema
    - Lastly from a client standpoint, we edit our appSlice.ts file which "enhances" the api by adding tags (ie caching invalidation), and exports our custom hooks (see RTKQ website for the naming convention)
    - Now our client should have a fully typed RTK queries/mutations that hit our API endpoints with typed requests and responses based on our source of truth (OpenAPI spec)
+   - **WORKFLOW**: I've made a /scripts folder at the project root that has a `generateTypes.sh` that will run the above openapi-typescript and @rtk-query/codegen-openapi CLI's to make this workflow faster.
 
 ## ORM, validation, and type safety
 - We are using **Objection.js** as our ORM (built on top of **Knex** query builder)

@@ -13,6 +13,10 @@ export interface paths {
 export interface components {
   schemas: {
     Coordinate: [number, number];
+    /**
+     * @description A Resource representation for server/client. It may mirror the ResourceModel and json schema used
+     * in the data access layer/ORM, but is separately defined here for the API.
+     */
     Resource: {
       id: number;
       name: string;
@@ -24,7 +28,7 @@ export interface components {
      *
      * This could include a resource or a machine, for instance.
      *
-     * An Interactable object details:
+     * An Interactable object describes:
      *   - Where it is located (latitude, longitude)
      *   - How far it is from the user (scan location)
      *   - Whether the user can interact with it (i.e. is the user within range?)
@@ -34,6 +38,11 @@ export interface components {
       distanceFromUser: number;
       userCanInteract: boolean;
     };
+    /**
+     * @description An array of ScannedResources is returned to the client after a successful scan operation.
+     * This object includes the properties of a Resource and additional information, e.g.,
+     * the vertices of the hexagon for drawing.
+     */
     ScannedResource: components["schemas"]["Interactable"] &
       components["schemas"]["Resource"] & {
         vertices?: number[][];
@@ -41,17 +50,6 @@ export interface components {
     Error: {
       code: string;
       message: string;
-    };
-    scan_body: {
-      userPosition: components["schemas"]["Coordinate"];
-    };
-    inline_response_200: {
-      metadata: { [key: string]: unknown };
-      interactables: components["schemas"]["inline_response_200_interactables"];
-    };
-    /** @example null */
-    inline_response_200_interactables: {
-      scannedResources?: components["schemas"]["ScannedResource"][];
     };
   };
   responses: {
@@ -77,32 +75,45 @@ export interface operations {
       /**
        * A successful scan returns metadata and interactables.
        *
-       * **Metadata** includes where the scan location occurred, timestamp, etc.
+       * Metadata includes where the scan location occurred, timestamp, etc.
        *
-       * **Interactables** can include resources, machines, etc. Each of which is an object that provides info on the position, distance from user, and whether the user can interact with it (i.e. is close enough to it)
+       * Interactables can include resources, machines, etc. Each of which is an object
+       * that provides info on the position, distance from user, and whether the user can
+       * interact with it (i.e. is close enough to it)
        */
       200: {
         content: {
-          "application/json": components["schemas"]["inline_response_200"];
+          "application/json": {
+            metadata: {
+              scannedLocation?: components["schemas"]["Coordinate"];
+              timestamp?: string;
+            };
+            interactables: {
+              scannedResources?: components["schemas"]["ScannedResource"][];
+            };
+          };
         };
       };
-      /** The request was invalid */
-      400: {
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** Not authorized */
-      403: {
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
+      400: components["responses"]["400BadRequest"];
+      403: components["responses"]["403NotAuthorized"];
     };
+    /**
+     * A user position (latitude/longitude coordinates) is required to perform the scan.
+     * This should be in the form of a tuple: [latitude, longitude]
+     *
+     * A user property with user data is optional (a scan doesn't have to be performed by an app user per se)
+     */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["scan_body"];
+        "application/json": {
+          user?: {
+            uuid: string;
+          };
+          userPosition: components["schemas"]["Coordinate"];
+        };
       };
     };
   };
 }
+
+export interface external {}
