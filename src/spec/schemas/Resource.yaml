@@ -1,0 +1,19 @@
+type: object
+description: |
+  A Resource representation for server/client. It may mirror the ResourceModel and json schema used
+  in the data access layer/ORM, but is separately defined here for the API.
+required:
+  - id
+  - name
+  - region_id
+  - h3Index
+properties:
+  id:
+    type: integer
+    readOnly: true
+  name:
+    type: string
+  region_id:
+    type: number
+  h3Index:
+    type: string

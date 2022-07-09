@@ -1,0 +1,35 @@
+type: object
+required:
+  - metadata
+  - interactables
+  - canInteractWith
+  - scannedRegions
+properties:
+  metadata:
+    type: object
+    properties:
+      scannedLocation:
+        $ref: "./Coordinate.yaml"
+      timestamp:
+        type: string
+  interactables:
+    type: object
+    required: 
+      - scannedResources
+    properties:
+      scannedResources:
+        type: array
+        items:
+          $ref: "./ScannedResource.yaml"
+  canInteractWith:
+    type: object
+    properties:
+      scannedResources:
+        description: "An array of Resource id's that satisfy the userCanInteract boolean, i.e. the user is close enough"
+        type: array
+        items:
+          type: number
+  scannedRegions:
+    type: array
+    items:
+      $ref: "./ScannedRegion.yaml"

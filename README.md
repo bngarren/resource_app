@@ -87,6 +87,12 @@
 - To pass a non-model version of the item around, we use a type derived from the model object: `export type ResourceType = ModelObject<ResourceModel>`, which contains all the properties defined in the model
 - This typing is **distinct** from the API typings derived from OpenAPI spec (see above) that is used with our REST endpoints.
 
+## RTK Query
+> 2022-07-09
+- For the client we are currently using Redux RTK and its associated RTK query for client side fetching, status/error handling, and caching.
+- RTK Query likes to have API endpoints declared up front, thus it plays nicely with us starting with an OpenAPI spec and using [RTK's own codegen](https://redux-toolkit.js.org/rtk-query/usage/code-generation#openapi) to generate the API.
+- See our [OpenAPI workflow](#swaggeropenapi-workflow) above to reference how we generate types
+
 # Heroku deployment
 ## Config vars
 - These are Heroku's environment variables
@@ -130,3 +136,4 @@
 # WIP 
 > 2022-07-09
 - Working on OpenApi spec for backend and making types
+- Start working on "users/inventory" endpoint next

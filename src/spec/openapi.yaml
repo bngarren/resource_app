@@ -76,123 +76,17 @@ components:
     Coordinate:
       $ref: "./schemas/Coordinate.yaml"
     Region:
-      type: object
-      description: |
-        A Region representation for server/client. It may mirror the RegionModel and json schema used
-        in the data access layer/ORM, but is separately defined here for the API.
-      required:
-        - id
-        - h3Index
-        - reset_date
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        h3Index:
-          type: string
-        reset_date:
-          type: string
+      $ref: "./schemas/Region.yaml"
     Resource:
-      type: object
-      description: |
-        A Resource representation for server/client. It may mirror the ResourceModel and json schema used
-        in the data access layer/ORM, but is separately defined here for the API.
-      required:
-        - id
-        - name
-        - region_id
-        - h3Index
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
-        region_id:
-          type: number
-        h3Index:
-          type: string
+      $ref: "./schemas/Resource.yaml"
     ScanResult:
-      type: object
-      required:
-        - metadata
-        - interactables
-        - canInteractWith
-        - scannedRegions
-      properties:
-        metadata:
-          type: object
-          properties:
-            scannedLocation:
-              $ref: "#/components/schemas/Coordinate"
-            timestamp:
-              type: string
-        interactables:
-          type: object
-          required: 
-            - scannedResources
-          properties:
-            scannedResources:
-              type: array
-              items:
-                $ref: "#/components/schemas/ScannedResource"
-        canInteractWith:
-          type: object
-          properties:
-            scannedResources:
-              description: "An array of Resource id's that satisfy the userCanInteract boolean, i.e. the user is close enough"
-              type: array
-              items:
-                type: number
-        scannedRegions:
-          type: array
-          items:
-            $ref: "#/components/schemas/ScannedRegion"
+      $ref: "./schemas/ScanResult.yaml"
     Interactable:
-      type: object
-      description: |
-        An Interactable represents an object in the environment which a user can interact. 
-        
-        This could include a resource or a machine, for instance.
-        
-        An Interactable object describes:
-          - Where it is located (latitude, longitude)
-          - How far it is from the user (scan location)
-          - Whether the user can interact with it (i.e. is the user within range?)
-      required:
-        - position
-        - distanceFromUser
-        - userCanInteract
-      properties:
-        position:
-          $ref: "#/components/schemas/Coordinate"
-        distanceFromUser:
-          type: integer
-          minimum: 0
-        userCanInteract: 
-          type: boolean
+      $ref: "./schemas/Interactable.yaml"
     ScannedResource:
-      description: |
-        An array of ScannedResources is returned to the client after a successful scan operation.
-        This object includes the properties of a Resource and additional information, e.g.,
-        the vertices of the hexagon for drawing.
-      allOf:
-        - $ref: "#/components/schemas/Interactable"
-        - $ref: "#/components/schemas/Resource"
-        - type: object
-          properties:
-            vertices:
-              type: array
-              items:
-                type: array
-                items:
-                  type: number
+      $ref: "./schemas/ScannedResource.yaml"
     ScannedRegion:
-      description: |
-        An array of ScannedRegions is returned to the client after a successful scan operation.
-        The ScannedRegion object contains properties of the Region in the scan area
-      allOf:
-        - $ref: "#/components/schemas/Region"
+      $ref: "./schemas/ScannedRegion.yaml"
     # Schema for error response body
     ErrorResponse:
       type: object

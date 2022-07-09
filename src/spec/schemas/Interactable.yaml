@@ -1,0 +1,22 @@
+type: object
+description: |
+  An Interactable represents an object in the environment which a user can interact. 
+  
+  This could include a resource or a machine, for instance.
+  
+  An Interactable object describes:
+    - Where it is located (latitude, longitude)
+    - How far it is from the user (scan location)
+    - Whether the user can interact with it (i.e. is the user within range?)
+required:
+  - position
+  - distanceFromUser
+  - userCanInteract
+properties:
+  position:
+    $ref: "./Coordinate.yaml"
+  distanceFromUser:
+    type: integer
+    minimum: 0
+  userCanInteract: 
+    type: boolean
