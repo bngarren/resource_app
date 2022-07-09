@@ -1,3 +1,4 @@
+import { newTypedHttpError } from "./../types/openapi.extended";
 import { HttpError } from "./../util/errors";
 import { NextFunction } from "express";
 import { logger } from "./../logger/index";
@@ -23,7 +24,10 @@ export const scan = async (
   // Validate request
   if (!userPosition || userPosition.length !== 2) {
     next(
-      new HttpError(StatusCodes.BAD_REQUEST, "Invalid or missing user position")
+      newTypedHttpError("scan", StatusCodes.BAD_REQUEST, {
+        code: StatusCodes.BAD_REQUEST.toString(),
+        message: "Invalid user position in the request",
+      })
     );
     return;
   }

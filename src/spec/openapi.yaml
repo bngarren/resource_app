@@ -1,0 +1,222 @@
+openapi: 3.0.3
+info:
+  description: |
+    This is for the Resource App server
+  version: 1.0.1
+  title: Resource App
+  termsOfService: http://swagger.io/terms/
+tags:
+  - name: Scan
+    description: Scanning for resources and interactables
+  - name: Resources
+    description: Access to Resources
+  - name: Users
+    description: Operations for users
+paths:
+  /scan:
+    post:
+      summary: Performs the scan action for a user
+      description: >-
+        A user (at a GPS location) scans and receives data about nearby
+        resources and interactables
+      tags:
+        - Scan
+      operationId: scan
+      requestBody:
+        required: true
+        description: | 
+          A user position (latitude/longitude coordinates) is required to perform the scan.
+          This should be in the form of a tuple: [latitude, longitude]
+          
+          A user property with user data is optional (a scan doesn't have to be performed by an app user per se)
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userPosition
+              properties:
+                user:
+                  type: object
+                  required:
+                    - uuid
+                  properties:
+                    uuid: 
+                      type: string
+                userPosition:
+                  $ref: "#/components/schemas/Coordinate"
+      responses:
+        '200':
+          description: |
+            A successful scan returns metadata and interactables.
+            
+            Metadata includes where the scan location occurred, timestamp, etc.
+            
+            Interactables can include resources, machines, etc. Each of which is an object
+            that provides info on the position, distance from user, and whether the user can
+            interact with it (i.e. is close enough to it)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanResult"
+        "400": 
+          $ref: "#/components/responses/400BadRequest"
+        "403":
+          $ref: "#/components/responses/403NotAuthorized"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+servers:
+  - url: https://virtserver.swaggerhub.com/BNGARREN_1/resource-app/1.0.1
+components:
+  schemas:
+    Coordinate:
+      $ref: "./schemas/Coordinate.yaml"
+    Region:
+      type: object
+      description: |
+        A Region representation for server/client. It may mirror the RegionModel and json schema used
+        in the data access layer/ORM, but is separately defined here for the API.
+      required:
+        - id
+        - h3Index
+        - reset_date
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        h3Index:
+          type: string
+        reset_date:
+          type: string
+    Resource:
+      type: object
+      description: |
+        A Resource representation for server/client. It may mirror the ResourceModel and json schema used
+        in the data access layer/ORM, but is separately defined here for the API.
+      required:
+        - id
+        - name
+        - region_id
+        - h3Index
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        region_id:
+          type: number
+        h3Index:
+          type: string
+    ScanResult:
+      type: object
+      required:
+        - metadata
+        - interactables
+        - canInteractWith
+        - scannedRegions
+      properties:
+        metadata:
+          type: object
+          properties:
+            scannedLocation:
+              $ref: "#/components/schemas/Coordinate"
+            timestamp:
+              type: string
+        interactables:
+          type: object
+          required: 
+            - scannedResources
+          properties:
+            scannedResources:
+              type: array
+              items:
+                $ref: "#/components/schemas/ScannedResource"
+        canInteractWith:
+          type: object
+          properties:
+            scannedResources:
+              description: "An array of Resource id's that satisfy the userCanInteract boolean, i.e. the user is close enough"
+              type: array
+              items:
+                type: number
+        scannedRegions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScannedRegion"
+    Interactable:
+      type: object
+      description: |
+        An Interactable represents an object in the environment which a user can interact. 
+        
+        This could include a resource or a machine, for instance.
+        
+        An Interactable object describes:
+          - Where it is located (latitude, longitude)
+          - How far it is from the user (scan location)
+          - Whether the user can interact with it (i.e. is the user within range?)
+      required:
+        - position
+        - distanceFromUser
+        - userCanInteract
+      properties:
+        position:
+          $ref: "#/components/schemas/Coordinate"
+        distanceFromUser:
+          type: integer
+          minimum: 0
+        userCanInteract: 
+          type: boolean
+    ScannedResource:
+      description: |
+        An array of ScannedResources is returned to the client after a successful scan operation.
+        This object includes the properties of a Resource and additional information, e.g.,
+        the vertices of the hexagon for drawing.
+      allOf:
+        - $ref: "#/components/schemas/Interactable"
+        - $ref: "#/components/schemas/Resource"
+        - type: object
+          properties:
+            vertices:
+              type: array
+              items:
+                type: array
+                items:
+                  type: number
+    ScannedRegion:
+      description: |
+        An array of ScannedRegions is returned to the client after a successful scan operation.
+        The ScannedRegion object contains properties of the Region in the scan area
+      allOf:
+        - $ref: "#/components/schemas/Region"
+    # Schema for error response body
+    ErrorResponse:
+      type: object
+      description: |
+        Describes the shape of an Error response to the client. For example, the client should receive json
+        containing `code` and `message` properties.
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+  responses:
+    400BadRequest:
+      description: "The request was invalid"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    403NotAuthorized:
+      description: "Not authorized"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

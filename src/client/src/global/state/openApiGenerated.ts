@@ -69,7 +69,7 @@ export type ScanResult = {
   };
   scannedRegions: ScannedRegion[];
 };
-export type HttpError = {
+export type ErrorResponse = {
   code: string;
   message: string;
 };

@@ -1,10 +1,10 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-@ts-nocheck Still some type errors in this file that need to be worked out
+// @ts-nocheck Still some type errors in this file that need to be worked out
 import { Request } from "express";
 import { Response } from "express-serve-static-core";
 import { operations } from "./openapi";
 import { StatusCodes } from "http-status-codes";
-import { HttpError } from "../util/errors"
+import { HttpError } from "../util/errors";
 
 /*
 This is not a generated file. We manually add types here to help use the generated types
@@ -28,7 +28,8 @@ export type TypedResponse<T extends ApiOperations> = Response<ResponseType<T>>;
 
 type PayloadType<
   operationType extends ApiOperations & string,
-  codeType extends keyof operations[operationType]["responses"] & (number | "default" | StatusCodes)
+  codeType extends keyof operations[operationType]["responses"] &
+    (number | "default" | StatusCodes)
 > = "content" extends keyof operations[operationType]["responses"][codeType]
   ? "application/json" extends keyof operations[operationType]["responses"][codeType]["content"]
     ? operations[operationType]["responses"][codeType]["content"]["application/json"]
@@ -53,8 +54,10 @@ export function resSendJson<
   code: codeType,
   payload: payloadType
 ): Response {
-  if (code === "default"){
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(payload as unknown as any);
+  if (code === "default") {
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json(payload as unknown as any);
   } else {
     return res.status(code).json(payload as unknown as any);
   }
@@ -80,19 +83,44 @@ export function resSendStatus<
 }
 
 // ERRORS
+/**
+ * @description
+ * Create a new HttpError based on the allowed codes and payload of this endpoint.
+ * This allows us to create HttpError objects that are expected by the express middleware 
+ * and also carry a payload that meets the requirements of the OpenAPI spec for that operation
+ * 
+ * @example
+ * ```javascript
+ * // Within express route handler
+ * next(
+      newTypedHttpError("scan", StatusCodes.BAD_REQUEST, {
+        code: StatusCodes.BAD_REQUEST.toString(),
+        message: "Invalid user position in the request",
+      })
+    );
+    ```
+ * 
+ * @param operation API endpoint, e.g. "scan"
+ * @param code Http status code
+ * @param payload Can be string or object, depending on the return type expected by the openAPI spec
+ * @returns
+ */
 export const newTypedHttpError = <
   operationType extends ApiOperations & string,
   codeType extends keyof operations[operationType]["responses"] &
     (number | "default" | StatusCodes),
-  payloadType extends PayloadType<operationType, codeType>
+  payloadType extends PayloadType<operationType, codeType> &
+    Record<string, unknown>
 >(
+  operation: operationType,
   code: codeType,
   payload: payloadType
 ): HttpError => {
+  const newPayload = payload ?? "An unexpected error occured.";
   if (code === "default") {
-    return new HttpError(StatusCodes.INTERNAL_SERVER_ERROR, payload)
+    return new HttpError(StatusCodes.INTERNAL_SERVER_ERROR, newPayload);
   } else {
-    return new HttpError(code, payload)
+    return new HttpError(code, newPayload);
   }
 };
 
@@ -113,9 +141,7 @@ type RequestBodyType<T extends ApiOperations> =
     ? "content" extends keyof operations[T]["requestBody"]
       ? "application/json" extends keyof operations[T]["requestBody"]["content"]
         ? operations[T]["requestBody"]["content"]["application/json"]
-        : ?("multipart/form-data" extends keyof operations[T]["requestBody"]["content"]
-            ? operations[T]["requestBody"]["content"]["multipart/form-data"]
-            : never)
+        : never
       : never
     : never;
 

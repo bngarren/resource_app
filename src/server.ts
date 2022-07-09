@@ -28,6 +28,7 @@ app.use(firebaseAuthentication);
 
 app.use("/api", routes);
 
+// Custom error handler
 app.use(errorHandler);
 
 export default app;

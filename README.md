@@ -31,10 +31,11 @@
    - Seeds the database
 
 ## custom sh scripts
-> updated: 2022-07-07
+> updated: 2022-07-09
 - `generateTypes.sh`
-   - This script uses an OpenAPI spec to generate backend types and frontend RTK Query api and types. The former uses 'openapi-typescript' and the latter uses '@rtk-query/codegen-openapi'.
+   - This script uses an OpenAPI spec to generate backend types and frontend RTK Query api and types. The former uses 'openapi-typescript' and the latter uses '@rtk-query/codegen-openapi'. It also uses a globally installed 'swagger-cli' to bundle the yaml spec prior to running.
    - File paths are defined within the script
+   - It should point to a _bundled_ OpenAPI spec; we have a "openapi.bundled.yaml" file in "./src/spec" that is produced by this script using swagger-cli
 
 ## Project root files
 - **Procfile** - this is a file that Heroku uses to know how to start our app. It points to our entry point, i.e. dist/main.js
@@ -46,25 +47,36 @@
 # Project architecture
 
 ## OpenApi
-> updated: 2022-07-07
+> updated: 2022-07-09
 - We are using OpenAPI to define our API's endpoints, operations on each endpoint, and schema for requests and responses to/from the API.
    - See https://swagger.io/docs/specification/about/
 - Our API specification is now the **source of truth** for our backend (how each route should ultimately be handled) and frontend (how RTK query should make requests and receive responses in a typesafe way).
-- We also use **Swagger** which is a set of tools built around OpenAPI. Currently we are building the OpenApi spec on Swagger Hub and syncing this through GitHub to a `swaggerhub` branch which we can then merge with our develop branch to get the latest API specs.
+- We also use **Swagger** which is a set of tools built around OpenAPI. ~~Currently we are building the OpenApi spec on Swagger Hub and syncing this through GitHub to a `swaggerhub` branch which we can then merge with our develop branch to get the latest API specs.~~
 - Typescript types can be automatically generated using CLI's from our OpenAPI spec for both backend and frontent (see below)
 
 ### Swagger/OpenAPI workflow
-> updated: 2022-07-07
-   - Use SwaggerHub to edit our API specification. This includes all endpoints, parameters, request bodies, responses, and HTTP error codes that the API should receive/send
-   - This will automatically sync (push to `swaggerhub` branch) a new openapi.json definition (`/src/openapi.json`)
-   - This branch can then be merged with `develop` to get this fresh API spec
+> updated: 2022-07-09
+   - ~~Use SwaggerHub to edit our API specification. This includes all endpoints, parameters, request bodies, responses, and HTTP error codes that the API should receive/send~~
+   - ~~This will automatically sync (push to `swaggerhub` branch) a new openapi.json definition (`/src/openapi.json`)~~
+   - ~~This branch can then be merged with `develop` to get this fresh API spec~~
+#### UPDATED
+   - Now using VScode to edit openapi yaml files directly. This allows quicker editing and dividing into multiple files.
+      - To accomplish this, we have OpenAPI Editor _extension_ installed for VS code
+      - We have placed the openiapi files in the **./src/spec** directory
+      - There is a "root" file called openapi.yaml
+      - It can reference other files
+      - Multiple yaml files are bundled into a single spec using swagger-cli (installed globally, but we do this in our generateTypes.sh script). See https://github.com/drwpow/openapi-typescript/issues/771#issuecomment-996914958
+      - We run our generateTypes.sh script which points to the bundled "openapi.bundled.yaml" file
    - On the **backend** side, we can use the OpenAPI spec and a run `"npx openapi-typescript openapi.json --output ./types/openapi.ts --support-array-length true --prettier-config ../.prettierrc"` to generate the types for our backend
       - See https://www.npmjs.com/package/openapi-typescript
+      - This is _included_ in our generateTypes.sh script
+   - We also have a non-generated **"openapi.extended.ts"** that includes helper functions and types associated with the generated types, e.g. to correctly type Express req/res and Errors based on our openapi types
    - **_IMPORTANT_**: These types are specific to the **API** side of the backend, i.e. HTTP requests and responses, not the _**model/database**_ side. So we still use an Objection Model with it's own jsonSchema to represent the database model, which is very similar and sometimes the same as the API types, but are intentionally duplicated in code and must be kept updated together.
    - From a **client** standpoint, we can use the command `"npx @rtk-query/codegen-openapi openapi-config.ts"` within the /src directory to generate a new RTKQ API file based on the backend/API's openapi.json file.
       - This codegen uses a config file, currently /src/openapi/openapi-config.ts, to determine which schema to use, which base API (skeleton createAPI from RTKQ) to build on, and where to output the generated file
       - Ultimately this creates a openAPIGenerated.ts file, which is an RTKQ api (essentially an RTK slice that can be use in store)
       - It also exports type definitions used in any schema
+      - This is _included_ in our generateTypes.sh script
    - Lastly from a client standpoint, we edit our appSlice.ts file which "enhances" the api by adding tags (ie caching invalidation), and exports our custom hooks (see RTKQ website for the naming convention)
    - Now our client should have a fully typed RTK queries/mutations that hit our API endpoints with typed requests and responses based on our source of truth (OpenAPI spec)
    - **WORKFLOW**: I've made a /scripts folder at the project root that has a `generateTypes.sh` that will run the above openapi-typescript and @rtk-query/codegen-openapi CLI's to make this workflow faster.
@@ -111,10 +123,10 @@
 - To securely access our app's API endpoints, we will send our ID token within the HTTP request header
 
 # App Health Checklist
-> 2022-07-06
+> 2022-07-09
 - Verify that the OpenAPI spec and the generated types from it are congruent with the backend model/types. Similarly, client/frontend types should derive from RTK query (the only way we should be interfacing with our API), which derives from our OpenAPI spec.
 
 
-# Current WIP 
-## 2022-07-06
-- Working on OpenApi spec for backend, using SwaggerHub and then RTK query codegen to make the api with typescript types
+# WIP 
+> 2022-07-09
+- Working on OpenApi spec for backend and making types

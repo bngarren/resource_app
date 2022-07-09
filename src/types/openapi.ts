@@ -75,7 +75,11 @@ export interface components {
      * The ScannedRegion object contains properties of the Region in the scan area
      */
     ScannedRegion: components["schemas"]["Region"];
-    HttpError: {
+    /**
+     * @description Describes the shape of an Error response to the client. For example, the client should receive json
+     * containing `code` and `message` properties.
+     */
+    ErrorResponse: {
       code: string;
       message: string;
     };
@@ -84,13 +88,13 @@ export interface components {
     /** The request was invalid */
     "400BadRequest": {
       content: {
-        "application/json": components["schemas"]["HttpError"];
+        "application/json": components["schemas"]["ErrorResponse"];
       };
     };
     /** Not authorized */
     "403NotAuthorized": {
       content: {
-        "application/json": components["schemas"]["HttpError"];
+        "application/json": components["schemas"]["ErrorResponse"];
       };
     };
   };
@@ -119,7 +123,7 @@ export interface operations {
       /** Unexpected error */
       default: {
         content: {
-          "application/json": components["schemas"]["HttpError"];
+          "application/json": components["schemas"]["ErrorResponse"];
         };
       };
     };

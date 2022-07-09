@@ -3,6 +3,16 @@ import { NextFunction, Request, Response } from "express";
 import { HttpError } from "../util/errors";
 import { logger } from "../logger";
 
+/**
+ * @description
+ * ### errorHandler
+ * This custom errorHandler excepts errors of the custom HttpError class
+ *
+ * @param error HttpError
+ * @param req Express Request
+ * @param res Express Response
+ * @param next Express next function
+ */
 export const errorHandler = (
   error: HttpError,
   req: Request,
