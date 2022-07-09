@@ -16,7 +16,8 @@ paths:
   /scan:
     post:
       summary: Performs the scan action for a user
-      description: A user (at a GPS location) scans and receives data about nearby resources and interactables
+      description: |
+        A user (at a GPS location) scans and receives data about nearby resources and interactables
       tags:
         - Scan
       operationId: scan
@@ -57,6 +58,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ScanResult'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '403':
+          $ref: '#/components/responses/403NotAuthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  '/users/{uuid}/inventory':
+    get:
+      summary: Gets the user's inventory
+      description: |
+        Retrieves the user's inventory from the database
+      tags:
+        - Users
+      operationId: getUserInventory
+      parameters:
+        - in: path
+          name: uuid
+          description: Uuid string of the user
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: |
+            Successful retrieval of user inventory.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInventory'
         '400':
           $ref: '#/components/responses/400BadRequest'
         '403':
@@ -196,6 +230,47 @@ components:
         The ScannedRegion object contains properties of the Region in the scan area
       allOf:
         - $ref: '#/components/schemas/Region'
+    UserInventory:
+      type: object
+      description: |
+        A user inventory consists of items and metadata
+      required:
+        - metadata
+        - items
+      properties:
+        metadata:
+          type: object
+          required:
+            - updated_at
+          properties:
+            updated_at:
+              type: string
+        items:
+          type: object
+          required:
+            - byId
+            - allIds
+          properties:
+            byId:
+              type: array
+              items:
+                $ref: '#/components/schemas/InventoryItem'
+            allIds:
+              type: array
+              items:
+                type: integer
+    InventoryItem:
+      type: object
+      description: |
+        An item in a user inventory
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
     ErrorResponse:
       type: object
       description: |

@@ -8,6 +8,12 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.body,
       }),
     }),
+    getUserInventory: build.query<
+      GetUserInventoryResponse,
+      GetUserInventoryArg
+    >({
+      query: (queryArg) => ({ url: `/users/${queryArg.uuid}/inventory` }),
+    }),
   }),
   overrideExisting: false,
 });
@@ -33,6 +39,13 @@ export type ScanArg = {
     };
     userPosition: Coordinate;
   };
+};
+export type GetUserInventoryResponse =
+  /** status 200 Successful retrieval of user inventory.
+   */ UserInventory;
+export type GetUserInventoryArg = {
+  /** Uuid string of the user */
+  uuid: string;
 };
 export type Coordinate = number[];
 export type Interactable = {
@@ -72,4 +85,17 @@ export type ScanResult = {
 export type ErrorResponse = {
   code: string;
   message: string;
+};
+export type InventoryItem = {
+  id: number;
+  name: string;
+};
+export type UserInventory = {
+  metadata: {
+    updated_at: string;
+  };
+  items: {
+    byId: InventoryItem[];
+    allIds: number[];
+  };
 };

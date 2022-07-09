@@ -15,6 +15,9 @@ in openapi.ts
 
 export type ApiOperations = keyof operations;
 
+// for the "default" response of OpenAPI
+type DEFAULT = "default";
+
 export type ResponseType<T extends ApiOperations> =
   200 extends keyof operations[T]["responses"]
     ? "content" extends keyof operations[T]["responses"][200]
@@ -29,7 +32,7 @@ export type TypedResponse<T extends ApiOperations> = Response<ResponseType<T>>;
 type PayloadType<
   operationType extends ApiOperations & string,
   codeType extends keyof operations[operationType]["responses"] &
-    (number | "default" | StatusCodes)
+    (number | DEFAULT | StatusCodes)
 > = "content" extends keyof operations[operationType]["responses"][codeType]
   ? "application/json" extends keyof operations[operationType]["responses"][codeType]["content"]
     ? operations[operationType]["responses"][codeType]["content"]["application/json"]
@@ -47,7 +50,7 @@ type PayloadType<
 export function resSendJson<
   operationType extends ApiOperations & string,
   codeType extends keyof operations[operationType]["responses"] &
-    (number | "default" | StatusCodes),
+    (number | DEFAULT | StatusCodes),
   payloadType extends PayloadType<operationType, codeType>
 >(
   res: TypedResponse<operationType>,
@@ -73,7 +76,7 @@ export function resSendJson<
 export function resSendStatus<
   operationType extends ApiOperations & string,
   codeType extends keyof operations[operationType]["responses"] &
-    (number | "default" | StatusCodes)
+    (number | DEFAULT | StatusCodes)
 >(res: TypedResponse<operationType>, code: codeType): Response {
   if (code === "default") {
     return res.sendStatus(StatusCodes.INTERNAL_SERVER_ERROR);
@@ -108,7 +111,7 @@ export function resSendStatus<
 export const newTypedHttpError = <
   operationType extends ApiOperations & string,
   codeType extends keyof operations[operationType]["responses"] &
-    (number | "default" | StatusCodes),
+    (number | DEFAULT | StatusCodes),
   payloadType extends PayloadType<operationType, codeType> &
     Record<string, unknown>
 >(

@@ -1,5 +1,4 @@
 import { newTypedHttpError } from "./../types/openapi.extended";
-import { HttpError } from "./../util/errors";
 import { NextFunction } from "express";
 import { logger } from "./../logger/index";
 import {

@@ -9,6 +9,6 @@ router.get("/debug", debug.showRecent);
 
 // Users routes
 router.post("/users/add", user.add);
-router.get("/users/:uuid/inventory", user.getInventoryItemsForUser);
+router.get("/users/:uuid/inventory", user.getUserInventory);
 
 export default router;

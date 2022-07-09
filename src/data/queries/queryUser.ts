@@ -1,4 +1,5 @@
-import { TransactionOrKnex, ref } from "objection";
+import { UserType } from "./../../models/User";
+import { TransactionOrKnex, ref, QueryBuilder } from "objection";
 import { logger } from "../../logger";
 import UserModel from "../../models/User";
 
@@ -34,7 +35,7 @@ export const addUser = async (model: UserModel, trx?: TransactionOrKnex) => {
 
 /**
  *
- * Query to get a User's inventory items in JSON
+ * Query to get a User's inventory in JSON
  *
  * Note: This returns a chainable QueryBuilder instance
  *
@@ -42,29 +43,21 @@ export const addUser = async (model: UserModel, trx?: TransactionOrKnex) => {
  * @param trx Optional transaction object (http://knexjs.org/guide/transactions.html)
  * @returns The QueryBuilder for this query
  */
-export const query_getInventoryItems = (
-  uuid: string,
-  trx?: TransactionOrKnex
-) => {
-  return UserModel.query(trx)
-    .select(ref("users.inventory:items").as("items"))
-    .findOne("uuid", uuid);
+export const query_getInventory = (uuid: string, trx?: TransactionOrKnex) => {
+  return UserModel.query(trx).select("inventory").findOne("uuid", uuid);
 };
 
 /**
  *
- * Executes the query for query_getInventoryItems
+ * Executes the query for query_getInventory
  *
  * @param uuid The uuid of the user
  * @param trx Optional transaction object (http://knexjs.org/guide/transactions.html)
- * @returns A JSON object containing the user's inventory items
+ * @returns A JSON object containing the user's inventory
  */
-export const getInventoryItems = async (
-  uuid: string,
-  trx?: TransactionOrKnex
-) => {
+export const getInventory = async (uuid: string, trx?: TransactionOrKnex) => {
   try {
-    return await query_getInventoryItems(uuid, trx);
+    return await query_getInventory(uuid, trx);
   } catch (error) {
     logger.error(error);
   }

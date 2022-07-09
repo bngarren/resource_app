@@ -8,6 +8,10 @@ export interface paths {
     /** A user (at a GPS location) scans and receives data about nearby resources and interactables */
     post: operations["scan"];
   };
+  "/users/{uuid}/inventory": {
+    /** Retrieves the user's inventory from the database */
+    get: operations["getUserInventory"];
+  };
 }
 
 export interface components {
@@ -75,6 +79,21 @@ export interface components {
      * The ScannedRegion object contains properties of the Region in the scan area
      */
     ScannedRegion: components["schemas"]["Region"];
+    /** @description A user inventory consists of items and metadata */
+    UserInventory: {
+      metadata: {
+        updated_at: string;
+      };
+      items: {
+        byId: components["schemas"]["InventoryItem"][];
+        allIds: number[];
+      };
+    };
+    /** @description An item in a user inventory */
+    InventoryItem: {
+      id: number;
+      name: string;
+    };
     /**
      * @description Describes the shape of an Error response to the client. For example, the client should receive json
      * containing `code` and `message` properties.
@@ -140,6 +159,31 @@ export interface operations {
             uuid: string;
           };
           userPosition: components["schemas"]["Coordinate"];
+        };
+      };
+    };
+  };
+  /** Retrieves the user's inventory from the database */
+  getUserInventory: {
+    parameters: {
+      path: {
+        /** Uuid string of the user */
+        uuid: string;
+      };
+    };
+    responses: {
+      /** Successful retrieval of user inventory. */
+      200: {
+        content: {
+          "application/json": components["schemas"]["UserInventory"];
+        };
+      };
+      400: components["responses"]["400BadRequest"];
+      403: components["responses"]["403NotAuthorized"];
+      /** Unexpected error */
+      default: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
         };
       };
     };

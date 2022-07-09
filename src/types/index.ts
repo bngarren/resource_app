@@ -13,4 +13,6 @@ export type Interactable = APISchemas["Interactable"];
 export type ScannedResource = APISchemas["ScannedResource"];
 export type ScannedRegion = APISchemas["ScannedRegion"];
 export type ScanResult = APISchemas["ScanResult"];
+export type UserInventory = APISchemas["UserInventory"];
+export type InventoryItem = APISchemas["InventoryItem"];
 export type ErrorResponse = APISchemas["ErrorResponse"];

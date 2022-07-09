@@ -4,7 +4,17 @@ export default class UserModel extends Model {
   id!: number;
   uuid!: string;
 
-  inventory?: object;
+  inventory?: {
+    metadata: {
+      updated_at: string;
+    };
+    items: {
+      byId: {
+        [key: number]: Record<string, unknown>;
+      };
+      allIds: number[];
+    };
+  };
 
   static tableName = "users";
 
@@ -12,14 +22,16 @@ export default class UserModel extends Model {
     metadata: {
       updated_at: new Date().toISOString(),
     },
-    items: {},
+    items: {
+      byId: {},
+      allIds: [],
+    },
   });
 
   static get jsonSchema() {
     return {
       type: "object",
       required: ["uuid", "inventory"],
-
       properties: {
         id: { type: "integer", readOnly: true },
         uuid: {
@@ -38,12 +50,23 @@ export default class UserModel extends Model {
             },
             items: {
               type: "object",
-              propertyNames: {
-                pattern: "/[0-9]+/", // must be positive integer
-              },
               properties: {
-                id: { type: "integer", readOnly: true },
-                name: { type: "string", readOnly: true },
+                byId: {
+                  type: "object",
+                  propertyNames: {
+                    pattern: "/[0-9]+/", // must be positive integer
+                  },
+                  properties: {
+                    id: { type: "integer", readOnly: true },
+                    name: { type: "string", readOnly: true },
+                  },
+                },
+                allIds: {
+                  type: "array",
+                  items: {
+                    type: "integer",
+                  },
+                },
               },
             },
           },

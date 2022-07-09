@@ -30,6 +30,11 @@ echo
 cd $PATH_TO_PROJECT && swagger-cli bundle $PATH_TO_OPENAPI_ROOT --outfile $PATH_TO_OPENAPI_BUNDLED --type yaml
 
 echo
+echo "--- swagger-cli validating... ---"
+# will exit with a non-zero code if the API is invalid
+swagger-cli validate $PATH_TO_OPENAPI_BUNDLED
+
+echo
 echo "--- Generating backend types ---"
 echo
 cd $PATH_TO_PROJECT && npx openapi-typescript $PATH_TO_OPENAPI_BUNDLED --output $PATH_TO_BACKEND_TYPES --support-array-length true --prettier-config $PATH_TO_PRETTIERRC
