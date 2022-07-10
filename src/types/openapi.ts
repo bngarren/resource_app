@@ -12,6 +12,10 @@ export interface paths {
     /** Given a uuid from authentication service, adds a new user (player) to the app and database */
     post: operations["addUser"];
   };
+  "/users/{uuid}": {
+    /** Given a uuid from authentication service, gets user (player) data from the database */
+    get: operations["getUser"];
+  };
   "/users/{uuid}/inventory": {
     /** Retrieves the user's inventory from the database */
     get: operations["getUserInventory"];
@@ -20,6 +24,10 @@ export interface paths {
 
 export interface components {
   schemas: {
+    /** @description A user (player) of the app */
+    User: {
+      uuid: string;
+    };
     Coordinate: [number, number];
     /**
      * @description A Region representation for server/client. It may mirror the RegionModel and json schema used
@@ -115,7 +123,17 @@ export interface components {
       };
     };
     /** Not authorized */
-    "403NotAuthorized": {
+    "401NotAuthorized": {
+      content: {
+        "application/json": components["schemas"]["ErrorResponse"];
+      };
+    };
+    /**
+     * The server understands the content type of the request entity, and
+     * the syntax of the request entity is correct, but it was unable to
+     * process the contained instructions.
+     */
+    "422UnprocessableEntity": {
       content: {
         "application/json": components["schemas"]["ErrorResponse"];
       };
@@ -142,7 +160,7 @@ export interface operations {
         };
       };
       400: components["responses"]["400BadRequest"];
-      403: components["responses"]["403NotAuthorized"];
+      401: components["responses"]["401NotAuthorized"];
       /** Unexpected error */
       default: {
         content: {
@@ -179,7 +197,8 @@ export interface operations {
         };
       };
       400: components["responses"]["400BadRequest"];
-      403: components["responses"]["403NotAuthorized"];
+      401: components["responses"]["401NotAuthorized"];
+      422: components["responses"]["422UnprocessableEntity"];
       /** Unexpected error */
       default: {
         content: {
@@ -192,6 +211,31 @@ export interface operations {
       content: {
         "application/json": {
           uuid: string;
+        };
+      };
+    };
+  };
+  /** Given a uuid from authentication service, gets user (player) data from the database */
+  getUser: {
+    parameters: {
+      path: {
+        /** Uuid string of the user */
+        uuid: string;
+      };
+    };
+    responses: {
+      /** Successful retrieval of the user data. */
+      200: {
+        content: {
+          "application/json": components["schemas"]["User"];
+        };
+      };
+      400: components["responses"]["400BadRequest"];
+      401: components["responses"]["401NotAuthorized"];
+      /** Unexpected error */
+      default: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
         };
       };
     };
@@ -212,7 +256,7 @@ export interface operations {
         };
       };
       400: components["responses"]["400BadRequest"];
-      403: components["responses"]["403NotAuthorized"];
+      401: components["responses"]["401NotAuthorized"];
       /** Unexpected error */
       default: {
         content: {

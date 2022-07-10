@@ -27,6 +27,8 @@
    - Runs any new (unrun) up migrations
 - `"migrate-rollback": "knex migrate:rollback --all --knexfile src/knexfile.ts"`
    - Rolls back all migrations
+- `"migrate-refresh": "npm run migrate-rollback && npm run migrate-latest"`
+   - Rolls back and re-migrates in one command, good for dev environment after a migration schema change
 - `"seed": "knex seed:run --knexfile src/knexfile.ts"`
    - Seeds the database
 
@@ -127,6 +129,41 @@
 - Firebase will refresh a user’s ID token on your behalf using a refresh token
    - When you authenticate, FB generates an ID token / refresh token pair and every hour continues to refresh the ID token on our behalf
 - To securely access our app's API endpoints, we will send our ID token within the HTTP request header
+
+# Error handling
+> 2022-07-10
+## Backend error handling
+- **API errors** (HTTP related errors dealing with Express, requests, responses, etc.) should be created in the **Controller** via next() function and use a typed error if possible, which is based on our helper function newTypedHttpError which provides typing of the error based on the OpenApi spec. API errors should ultimately be handled by the **errorHandler middleware**.
+- Errors occuring in the Data Access Layer (e.g. queryResource, queryUser, etc.) should throw out to the calling **Service** layer.
+   - Always use 'return await' to keep the async function in the call stack. See https://stackoverflow.com/a/44806230
+- The Service layer uses a helper `handleDatabaseError()` to filter the error, and then returns it.
+- Thus, a caller of a Service layer function should expect the Result | Error
+```javascript
+// queryUser.ts "Data Access Layer"
+export const addUser = async (model: UserModel, trx?: TransactionOrKnex) => {
+  // Keeps thrown Error in the call stack
+  return await query_addUser(model, trx);
+}
+```
+```javascript
+// userService.ts "Service Layer"
+// ...
+try {
+    // Validate json schema for the model
+    inputUserModel = UserModel.fromJson(modifiedUserJson);
+    // perform query
+    const resultUser = await addUser(inputUserModel, trx);
+    // If result could be undefined, may need another check and possibly return Error here as well...
+    // Here, addUser either returns the User or throws
+    return resultUser;
+  } catch (error) {
+    // Includes all database/query errors
+    // Filter/transform the error and return it
+    if (error instanceof Error) return handleDatabaseError(error);
+    // shouldn't need, but for type safety
+    return new Error(String(error));
+  };
+```
 
 # App Health Checklist
 > 2022-07-09

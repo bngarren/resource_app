@@ -44,8 +44,8 @@ post:
             $ref: "../schemas/ScanResult.yaml"
     "400": 
       $ref: "../openapi.yaml#/components/responses/400BadRequest"
-    "403":
-      $ref: "../openapi.yaml#/components/responses/403NotAuthorized"
+    "401":
+      $ref: "../openapi.yaml#/components/responses/401NotAuthorized"
     default:
       description: Unexpected error
       content:

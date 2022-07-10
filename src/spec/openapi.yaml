@@ -17,12 +17,16 @@ paths:
     $ref: "./paths/scan.yaml"
   /users/add:
     $ref: "./paths/usersAdd.yaml"
+  /users/{uuid}:
+    $ref: "./paths/user.yaml"
   /users/{uuid}/inventory:
     $ref: "./paths/userInventory.yaml"
 servers:
   - url: https://virtserver.swaggerhub.com/BNGARREN_1/resource-app/1.0.1
 components:
   schemas:
+    User:
+      $ref: "./schemas/User.yaml"
     Coordinate:
       $ref: "./schemas/Coordinate.yaml"
     Region:
@@ -51,8 +55,17 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-    403NotAuthorized:
+    401NotAuthorized:
       description: "Not authorized"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    422UnprocessableEntity:
+      description: |
+        The server understands the content type of the request entity, and
+        the syntax of the request entity is correct, but it was unable to
+        process the contained instructions.
       content:
         application/json:
           schema:

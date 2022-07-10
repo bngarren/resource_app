@@ -50,8 +50,7 @@ describe("handleCreateUser()", () => {
   });
   describe("when a uuid already exists", () => {
     //
-    it("should not create a new user", async () => {
-      //! NOT PASSING
+    it("should not create a new user and return error with message 'DatabaseError'", async () => {
       try {
         await handleCreateUser({ uuid: FAKE_UUID });
       } catch (err) {
@@ -59,12 +58,12 @@ describe("handleCreateUser()", () => {
         return false;
       }
       const res1 = await UserModel.query().select().where("uuid", FAKE_UUID);
-      console.log("res1", res1);
       // Previouly existing user
       expect(res1).toHaveLength(1);
       // Now try to create another user with the same uuid
       const res2 = await handleCreateUser({ uuid: FAKE_UUID });
-      console.log("res2", res2);
+      expect(res2).toBeInstanceOf(Error);
+      expect((res2 as Error).message).toMatch(/DatabaseError/i);
     });
   });
 });

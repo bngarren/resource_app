@@ -30,23 +30,73 @@ export const add = async (
     );
     return;
   }
+  // Check if uuid already exists
+  // TODO
 
   try {
     const result = await userService.handleCreateUser({ uuid });
-    if (result instanceof UserModel) {
-      resSendJson(res, StatusCodes.CREATED, {
-        message: "User successfully created.",
-      });
+    if (result instanceof Error) {
+      throw result;
     } else {
+      resSendJson(res, StatusCodes.CREATED, {
+        message: `User successfully created with uuid: ${result.uuid}.`,
+      });
+    }
+  } catch (error) {
+    if (error instanceof Error) {
       next(
         newTypedHttpError("addUser", "default", {
           code: StatusCodes.INTERNAL_SERVER_ERROR.toString(),
-          message: "Unexpected server error. Failed adding new user.",
+          message: error.message,
         })
       );
+    } else {
+      next(String(error));
+    }
+  }
+};
+
+/**
+ * GET /users/{uuid}
+ */
+export const getUser = async (
+  req: TypedRequest<"getUser">,
+  res: TypedResponse<"getUser">,
+  next: NextFunction
+) => {
+  const { uuid } = req.params;
+
+  // Validate request
+  if (!uuid || typeof uuid !== "string") {
+    next(
+      newTypedHttpError("getUser", StatusCodes.BAD_REQUEST, {
+        code: StatusCodes.BAD_REQUEST.toString(),
+        message: "Invalid uuid in the request",
+      })
+    );
+    return;
+  }
+
+  try {
+    const result = await userService.handleGetUser(uuid);
+    if (result instanceof Error) {
+      throw result;
+    } else {
+      resSendJson(res, StatusCodes.OK, {
+        uuid: result.uuid,
+      });
     }
   } catch (error) {
-    next(error);
+    if (error instanceof Error) {
+      next(
+        newTypedHttpError("getUser", "default", {
+          code: StatusCodes.INTERNAL_SERVER_ERROR.toString(),
+          message: error.message,
+        })
+      );
+    } else {
+      next(String(error));
+    }
   }
 };
 

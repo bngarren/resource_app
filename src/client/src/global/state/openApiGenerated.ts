@@ -15,6 +15,9 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.body,
       }),
     }),
+    getUser: build.query<GetUserResponse, GetUserArg>({
+      query: (queryArg) => ({ url: `/users/${queryArg.uuid}` }),
+    }),
     getUserInventory: build.query<
       GetUserInventoryResponse,
       GetUserInventoryArg
@@ -57,6 +60,13 @@ export type AddUserArg = {
   body: {
     uuid: string;
   };
+};
+export type GetUserResponse =
+  /** status 200 Successful retrieval of the user data.
+   */ User;
+export type GetUserArg = {
+  /** Uuid string of the user */
+  uuid: string;
 };
 export type GetUserInventoryResponse =
   /** status 200 Successful retrieval of user inventory.
@@ -103,6 +113,9 @@ export type ScanResult = {
 export type ErrorResponse = {
   code: string;
   message: string;
+};
+export type User = {
+  uuid: string;
 };
 export type InventoryItem = {
   id: number;

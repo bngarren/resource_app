@@ -1,10 +1,10 @@
 get:
-  summary: Gets the user's inventory
+  summary: Gets a user
   description: |
-    Retrieves the user's inventory from the database
+    Given a uuid from authentication service, gets user (player) data from the database
   tags:
     - Users
-  operationId: getUserInventory
+  operationId: getUser
   parameters:
     - in: path
       name: uuid
@@ -15,11 +15,11 @@ get:
   responses:
     "200":
       description: |
-        Successful retrieval of user inventory.
+        Successful retrieval of the user data.
       content:
         application/json:
           schema:
-            $ref: "../schemas/UserInventory.yaml"
+            $ref: "../schemas/User.yaml"
     "400": 
       $ref: "../openapi.yaml#/components/responses/400BadRequest"
     "401":

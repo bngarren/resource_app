@@ -1,0 +1,8 @@
+type: object
+description: |
+  A user (player) of the app
+required:
+  - uuid
+properties:
+  uuid:
+    type: string

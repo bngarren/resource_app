@@ -60,8 +60,8 @@ paths:
                 $ref: '#/components/schemas/ScanResult'
         '400':
           $ref: '#/components/responses/400BadRequest'
-        '403':
-          $ref: '#/components/responses/403NotAuthorized'
+        '401':
+          $ref: '#/components/responses/401NotAuthorized'
         default:
           description: Unexpected error
           content:
@@ -104,8 +104,43 @@ paths:
                     type: string
         '400':
           $ref: '#/components/responses/400BadRequest'
-        '403':
-          $ref: '#/components/responses/403NotAuthorized'
+        '401':
+          $ref: '#/components/responses/401NotAuthorized'
+        '422':
+          $ref: '#/components/responses/422UnprocessableEntity'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  '/users/{uuid}':
+    get:
+      summary: Gets a user
+      description: |
+        Given a uuid from authentication service, gets user (player) data from the database
+      tags:
+        - Users
+      operationId: getUser
+      parameters:
+        - in: path
+          name: uuid
+          description: Uuid string of the user
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: |
+            Successful retrieval of the user data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401NotAuthorized'
         default:
           description: Unexpected error
           content:
@@ -137,8 +172,8 @@ paths:
                 $ref: '#/components/schemas/UserInventory'
         '400':
           $ref: '#/components/responses/400BadRequest'
-        '403':
-          $ref: '#/components/responses/403NotAuthorized'
+        '401':
+          $ref: '#/components/responses/401NotAuthorized'
         default:
           description: Unexpected error
           content:
@@ -149,6 +184,15 @@ servers:
   - url: 'https://virtserver.swaggerhub.com/BNGARREN_1/resource-app/1.0.1'
 components:
   schemas:
+    User:
+      type: object
+      description: |
+        A user (player) of the app
+      required:
+        - uuid
+      properties:
+        uuid:
+          type: string
     Coordinate:
       type: array
       minItems: 2
@@ -335,8 +379,17 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-    403NotAuthorized:
+    401NotAuthorized:
       description: Not authorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    422UnprocessableEntity:
+      description: |
+        The server understands the content type of the request entity, and
+        the syntax of the request entity is correct, but it was unable to
+        process the contained instructions.
       content:
         application/json:
           schema:

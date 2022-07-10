@@ -39,6 +39,7 @@ afterAll(async () => {
 afterEach(async () => {
   await db("resources").del();
   await db("regions").del();
+  await db("users").del();
 });
 
 describe("for authorized requests", () => {
@@ -115,6 +116,23 @@ describe("for authorized requests", () => {
           .set("Authorization", `Bearer ${token}`)
           .expect(201);
         expect(response.body).toHaveProperty("message");
+      });
+      it("should return status 422 (unprocessable) if the uuid already exists", async () => {
+        await request(app)
+          .post("/api/users/add")
+          .send({
+            uuid,
+          })
+          .set("Authorization", `Bearer ${token}`)
+          .expect(201);
+        const result = await request(app)
+          .post("/api/users/add")
+          .send({
+            uuid,
+          })
+          .set("Authorization", `Bearer ${token}`);
+        expect(result.status).toBe(422);
+        expect(result.body.message).toMatch(/DatabaseError/i);
       });
     });
   });
