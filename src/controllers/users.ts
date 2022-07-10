@@ -5,28 +5,48 @@ import {
   TypedResponse,
 } from "./../types/openapi.extended";
 import { newTypedHttpError } from "./../types/openapi.extended";
-import { AddUserRequest } from "../types/index";
 import { userService } from "../services";
 import { NextFunction, Request, Response } from "express";
 import { logger } from "../logger";
+import UserModel from "../models/User";
 
+/**
+ * POST /users/add
+ */
 export const add = async (
-  req: Request<unknown, unknown, AddUserRequest>,
-  res: Response
+  req: TypedRequest<"addUser">,
+  res: TypedResponse<"addUser">,
+  next: NextFunction
 ) => {
-  const { body } = req;
+  const { uuid } = req.body;
 
-  if (!body["uuid"]) {
-    res.status(400).send("Need a uuid to add a new user");
+  // Validate request
+  if (!uuid || typeof uuid !== "string") {
+    next(
+      newTypedHttpError("addUser", StatusCodes.BAD_REQUEST, {
+        code: StatusCodes.BAD_REQUEST.toString(),
+        message: "Invalid or missing uuid in the request",
+      })
+    );
     return;
   }
 
-  const result = await userService.handleCreateUser(body);
-
-  if (!result) {
-    res.sendStatus(500);
-  } else {
-    res.send(result);
+  try {
+    const result = await userService.handleCreateUser({ uuid });
+    if (result instanceof UserModel) {
+      resSendJson(res, StatusCodes.CREATED, {
+        message: "User successfully created.",
+      });
+    } else {
+      next(
+        newTypedHttpError("addUser", "default", {
+          code: StatusCodes.INTERNAL_SERVER_ERROR.toString(),
+          message: "Unexpected server error. Failed adding new user.",
+        })
+      );
+    }
+  } catch (error) {
+    next(error);
   }
 };
 

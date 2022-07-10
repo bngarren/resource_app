@@ -44,6 +44,7 @@ afterEach(async () => {
 describe("for authorized requests", () => {
   // We use a client firebase SDK to sign in a user to get an ID token for authorized headers
   let token: string;
+  let uuid: string;
   beforeAll(async () => {
     const firebaseConfig = {
       apiKey: "AIzaSyDPhUcM2-cwT10bprbtd3qgLTlwgb7zDgM",
@@ -61,6 +62,7 @@ describe("for authorized requests", () => {
     );
     const credential = await signInWithCustomToken(fbAuth, customToken);
     token = await credential.user.getIdToken();
+    uuid = credential.user.uid;
   });
 
   describe("POST /scan", () => {
@@ -90,6 +92,30 @@ describe("for authorized requests", () => {
         })
         .set("Authorization", `Bearer ${token}`)
         .expect(400);
+    });
+  });
+
+  describe("/users", () => {
+    //
+    describe("POST /users/add", () => {
+      //
+      it("should return status 400 (bad request) if missing or invalid uuid", async () => {
+        await request(app)
+          .post("/api/users/add")
+          .send({})
+          .set("Authorization", `Bearer ${token}`)
+          .expect(400);
+      });
+      it("should return status 201 (resource created OK) if successful", async () => {
+        const response = await request(app)
+          .post("/api/users/add")
+          .send({
+            uuid,
+          })
+          .set("Authorization", `Bearer ${token}`)
+          .expect(201);
+        expect(response.body).toHaveProperty("message");
+      });
     });
   });
 });

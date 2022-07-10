@@ -1,6 +1,5 @@
 import * as APITypes from "./openapi";
 export * from "./openapi.extended";
-export * from "./requestResponse.types";
 export * from "./scanService.types";
 
 export type APISchemas = APITypes.components["schemas"];

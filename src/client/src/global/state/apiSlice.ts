@@ -15,4 +15,5 @@ export const api = openApiGenerated.enhanceEndpoints({
  *
  * These are defined in th openApiGenerated.ts file
  */
-export const { useScanMutation, useGetUserInventoryQuery } = api;
+export const { useScanMutation, useAddUserMutation, useGetUserInventoryQuery } =
+  api;

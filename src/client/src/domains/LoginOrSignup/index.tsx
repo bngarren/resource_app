@@ -15,6 +15,7 @@ import { useToasty } from "../../components/Toasty";
 import { UserCredential } from "firebase/auth";
 import { LocationState } from "../../types";
 import { signIn, createUser } from "../../global/auth/firebase";
+import { useAddUserMutation } from "../../global/state/apiSlice";
 
 type LoginOrSignupProps = {
   type: "login" | "signup";
@@ -28,6 +29,8 @@ const LoginOrSignup = (props: LoginOrSignupProps) => {
   const from = locationState?.from || "/home";
 
   const { openToasty } = useToasty();
+
+  const [addUser] = useAddUserMutation();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -49,37 +52,37 @@ const LoginOrSignup = (props: LoginOrSignupProps) => {
 
     if (fb_result instanceof Error) {
       openToasty(fb_result.message, "error");
-      didError = true;
+      console.error(fb_result.message);
+      return;
     }
 
     // Handle our database side of the sign up process
-    if (type === "signup" && !(fb_result instanceof Error)) {
+    if (type === "signup") {
       // Make a new user object
       const newUserJSON = {
         uuid: fb_result.user.uid,
       };
 
       try {
-        //! TODO
-        // Success...
+        const addUserPromise = await addUser({ body: newUserJSON }).unwrap();
+
         openToasty(
           "You are in! Get out there and find some resources!",
           "success"
         );
+        console.log("FROM SERVER:", addUserPromise.message);
       } catch (error) {
         if (error instanceof Error) {
           //! Toasting the errors for debug purposes...
           openToasty(error.message, "error");
         }
-        console.log(error);
+        console.error(error);
         didError = true;
         // Rollback the new firebase user
         // TODO new to try/catch here
-        await fb_result.user.delete();
+        if (!(fb_result instanceof Error)) await fb_result.user.delete();
       }
     }
-
-    //console.log("userCredential", fb_result);
 
     // If no errors, navigate to where they were trying to go
     if (!didError) {

@@ -25,7 +25,7 @@ export const scan = async (
     next(
       newTypedHttpError("scan", StatusCodes.BAD_REQUEST, {
         code: StatusCodes.BAD_REQUEST.toString(),
-        message: "Invalid user position in the request",
+        message: "Invalid or missing user position in the request",
       })
     );
     return;
@@ -41,7 +41,6 @@ export const scan = async (
     );
     resSendJson(res, StatusCodes.OK, scanResult);
   } catch (error) {
-    logger.error(error, "Sending a status 500 unexpected error");
     next(error);
   }
 };

@@ -135,7 +135,10 @@
 
 # WIP 
 > 2022-07-09
+- Currently working on tests for userService handleCreateUser, not passing test
 - Working on getUserInventory endpoint
    - having trouble with typing of the json query in the data access layer
    - consider looking into [this](https://github.com/Vincit/objection.js/issues/2237#issuecomment-1059569032) regarding a way to type the model class and use a custom query builder
    - a custom query builder may allow for a custom query function (i.e. json query) to return the correct type
+   - Or maybe better: look at objection's [castTo()](https://github.com/Vincit/objection.js/issues/2237#issuecomment-1059569032)
+   - Need to get addUser working again so that we can pre-populate a correct user inventory structure in the DB

@@ -44,7 +44,10 @@ export const addUser = async (model: UserModel, trx?: TransactionOrKnex) => {
  * @returns The QueryBuilder for this query
  */
 export const query_getInventory = (uuid: string, trx?: TransactionOrKnex) => {
-  return UserModel.query(trx).select("inventory").findOne("uuid", uuid);
+  return UserModel.query(trx)
+    .select(ref("inventory").as("inventory").castJson())
+    .findOne("uuid", uuid)
+    .castTo<UserType["inventory"]>();
 };
 
 /**

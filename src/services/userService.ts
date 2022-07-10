@@ -5,6 +5,8 @@ import { logger } from "../logger";
 import UserModel from "../models/User";
 
 /**
+ * @description
+ * ### handleCreateuser
  * Handles the creation of a new user
  *
  * To accomplish this:

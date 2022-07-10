@@ -8,6 +8,13 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.body,
       }),
     }),
+    addUser: build.mutation<AddUserResponse, AddUserArg>({
+      query: (queryArg) => ({
+        url: `/users/add`,
+        method: "POST",
+        body: queryArg.body,
+      }),
+    }),
     getUserInventory: build.query<
       GetUserInventoryResponse,
       GetUserInventoryArg
@@ -38,6 +45,17 @@ export type ScanArg = {
       uuid: string;
     };
     userPosition: Coordinate;
+  };
+};
+export type AddUserResponse = /** status 201 The user was sucessfully created
+ */ {
+  message: string;
+};
+export type AddUserArg = {
+  /** A user uuid is required to create a new user. This is obtained via the authentication service (Firebase auth). Thus, this part must be complete prior to hitting this endpoint.
+   */
+  body: {
+    uuid: string;
   };
 };
 export type GetUserInventoryResponse =

@@ -8,6 +8,10 @@ export interface paths {
     /** A user (at a GPS location) scans and receives data about nearby resources and interactables */
     post: operations["scan"];
   };
+  "/users/add": {
+    /** Given a uuid from authentication service, adds a new user (player) to the app and database */
+    post: operations["addUser"];
+  };
   "/users/{uuid}/inventory": {
     /** Retrieves the user's inventory from the database */
     get: operations["getUserInventory"];
@@ -159,6 +163,35 @@ export interface operations {
             uuid: string;
           };
           userPosition: components["schemas"]["Coordinate"];
+        };
+      };
+    };
+  };
+  /** Given a uuid from authentication service, adds a new user (player) to the app and database */
+  addUser: {
+    responses: {
+      /** The user was sucessfully created */
+      201: {
+        content: {
+          "application/json": {
+            message: string;
+          };
+        };
+      };
+      400: components["responses"]["400BadRequest"];
+      403: components["responses"]["403NotAuthorized"];
+      /** Unexpected error */
+      default: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+    /** A user uuid is required to create a new user. This is obtained via the authentication service (Firebase auth). Thus, this part must be complete prior to hitting this endpoint. */
+    requestBody: {
+      content: {
+        "application/json": {
+          uuid: string;
         };
       };
     };
