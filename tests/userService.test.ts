@@ -1,4 +1,5 @@
-import { handleCreateUser } from "./../src/services/userService";
+import { NotFoundError, UniqueViolationError } from "objection";
+import { handleCreateUser, handleGetUser } from "./../src/services/userService";
 import { Knex } from "knex";
 import config from "../src/config";
 import { setupDB } from "../src/data/db";
@@ -50,20 +51,27 @@ describe("handleCreateUser()", () => {
   });
   describe("when a uuid already exists", () => {
     //
-    it("should not create a new user and return error with message 'DatabaseError'", async () => {
-      try {
-        await handleCreateUser({ uuid: FAKE_UUID });
-      } catch (err) {
-        console.error(err);
-        return false;
-      }
+    it("should not create a new user and should return UniqueValidationError", async () => {
+      await handleCreateUser({ uuid: FAKE_UUID });
       const res1 = await UserModel.query().select().where("uuid", FAKE_UUID);
       // Previouly existing user
       expect(res1).toHaveLength(1);
       // Now try to create another user with the same uuid
       const res2 = await handleCreateUser({ uuid: FAKE_UUID });
-      expect(res2).toBeInstanceOf(Error);
-      expect((res2 as Error).message).toMatch(/DatabaseError/i);
+      expect(res2).toBeInstanceOf(UniqueViolationError);
+      await expect(UserModel.query().select()).resolves.toHaveLength(1);
+    });
+  });
+});
+
+describe("handleGetUser", () => {
+  //
+  describe("when a uuid doesn't exist in the database", () => {
+    //
+    it("should not throw but return an error", async () => {
+      await expect(() => handleGetUser("DOESNT EXIST")).not.toThrowError();
+      const result = await handleGetUser("DOESNT EXIST");
+      expect(result).toBeInstanceOf(NotFoundError);
     });
   });
 });

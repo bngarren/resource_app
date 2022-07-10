@@ -128,6 +128,12 @@ export interface components {
         "application/json": components["schemas"]["ErrorResponse"];
       };
     };
+    /** Resource not found */
+    "404NotFound": {
+      content: {
+        "application/json": components["schemas"]["ErrorResponse"];
+      };
+    };
     /**
      * The server understands the content type of the request entity, and
      * the syntax of the request entity is correct, but it was unable to
@@ -232,6 +238,7 @@ export interface operations {
       };
       400: components["responses"]["400BadRequest"];
       401: components["responses"]["401NotAuthorized"];
+      404: components["responses"]["404NotFound"];
       /** Unexpected error */
       default: {
         content: {
@@ -257,6 +264,7 @@ export interface operations {
       };
       400: components["responses"]["400BadRequest"];
       401: components["responses"]["401NotAuthorized"];
+      404: components["responses"]["404NotFound"];
       /** Unexpected error */
       default: {
         content: {

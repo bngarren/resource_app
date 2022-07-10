@@ -1,3 +1,4 @@
+import { UserType } from "./../models/User";
 import { UserInventory } from "./../types/index";
 import { TransactionOrKnex } from "objection";
 import { addUser, getInventory, getUser } from "../data/queries/queryUser";
@@ -16,7 +17,7 @@ import { handleDatabaseError } from "../util/errors";
  * - Return the user (UserModel) to the caller
  *
  * @param userJson The new user's data in json object
- * @returns Promise resolving to a UserModel, or undefined if error occurred
+ * @returns Promise resolving to a UserModel or Error
  */
 export const handleCreateUser = async (
   userJson: Partial<UserModel>,
@@ -37,7 +38,7 @@ export const handleCreateUser = async (
   } catch (error) {
     // Includes all database/query errors
     // Filter/log the error and return it
-    if (error instanceof Error) return handleDatabaseError(error);
+    if (error instanceof Error) return error;
     // shouldn't need, but for type safety
     return new Error(String(error));
   }
@@ -47,28 +48,42 @@ export const handleCreateUser = async (
  * @description
  * ### handleGetUser
  * Gets a UserModel from the database, by user uuid
- * @param uuid
+ * @param uuid User uuid
  */
 export const handleGetUser = async (uuid: string) => {
   try {
     const result = await getUser(uuid);
     if (!(result instanceof UserModel)) {
-      throw new Error("Unknown error attemping to get user.");
+      return new Error("Unknown error attemping to get user.");
     }
     return result;
   } catch (error) {
-    if (error instanceof Error) return handleDatabaseError(error);
+    if (error instanceof Error) return error;
     // shouldn't need, but for type safety
     return new Error(String(error));
   }
 };
 
-export const getUserInventory = async (
-  uuid: string
-): Promise<UserInventory | undefined> => {
-  const result = await getInventory(uuid);
-  console.log(result);
-  // ! We expect our API type to match our database/model type so we use "as UserInventory"
-  // This is unsafe if these types don't match
-  return result as UserInventory;
+/**
+ * @description
+ * ### handleGetUserInventory
+ * Gets the user's inventory
+ *
+ * **NOTE**: If there are unexpected errors, ensure that the database/model user inventory shape
+ * matches the expected shape (i.e. that defined by OpenAPI, which generates the UserInventory type
+ * used here.)
+ * @param uuid User uuid
+ */
+export const handleGetUserInventory = async (uuid: string) => {
+  try {
+    const result = await getInventory(uuid);
+    if (!result) {
+      return new Error("Unknown error attemping to get user inventory.");
+    }
+    return result as UserInventory;
+  } catch (error) {
+    if (error instanceof Error) return error;
+    // shouldn't need, but for type safety
+    return new Error(String(error));
+  }
 };

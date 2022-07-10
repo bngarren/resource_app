@@ -40,7 +40,11 @@ export const addUser = async (model: UserModel, trx?: TransactionOrKnex) => {
  * @returns The QueryBuilder for this query
  */
 export const query_getUser = (uuid: string, trx?: TransactionOrKnex) => {
-  return UserModel.query(trx).select("uuid").findOne("uuid", uuid);
+  return UserModel.query(trx)
+    .select("uuid")
+    .findOne("uuid", uuid)
+    .throwIfNotFound();
+  // https://vincit.github.io/objection.js/api/query-builder/other-methods.html#throwifnotfound
 };
 
 /**
@@ -67,8 +71,9 @@ export const getUser = async (uuid: string, trx?: TransactionOrKnex) => {
  */
 export const query_getInventory = (uuid: string, trx?: TransactionOrKnex) => {
   return UserModel.query(trx)
-    .select(ref("inventory").as("inventory").castJson())
+    .select(ref("inventory"))
     .findOne("uuid", uuid)
+    .throwIfNotFound()
     .castTo<UserType["inventory"]>();
 };
 
@@ -81,14 +86,5 @@ export const query_getInventory = (uuid: string, trx?: TransactionOrKnex) => {
  * @returns A JSON object containing the user's inventory
  */
 export const getInventory = async (uuid: string, trx?: TransactionOrKnex) => {
-  return query_getInventory(uuid, trx)
-    .then((result) => {
-      if (!result) {
-        throw new Error("No inventory was found in the database.");
-      }
-      return result;
-    })
-    .catch((error) => {
-      throw error;
-    });
+  return await query_getInventory(uuid, trx);
 };

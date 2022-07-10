@@ -1,5 +1,10 @@
 import { Model, ModelObject } from "objection";
 
+type InventoryItem = {
+  id: number;
+  name: string;
+};
+
 export default class UserModel extends Model {
   id!: number;
   uuid!: string;
@@ -10,7 +15,7 @@ export default class UserModel extends Model {
     };
     items: {
       byId: {
-        [key: number]: Record<string, unknown>;
+        [key: number]: InventoryItem;
       };
       allIds: number[];
     };

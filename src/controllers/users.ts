@@ -1,3 +1,4 @@
+import { NotFoundError, UniqueViolationError } from "objection";
 import { StatusCodes } from "http-status-codes";
 import {
   resSendJson,
@@ -25,13 +26,11 @@ export const add = async (
     next(
       newTypedHttpError("addUser", StatusCodes.BAD_REQUEST, {
         code: StatusCodes.BAD_REQUEST.toString(),
-        message: "Invalid or missing uuid in the request",
+        message: "Invalid or missing user id in the request",
       })
     );
     return;
   }
-  // Check if uuid already exists
-  // TODO
 
   try {
     const result = await userService.handleCreateUser({ uuid });
@@ -44,6 +43,14 @@ export const add = async (
     }
   } catch (error) {
     if (error instanceof Error) {
+      if (error instanceof UniqueViolationError) {
+        next(
+          newTypedHttpError("addUser", 422, {
+            code: StatusCodes.UNPROCESSABLE_ENTITY.toString(),
+            message: "This user id already exists!",
+          })
+        );
+      }
       next(
         newTypedHttpError("addUser", "default", {
           code: StatusCodes.INTERNAL_SERVER_ERROR.toString(),
@@ -71,7 +78,7 @@ export const getUser = async (
     next(
       newTypedHttpError("getUser", StatusCodes.BAD_REQUEST, {
         code: StatusCodes.BAD_REQUEST.toString(),
-        message: "Invalid uuid in the request",
+        message: "Invalid or missing user id in the request",
       })
     );
     return;
@@ -88,12 +95,21 @@ export const getUser = async (
     }
   } catch (error) {
     if (error instanceof Error) {
-      next(
-        newTypedHttpError("getUser", "default", {
-          code: StatusCodes.INTERNAL_SERVER_ERROR.toString(),
-          message: error.message,
-        })
-      );
+      if (error instanceof NotFoundError) {
+        next(
+          newTypedHttpError("getUser", 404, {
+            code: StatusCodes.NOT_FOUND.toString(),
+            message: error.message,
+          })
+        );
+      } else {
+        next(
+          newTypedHttpError("getUser", "default", {
+            code: StatusCodes.INTERNAL_SERVER_ERROR.toString(),
+            message: error.message,
+          })
+        );
+      }
     } else {
       next(String(error));
     }
@@ -115,28 +131,40 @@ export const getUserInventory = async (
     next(
       newTypedHttpError("getUserInventory", StatusCodes.BAD_REQUEST, {
         code: StatusCodes.BAD_REQUEST.toString(),
-        message: "Invalid uuid in the request",
+        message: "Invalid or missing user id in the request",
       })
     );
     return;
   }
 
   try {
-    const result = await userService.getUserInventory(uuid);
-    if (result) {
+    const result = await userService.handleGetUserInventory(uuid);
+    if (result instanceof Error) {
+      throw result;
+    } else {
       resSendJson(res, StatusCodes.OK, {
         ...result,
       });
-    } else {
-      next(
-        newTypedHttpError("getUserInventory", "default", {
-          code: StatusCodes.INTERNAL_SERVER_ERROR.toString(),
-          message: "Could not get user's inventory. Possibly an invalid uuid?",
-        })
-      );
     }
   } catch (error) {
-    logger.error(error, "Sending a status 500 unexpected error");
-    next(error);
+    if (error instanceof Error) {
+      if (error instanceof NotFoundError) {
+        next(
+          newTypedHttpError("getUserInventory", 404, {
+            code: StatusCodes.NOT_FOUND.toString(),
+            message: error.message,
+          })
+        );
+      } else {
+        next(
+          newTypedHttpError("getUserInventory", "default", {
+            code: StatusCodes.INTERNAL_SERVER_ERROR.toString(),
+            message: error.message,
+          })
+        );
+      }
+    } else {
+      next(String(error));
+    }
   }
 };

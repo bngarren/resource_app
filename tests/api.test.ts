@@ -42,6 +42,13 @@ afterEach(async () => {
   await db("users").del();
 });
 
+/**
+ *
+ * For this section of API endpoint tests, we should test each endpoint to provide the status code and/or response body
+ * that we expect BASED ON the OpenAPI specification.
+ *
+ *
+ */
 describe("for authorized requests", () => {
   // We use a client firebase SDK to sign in a user to get an ID token for authorized headers
   let token: string;
@@ -132,7 +139,36 @@ describe("for authorized requests", () => {
           })
           .set("Authorization", `Bearer ${token}`);
         expect(result.status).toBe(422);
-        expect(result.body.message).toMatch(/DatabaseError/i);
+      });
+    });
+    describe("GET /users/{uuid}", () => {
+      //
+      it("should return status 404 (not found) if the uuid doesn't exist", async () => {
+        await request(app)
+          .get(`/api/users/made-up-uuid`)
+          .set("Authorization", `Bearer ${token}`)
+          .expect(404);
+      });
+      it("should return status 200 (OK) if the user exists", async () => {
+        await request(app)
+          .post("/api/users/add")
+          .send({
+            uuid,
+          })
+          .set("Authorization", `Bearer ${token}`);
+        await request(app)
+          .get(`/api/users/${uuid}`)
+          .set("Authorization", `Bearer ${token}`)
+          .expect(200);
+      });
+    });
+    describe("GET /users/{uuid}/inventory", () => {
+      //
+      it("should return status 404 (not found) if the uuid doesn't exist", async () => {
+        await request(app)
+          .get(`/api/users/made-up-uuid/inventory`)
+          .set("Authorization", `Bearer ${token}`)
+          .expect(404);
       });
     });
   });

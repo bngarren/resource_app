@@ -166,8 +166,10 @@ try {
 ```
 
 # App Health Checklist
-> 2022-07-09
+> 2022-07-10
 - Verify that the OpenAPI spec and the generated types from it are congruent with the backend model/types. Similarly, client/frontend types should derive from RTK query (the only way we should be interfacing with our API), which derives from our OpenAPI spec.
+- Test coverage
+   - Tests in `api.test.ts` should test each endpoint for the correct status code and, if appropriate, response body based on the OpenAPI spec
 
 
 # WIP 
