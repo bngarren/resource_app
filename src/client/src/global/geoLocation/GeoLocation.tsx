@@ -1,21 +1,20 @@
 import * as React from "react";
-import config from "../config";
+import config from "../../config";
 
 /**
- *
+ * ### useGeoLocation
+ * ---
+ * @description
  * Custom hook for managing navigator.geolocation functionality. It starts/stops new watchPosition sessions, awaits callbacks, determines if geolocation accuracy meets threshold, and then makes location available in its return
  *
+ * ---
+ *
  * @returns
- *
- * startWatcher - starts a new watchPosition session.
- *
- * endWatcher - ends the current watchPosition session
- *
- * location - the most recent location that met criteria. Only non-null during an active watchPosition session
- *
- * isWatching - true if watchPosition is active
- *
- * error - error message
+ * - startWatcher - starts a new watchPosition session.
+ * - endWatcher - ends the current watchPosition session
+ * - location - the most recent location that met criteria. Only non-null during an active watchPosition session
+ * - isWatching - true if watchPosition is active
+ * - error - error message
  */
 export const useGeoLocation = () => {
   /**
@@ -63,13 +62,9 @@ export const useGeoLocation = () => {
   /**
    * This is the most recent location state of our hook
    */
-  const [location, _setLocation] =
-    React.useState<GeolocationCoordinates | null>(null);
-
-  // TODO not sure we need a custom setState here...
-  const setLocation = React.useCallback((l: GeolocationCoordinates | null) => {
-    _setLocation(l);
-  }, []);
+  const [location, setLocation] = React.useState<GeolocationCoordinates | null>(
+    null
+  );
 
   /**
    * Should be true when watchPosition is on/active.
@@ -141,7 +136,7 @@ export const useGeoLocation = () => {
       // Lastly, we save the time of this watchResult
       lastWatchResultTime.current = new Date().getTime();
     },
-    [setLocation, location]
+    [location]
   );
 
   /**
@@ -165,7 +160,7 @@ export const useGeoLocation = () => {
     setLocation(null);
 
     clearTimeout(watchTimer.current);
-  }, [setLocation]);
+  }, []);
 
   /**
    * Sets a timeout to call endWatcher after a specified amount of time. This effectively shuts down the continuous GPS activity after some time, unless restarted.
@@ -199,7 +194,7 @@ export const useGeoLocation = () => {
       if (resetTimeOnly) {
         if (watchId.current) {
           newWatchTimer(config.geoLocation_watcher_duration);
-          console.log("watchTimer reset");
+          console.log(`watchTimer ${watchId.current} reset`);
           // Don't need to do anything else
           return;
         }
@@ -255,9 +250,9 @@ export const useGeoLocation = () => {
   }, []);
 
   return {
+    location,
     startWatcher,
     endWatcher,
-    location,
     isWatching,
     error,
   };

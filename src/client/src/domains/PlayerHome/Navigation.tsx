@@ -26,18 +26,11 @@ CraftLink.displayName = "CraftLink";
 
 type NavigationProps = {
   currentView: PlayerHomeView;
-  onChange: (nextView: PlayerHomeView) => void;
 };
 
-const Navigation = ({ currentView, onChange }: NavigationProps) => {
+const Navigation = ({ currentView }: NavigationProps) => {
   return (
-    <BottomNavigation
-      showLabels
-      value={currentView}
-      onChange={(event, newValue) => {
-        onChange(newValue);
-      }}
-    >
+    <BottomNavigation showLabels value={currentView}>
       <BottomNavigationAction
         label="Gather"
         value="GATHER"

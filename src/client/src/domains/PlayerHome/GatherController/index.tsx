@@ -13,29 +13,15 @@ import GpsFixedIcon from "@mui/icons-material/GpsFixed";
 import GpsOffIcon from "@mui/icons-material/GpsOff";
 import * as React from "react";
 import MapWrapper from "../../../components/MapWrapper";
-import { useGeoLocation } from "../../../global/useGeoLocation.new";
 import { UserPosition, ScanStatus, APITypes } from "../../../types";
 import { useScanMutation } from "../../../global/state/apiSlice";
+import { useGeoLocationContext } from "..";
 
 const GatherController = () => {
-  const { startWatcher, endWatcher, location, isWatching } = useGeoLocation();
-
-  /**
-   * Want to start the useGeoLocation watcher once when this component mounts. If true, has been started once.
-   */
-  const startedWatcherOnce = React.useRef(false);
-
-  /**
-   * Stores a ref to the initial location returned by useGeoLocation so that we can initialize our map centered on the user's position.
-   */
-  const initLocation = React.useRef<GeolocationCoordinates>();
-  if (location && !initLocation.current) {
-    initLocation.current = location;
-    console.log("initLocation set as", initLocation.current);
-  }
+  const { startWatcher, endWatcher, location, isWatching, initLocation } =
+    useGeoLocationContext();
 
   const scanStartTime = React.useRef<number | null>();
-
   const [lastScannedLocation, setLastScannedLocation] =
     React.useState<UserPosition>();
   const scanCount = React.useRef<number>(0);
@@ -99,15 +85,6 @@ const GatherController = () => {
       });
   }, [scan, isWatching, location, startWatcher]);
 
-  // Start the geo location watcher once on mount
-  React.useEffect(() => {
-    if (startedWatcherOnce.current) {
-      return;
-    }
-    startWatcher();
-    startedWatcherOnce.current = true;
-  }, [startWatcher]);
-
   // This watches for new locations while we are in the "awaiting" state
   // E.g. the user clicked scan but no watcher session active, so we waited for a new one to boot up and give us a location
   React.useEffect(() => {
@@ -121,9 +98,8 @@ const GatherController = () => {
   React.useEffect(() => {
     return () => {
       clearTimeout(scanAnimationTimer.current);
-      endWatcher();
     };
-  }, [endWatcher]);
+  }, []);
 
   const alertSeverity = {
     COMPLETED: "success",
@@ -135,7 +111,7 @@ const GatherController = () => {
   return (
     <>
       <MapWrapper
-        initLocation={initLocation.current}
+        initLocation={initLocation}
         userPosition={lastScannedLocation}
         scanStatus={scanStatus}
         resources={scanResult?.interactables.scannedResources}

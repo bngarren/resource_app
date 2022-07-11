@@ -173,6 +173,9 @@ try {
 
 
 # WIP 
+> 2022-07-10
+- Currently working on lifting useGeoLocation hook and state into PlayerHome and out of GatherController since location state will be needed by HarvestController as well
+- Also trying to debug useGeoLocation -- something wrong with location being set to null inappropriately...
 > 2022-07-09
 - Currently working on tests for userService handleCreateUser, not passing test
 - Working on getUserInventory endpoint
