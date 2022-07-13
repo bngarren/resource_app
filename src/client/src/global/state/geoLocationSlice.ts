@@ -1,19 +1,28 @@
-import { add } from "./../../../../controllers/users";
 import { AppStartListening } from "./listenerMiddleware";
-import {
-  CaseReducer,
-  createSlice,
-  PayloadAction,
-  Slice,
-} from "@reduxjs/toolkit";
+import { CaseReducer, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import config from "../../config";
-import { ResetTvOutlined } from "@mui/icons-material";
 
 type GeoLocationState = {
+  /**
+   * Id returned by the watchPosition function so that it
+   * can be stopped/cleared at a later time
+   */
   watchId: number | null;
+  /**
+   * Marks the start time of the watchPosition function
+   */
   startTime: number | null;
+  /**
+   * Whether the watcher is active, should coincide with a non-null watchId
+   */
   isWatching: boolean;
+  /**
+   * The most recent location
+   */
   location: GeolocationPosition | null;
+  /**
+   * The initial/first location of the watcher
+   */
   initialLocation: GeolocationPosition | null;
 };
 
@@ -43,9 +52,18 @@ const slice = createSlice({
     watchId: null,
   } as GeoLocationState,
   reducers: {
+    /**
+     * Starts a new GeoLocation.watchPosition session, or if one is
+     * already running, does nothing.
+     */
     startWatcher: (state) => state,
     startedWatcher: _startedWatcher,
-    refreshWatcher: (state) => {
+    /**
+     * Sends a keep alive signal to the watcher, which extends the
+     * duration that the watcher is active. E.g, after a user event
+     * that requires geolocation, i.e. scan, harvest, etc.
+     */
+    refreshWatcher: () => {
       console.log(
         `watcher - refreshed ${Math.floor(
           config.geoLocation_watcher_duration / 1000
@@ -83,10 +101,12 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
     effect: async (action, listenerApi) => {
       const { geoLocation: orig } = listenerApi.getOriginalState();
 
-      // Clear any previous Watcher, i.e., watchPosition (watchId)
+      // If startWatcher is called when a watcher is already running, ignore...
       if (orig.watchId != null) {
-        console.log(`Clearing previous watchId: ${orig.watchId}`);
-        navigator.geolocation.clearWatch(orig.watchId);
+        console.log(
+          `startWatcher called, already in progress, continuing watchId ${orig.watchId}`
+        );
+        return;
       }
 
       // Start new Watcher, i.e., watchPosition
@@ -109,15 +129,18 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
         },
         (positionError) => {
           listenerApi.dispatch(slice.actions.newWatchResult(positionError));
-        }
+        },
+        { enableHighAccuracy: true }
       );
-      console.log(`startWatcher watchId: ${watchId}`);
+      console.log(`startWatcher started watchId: ${watchId}`);
       listenerApi.dispatch(
         slice.actions.startedWatcher({ startTime: new Date().getTime() })
       );
       listenerApi.dispatch(slice.actions.setWatchId(watchId));
 
-      // TURN OFF the Watcher after a predetermined duration
+      // We want to TURN OFF the Watcher after a predetermined duration
+      // i.e. don't want to keep GPS running unnecessarily in the app...
+
       // Waits for a refresh action, if it doesn't come, kill the watcher
       const keepAliveTask = listenerApi.fork(async () => {
         let keepAlive = true;
@@ -129,11 +152,10 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
         }
         return true;
       });
-      const result = await keepAliveTask.result;
-      // If we exit the while loop above, we should be calling endWatcher
-      if (result.status === "ok") {
-        listenerApi.dispatch(slice.actions.endWatcher());
-      }
+
+      await keepAliveTask.result;
+      // If we exit the while loop in keepAliveTask, we should be calling endWatcher
+      listenerApi.dispatch(slice.actions.endWatcher());
     },
   });
   /**
@@ -146,11 +168,16 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
       const watchResult = action.payload;
 
       if (watchResult instanceof GeolocationPositionError) {
-        //handle error
+        console.error(watchResult.message);
         return;
       }
 
-      // No location has been set yet
+      // ** No location has been set yet **
+      // GPS accuracy seems to be worse after a cold start and seems to improve
+      // after the first several results...The following logic tries to wait for
+      // a period of time to allow accuracy to improve before sending the initial location.
+      // This is an attempt to prevent the initial map view or user experience
+      // like trying to interact from being inaccurate due to a bad initial location
       if (orig.location == null) {
         const timeSinceStart =
           watchResult.timestamp -
@@ -164,7 +191,7 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
         }
 
         // Try to wait for additional results
-        const result = await listenerApi.fork(async () => {
+        const improveAccuracyTask = await listenerApi.fork(async () => {
           let finalResult = watchResult;
 
           const nextResultPromise = listenerApi.take((action) => {
@@ -193,6 +220,7 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
                 finalResult = payload;
 
                 // stopping threshold
+                // TODO - needs work
                 if (payload.coords.accuracy < 5) {
                   shouldContinue = false;
                 }
@@ -200,7 +228,9 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
             }
           }
           return finalResult;
-        }).result;
+        });
+
+        const result = await improveAccuracyTask.result;
 
         if (result.status === "ok") {
           listenerApi.dispatch(slice.actions.setLocation(result.value));

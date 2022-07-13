@@ -31,6 +31,7 @@ const GatherController = () => {
       ? geoCoordinatesToLatLngTuple(state.geoLocation.initialLocation.coords)
       : undefined
   );
+  const hasInitiatedWatcher = React.useRef(false);
 
   ///
   const scanStartTime = React.useRef<number | null>();
@@ -43,10 +44,11 @@ const GatherController = () => {
   const [scan, { data: scanResult }] = useScanMutation();
 
   React.useEffect(() => {
-    if (!initialLocation) {
+    if (!hasInitiatedWatcher.current) {
       dispatch(startWatcher);
+      hasInitiatedWatcher.current = true;
     }
-  }, [dispatch, initialLocation]);
+  }, [dispatch]);
 
   const handleScan = React.useCallback(async () => {
     scanStartTime.current = new Date().getTime();

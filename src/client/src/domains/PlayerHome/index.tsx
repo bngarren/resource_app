@@ -26,8 +26,6 @@ const PlayerHome = () => {
 
   const dispatch = useAppDispatch();
 
- 
-
   return (
     <>
       <Outlet />
