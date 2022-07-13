@@ -16,7 +16,7 @@ export default {
   /**
    * How long the watchPosition session will run before ending itself
    */
-  geoLocation_watcher_duration: 120000, // 2 minutes
+  geoLocation_watcher_duration: 10000, // 2 minutes
   /**
    * How long useGeoLocation will wait to improve accuracy before releasing its most recent location
    */
