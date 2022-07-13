@@ -15,12 +15,20 @@ import * as React from "react";
 import MapWrapper from "../../../components/MapWrapper";
 import { UserPosition, ScanStatus, APITypes } from "../../../types";
 import { useScanMutation } from "../../../global/state/apiSlice";
-import { useGeoLocationContext } from "..";
+import { useAppDispatch } from "../../../global/state/store";
+import { refreshWatcher } from "../../../global/state/geoLocationSlice";
 
 const GatherController = () => {
-  const { startWatcher, endWatcher, location, isWatching, initLocation } =
-    useGeoLocationContext();
+  const dispatch = useAppDispatch();
+  return (
+    <>
+      GatherController
+      <button onClick={() => dispatch(refreshWatcher())}>Scan</button>
+    </>
+  );
+};
 
+const GatherControllerOld = () => {
   const scanStartTime = React.useRef<number | null>();
   const [lastScannedLocation, setLastScannedLocation] =
     React.useState<UserPosition>();

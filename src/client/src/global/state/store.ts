@@ -1,20 +1,25 @@
+import { listenerMiddleware } from "./listenerMiddleware";
 import { configureStore } from "@reduxjs/toolkit";
 import { useDispatch, useSelector, TypedUseSelectorHook } from "react-redux";
 import { api } from "./apiSlice";
 import authReducer from "./authSlice";
 import appReducer from "./appSlice";
+import geoLocationReducer from "./geoLocationSlice";
 
 export const store = configureStore({
   reducer: {
     [api.reducerPath]: api.reducer,
     auth: authReducer,
     app: appReducer,
+    geoLocation: geoLocationReducer,
   },
   devTools: process.env.NODE_ENV !== "production",
   // Adding the api middleware enables caching, invalidation, polling,
   // and other useful features of `rtk-query`.
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(api.middleware),
+    getDefaultMiddleware()
+      .prepend(listenerMiddleware.middleware)
+      .concat(api.middleware),
 });
 
 // TODO
