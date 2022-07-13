@@ -1,12 +1,6 @@
-import * as React from "react";
-import { useGetUserInventoryQuery } from "../../global/state/apiSlice.old";
-import GatherController from "./GatherController";
-import { useAuth } from "../../global/auth";
-import { Box, Paper } from "@mui/material";
 import Navigation from "./Navigation";
 import { Outlet, useLocation } from "react-router-dom";
-import { useAppDispatch } from "../../global/state/store";
-import { startWatcher } from "../../global/state/geoLocationSlice";
+import { Paper } from "@mui/material";
 
 /**
  * The types of Views on the PlayerHome page.
@@ -23,8 +17,6 @@ const PlayerHome = () => {
   // Want to set our current navigation selection based on the route path
   const routerLocation = useLocation();
   const currentView = getViewFromRouteLocation(routerLocation.pathname);
-
-  const dispatch = useAppDispatch();
 
   return (
     <>

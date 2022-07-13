@@ -175,3 +175,4 @@ try {
 # WIP 
 > 2022-07-12
 - Finished putting geolocation into redux using listener middleware.
+- Consider adding a 'lastSessionLocation' to geoLocationSlice so that MapWrapper always has a relatively good starting point, rather the zoomed out whole world

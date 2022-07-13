@@ -1,47 +1,31 @@
-import {
-  Alert,
-  AlertColor,
-  Button,
-  List,
-  ListItem,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Alert, AlertColor, Button } from "@mui/material";
 import RadarIcon from "@mui/icons-material/Radar";
-import HardwareIcon from "@mui/icons-material/Hardware";
 import GpsFixedIcon from "@mui/icons-material/GpsFixed";
 import GpsOffIcon from "@mui/icons-material/GpsOff";
 import * as React from "react";
 import MapWrapper from "../../../components/MapWrapper";
-import { UserPosition, ScanStatus, APITypes } from "../../../types";
-import { useScanMutation } from "../../../global/state/apiSlice";
 import { useAppSelector, useAppDispatch } from "../../../global/state/store";
-import {
-  startWatcher,
-  refreshWatcher,
-} from "../../../global/state/geoLocationSlice";
+import { startWatcher } from "../../../global/state/geoLocationSlice";
 import { geoCoordinatesToLatLngTuple } from "../../../util";
+import { useScan } from "./useScan";
 
 const GatherController = () => {
   const dispatch = useAppDispatch();
   const isWatching = useAppSelector((state) => state.geoLocation.isWatching);
-  const location = useAppSelector((state) => state.geoLocation.location);
+
+  // Get the initial GPS location to initialize the MapWrapper
   const initialLocation = useAppSelector((state) =>
     state.geoLocation.initialLocation
       ? geoCoordinatesToLatLngTuple(state.geoLocation.initialLocation.coords)
       : undefined
   );
+
+  // This component will initialize a watcher session on mount if
+  // one isn't already running
   const hasInitiatedWatcher = React.useRef(false);
 
-  ///
-  const scanStartTime = React.useRef<number | null>();
-  const [lastScannedLocation, setLastScannedLocation] =
-    React.useState<UserPosition>();
-  const scanCount = React.useRef<number>(0);
-  const [scanStatus, setScanStatus] = React.useState<ScanStatus>(null);
-  const scanAnimationTimer = React.useRef<NodeJS.Timeout>();
-
-  const [scan, { data: scanResult }] = useScanMutation();
+  // The user scan operation
+  const { scan, scannedLocation, scanStatus, scanResult } = useScan();
 
   React.useEffect(() => {
     if (!hasInitiatedWatcher.current) {
@@ -51,73 +35,8 @@ const GatherController = () => {
   }, [dispatch]);
 
   const handleScan = React.useCallback(async () => {
-    scanStartTime.current = new Date().getTime();
-    setScanStatus(null);
-
-    if (!isWatching) {
-      console.log("Scan aborted, awaiting GPS location.");
-      setScanStatus("AWAITING_GPS");
-      dispatch(startWatcher());
-      return;
-    }
-
-    if (!location) {
-      console.error("Did not have GPS location to scan");
-      setScanStatus("ERRORED");
-      return;
-    }
-
-    setScanStatus("STARTED");
-
-    const userPosition: UserPosition = [
-      location.coords.latitude,
-      location.coords.longitude,
-    ];
-
-    scanCount.current = scanCount.current + 1;
-    setLastScannedLocation(userPosition);
-
-    // RTK query
-    // Perform the scan query then use unwrap() to get the promised result
-    scan({ body: { userPosition } })
-      .unwrap()
-      .then(() => {
-        // Calculate remaining animation time
-        const elapsedScanTime =
-          new Date().getTime() - (scanStartTime.current as number);
-        const remainingAnimationTime = 1500 - elapsedScanTime;
-
-        scanAnimationTimer.current = setTimeout(
-          () => {
-            dispatch(refreshWatcher()); // resets the geolocation watcher duration
-            setScanStatus("COMPLETED");
-            scanStartTime.current = null;
-            console.log("Scan completed.");
-          },
-          remainingAnimationTime > 0 ? remainingAnimationTime : 0
-        );
-      })
-      .catch((error) => {
-        setScanStatus("ERRORED");
-        console.error(error);
-      });
-  }, [scan, isWatching, location, dispatch]);
-
-  // This watches for new locations while we are in the "awaiting" state
-  // E.g. the user clicked scan but no watcher session active, so we waited for a new one to boot up and give us a location
-  React.useEffect(() => {
-    if (scanStatus === "AWAITING_GPS" && location) {
-      console.log("Restarting scan with new location");
-      handleScan();
-    }
-  }, [scanStatus, location, handleScan]);
-
-  // Clean up
-  React.useEffect(() => {
-    return () => {
-      clearTimeout(scanAnimationTimer.current);
-    };
-  }, []);
+    scan();
+  }, [scan]);
 
   const alertSeverity = {
     COMPLETED: "success",
@@ -130,7 +49,7 @@ const GatherController = () => {
     <>
       <MapWrapper
         initialLocation={initialLocation}
-        userPosition={lastScannedLocation}
+        userPosition={scannedLocation}
         scanStatus={scanStatus}
         resources={scanResult?.interactables.scannedResources}
       />
@@ -144,7 +63,6 @@ const GatherController = () => {
       ) : (
         <GpsOffIcon />
       )}
-      {location && `Acc ${location.coords.accuracy}m`}
 
       <div>
         <Button

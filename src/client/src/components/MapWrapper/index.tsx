@@ -172,8 +172,6 @@ const RadarMarker = React.memo(({ position, visible }: RadarMarkerProps) => {
     );
     const zoomedIn = !map.getBounds().contains(l2);
 
-    console.log("map size", map.getSize());
-
     return (
       <>
         <Marker
@@ -217,7 +215,7 @@ const ScanArea = ({ position }: ScanAreaProps) => {
 
 type MapWrapperProps = {
   initialLocation?: LatLngTuple;
-  userPosition?: UserPosition;
+  userPosition?: UserPosition | null;
   scanStatus?: ScanStatus;
   resources?: APITypes.ScannedResource[];
 };
@@ -231,6 +229,8 @@ const MapWrapper = React.memo(
   }: MapWrapperProps) => {
     const initMapCenter = React.useRef<LatLngTuple>();
 
+    // Set the location for initializing the map center once.
+    // Any future changes in map view are due to userPosition
     if (initialLocation && !initMapCenter.current) {
       initMapCenter.current = initialLocation;
     }
