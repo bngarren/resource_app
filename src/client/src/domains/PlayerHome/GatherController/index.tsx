@@ -15,20 +15,24 @@ import * as React from "react";
 import MapWrapper from "../../../components/MapWrapper";
 import { UserPosition, ScanStatus, APITypes } from "../../../types";
 import { useScanMutation } from "../../../global/state/apiSlice";
-import { useAppDispatch } from "../../../global/state/store";
-import { refreshWatcher } from "../../../global/state/geoLocationSlice";
+import { useAppSelector, useAppDispatch } from "../../../global/state/store";
+import {
+  startWatcher,
+  refreshWatcher,
+} from "../../../global/state/geoLocationSlice";
+import { geoCoordinatesToLatLngTuple } from "../../../util";
 
 const GatherController = () => {
   const dispatch = useAppDispatch();
-  return (
-    <>
-      GatherController
-      <button onClick={() => dispatch(refreshWatcher())}>Scan</button>
-    </>
+  const isWatching = useAppSelector((state) => state.geoLocation.isWatching);
+  const location = useAppSelector((state) => state.geoLocation.location);
+  const initialLocation = useAppSelector((state) =>
+    state.geoLocation.initialLocation
+      ? geoCoordinatesToLatLngTuple(state.geoLocation.initialLocation.coords)
+      : undefined
   );
-};
 
-const GatherControllerOld = () => {
+  ///
   const scanStartTime = React.useRef<number | null>();
   const [lastScannedLocation, setLastScannedLocation] =
     React.useState<UserPosition>();
@@ -38,6 +42,12 @@ const GatherControllerOld = () => {
 
   const [scan, { data: scanResult }] = useScanMutation();
 
+  React.useEffect(() => {
+    if (!initialLocation) {
+      dispatch(startWatcher);
+    }
+  }, [dispatch, initialLocation]);
+
   const handleScan = React.useCallback(async () => {
     scanStartTime.current = new Date().getTime();
     setScanStatus(null);
@@ -45,7 +55,7 @@ const GatherControllerOld = () => {
     if (!isWatching) {
       console.log("Scan aborted, awaiting GPS location.");
       setScanStatus("AWAITING_GPS");
-      startWatcher();
+      dispatch(startWatcher());
       return;
     }
 
@@ -57,12 +67,10 @@ const GatherControllerOld = () => {
 
     setScanStatus("STARTED");
 
-    const userPosition: UserPosition = [location.latitude, location.longitude];
-
-    if (!userPosition) {
-      setScanStatus("ERRORED");
-      return;
-    }
+    const userPosition: UserPosition = [
+      location.coords.latitude,
+      location.coords.longitude,
+    ];
 
     scanCount.current = scanCount.current + 1;
     setLastScannedLocation(userPosition);
@@ -79,7 +87,7 @@ const GatherControllerOld = () => {
 
         scanAnimationTimer.current = setTimeout(
           () => {
-            startWatcher(true); // reset the timer
+            dispatch(refreshWatcher()); // resets the geolocation watcher duration
             setScanStatus("COMPLETED");
             scanStartTime.current = null;
             console.log("Scan completed.");
@@ -91,7 +99,7 @@ const GatherControllerOld = () => {
         setScanStatus("ERRORED");
         console.error(error);
       });
-  }, [scan, isWatching, location, startWatcher]);
+  }, [scan, isWatching, location, dispatch]);
 
   // This watches for new locations while we are in the "awaiting" state
   // E.g. the user clicked scan but no watcher session active, so we waited for a new one to boot up and give us a location
@@ -119,7 +127,7 @@ const GatherControllerOld = () => {
   return (
     <>
       <MapWrapper
-        initLocation={initLocation}
+        initialLocation={initialLocation}
         userPosition={lastScannedLocation}
         scanStatus={scanStatus}
         resources={scanResult?.interactables.scannedResources}
@@ -134,7 +142,7 @@ const GatherControllerOld = () => {
       ) : (
         <GpsOffIcon />
       )}
-      {location && `Acc ${location.accuracy}m`}
+      {location && `Acc ${location.coords.accuracy}m`}
 
       <div>
         <Button

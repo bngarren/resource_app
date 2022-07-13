@@ -26,9 +26,7 @@ const PlayerHome = () => {
 
   const dispatch = useAppDispatch();
 
-  React.useEffect(() => {
-    dispatch(startWatcher);
-  }, [dispatch]);
+ 
 
   return (
     <>

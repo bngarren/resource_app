@@ -216,17 +216,25 @@ const ScanArea = ({ position }: ScanAreaProps) => {
 };
 
 type MapWrapperProps = {
-  initLocation?: GeolocationCoordinates | null;
+  initialLocation?: LatLngTuple;
   userPosition?: UserPosition;
   scanStatus?: ScanStatus;
   resources?: APITypes.ScannedResource[];
 };
 
 const MapWrapper = React.memo(
-  ({ initLocation, userPosition, scanStatus, resources }: MapWrapperProps) => {
-    const initLatLng = initLocation
-      ? ([initLocation.latitude, initLocation.longitude] as LatLngTuple)
-      : null;
+  ({
+    initialLocation,
+    userPosition,
+    scanStatus,
+    resources,
+  }: MapWrapperProps) => {
+    const initMapCenter = React.useRef<LatLngTuple>();
+
+    if (initialLocation && !initMapCenter.current) {
+      initMapCenter.current = initialLocation;
+    }
+
     const isScanning =
       scanStatus === "STARTED" || scanStatus === "AWAITING_GPS";
 
@@ -238,7 +246,7 @@ const MapWrapper = React.memo(
         }}
       >
         <Backdrop
-          open={!initLocation || scanStatus === "AWAITING_GPS"}
+          open={!initMapCenter.current || scanStatus === "AWAITING_GPS"}
           sx={{
             position: "absolute",
             zIndex: 1000,
@@ -261,17 +269,17 @@ const MapWrapper = React.memo(
           />
           {!isScanning && <ZoomControl position={"bottomleft"} />}
 
-          {initLatLng && !userPosition && (
-            <MapInitialization position={initLatLng} />
+          {initMapCenter.current && !userPosition && (
+            <MapInitialization position={initMapCenter.current} />
           )}
 
           <UserMarker
-            position={userPosition || initLatLng || null}
+            position={userPosition || initMapCenter.current || null}
             isScanning={isScanning}
           />
 
           <RadarMarker
-            position={userPosition || initLatLng || null}
+            position={userPosition || initMapCenter.current || null}
             visible={scanStatus === "STARTED"}
           />
 

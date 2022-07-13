@@ -14,6 +14,7 @@ type GeoLocationState = {
   startTime: number | null;
   isWatching: boolean;
   location: GeolocationPosition | null;
+  initialLocation: GeolocationPosition | null;
 };
 
 const _startedWatcher: CaseReducer<
@@ -28,6 +29,7 @@ const _endedWatcher: CaseReducer<GeoLocationState> = (state) => {
   state.isWatching = false;
   state.watchId = null;
   state.startTime = null;
+  state.initialLocation = null;
 };
 
 const _newWatchResult: CaseReducer<
@@ -43,7 +45,13 @@ const slice = createSlice({
   reducers: {
     startWatcher: (state) => state,
     startedWatcher: _startedWatcher,
-    refreshWatcher: (state) => state,
+    refreshWatcher: (state) => {
+      console.log(
+        `watcher - refreshed ${Math.floor(
+          config.geoLocation_watcher_duration / 1000
+        )} s`
+      );
+    },
     endWatcher: (state) => state,
     endedWatcher: _endedWatcher,
     newWatchResult: _newWatchResult,
@@ -52,6 +60,9 @@ const slice = createSlice({
     },
     setLocation: (state, action: PayloadAction<GeolocationPosition | null>) => {
       state.location = action.payload;
+      if (!state.initialLocation) {
+        state.initialLocation = action.payload;
+      }
       console.log(
         `watcher - Location: ${JSON.stringify(action.payload?.coords)}`
       );
