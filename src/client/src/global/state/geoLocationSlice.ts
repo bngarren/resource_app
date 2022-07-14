@@ -1,5 +1,10 @@
 import { AppStartListening } from "./listenerMiddleware";
-import { CaseReducer, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import {
+  CaseReducer,
+  createSlice,
+  isAnyOf,
+  PayloadAction,
+} from "@reduxjs/toolkit";
 import config from "../../config";
 
 type GeoLocationState = {
@@ -60,9 +65,14 @@ const _endedWatcher: CaseReducer<GeoLocationState> = (state) => {
   state.initialLocation = null;
 };
 
-const _newWatchResult: CaseReducer<
+const _newWatchResultSuccess: CaseReducer<
   GeoLocationState,
-  PayloadAction<GeolocationPosition | GeoLocationError>
+  PayloadAction<GeolocationPosition>
+> = (state) => state;
+
+const _newWatchResultError: CaseReducer<
+  GeoLocationState,
+  PayloadAction<GeoLocationError>
 > = (state) => state;
 
 const _addError: CaseReducer<
@@ -103,7 +113,14 @@ const slice = createSlice({
     },
     endWatcher: (state) => state,
     endedWatcher: _endedWatcher,
-    newWatchResult: _newWatchResult,
+    /**
+     * A new watch result success is fired after a GeolocationPosition returns from watchPosition
+     */
+    newWatchResultSuccess: _newWatchResultSuccess,
+    /**
+     * A new watch result error is fired after a GeolocationPositionError returns from watchPosition
+     */
+    newWatchResultError: _newWatchResultError,
     setWatchId: (state, action: PayloadAction<number | null>) => {
       state.watchId = action.payload;
     },
@@ -125,6 +142,10 @@ export const { startWatcher, setWatchId, refreshWatcher } = slice.actions;
 
 export default slice.reducer;
 
+/**
+ * Subscribes the various listeners related to Geolocation
+ * @param startListening A typed version of the startListening function
+ */
 export const addGeoLocationListeners = (startListening: AppStartListening) => {
   /**
    * Start Watcher
@@ -171,11 +192,11 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
               speed: position.coords.speed,
             },
           };
-          listenerApi.dispatch(slice.actions.newWatchResult(p));
+          listenerApi.dispatch(slice.actions.newWatchResultSuccess(p));
         },
         (positionError) => {
           listenerApi.dispatch(
-            slice.actions.newWatchResult({
+            slice.actions.newWatchResultError({
               code: positionError.code,
               message: positionError.message,
             })
@@ -219,89 +240,100 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
     },
   });
   /**
-   * Handle watch result
+   * Handle watch results
+   *
+   * Listens for both success and error results
    */
   startListening({
-    actionCreator: slice.actions.newWatchResult,
+    matcher: isAnyOf(
+      slice.actions.newWatchResultSuccess,
+      slice.actions.newWatchResultError
+    ),
     effect: async (action, listenerApi) => {
       const { geoLocation: orig } = listenerApi.getOriginalState();
-      const watchResult = action.payload;
 
       // Watch result errored
-      // !DEBUG this typeguard isn't working...
-      if (!(watchResult instanceof GeolocationPosition)) {
-        console.error(watchResult);
-        listenerApi.dispatch(slice.actions.addError(watchResult));
+      if (slice.actions.newWatchResultError.match(action)) {
+        const watchResultError = action.payload;
+        console.error(watchResultError);
+        listenerApi.dispatch(slice.actions.addError(watchResultError));
 
         // If permission denied, end the watcher
-        if (watchResult.code == GeolocationPositionError.PERMISSION_DENIED) {
+        if (
+          watchResultError.code == GeolocationPositionError.PERMISSION_DENIED
+        ) {
           listenerApi.dispatch(slice.actions.endWatcher());
         }
         return;
       }
 
-      // ** No location has been set yet **
-      // GPS accuracy seems to be worse after a cold start and seems to improve
-      // after the first several results...The following logic tries to wait for
-      // a period of time to allow accuracy to improve before sending the initial location.
-      // This is an attempt to prevent the initial map view or user experience
-      // like trying to interact from being inaccurate due to a bad initial location
-      if (orig.location == null) {
-        const timeSinceStart =
-          watchResult.timestamp -
-          (listenerApi.getState().geoLocation.startTime || 0);
+      // Watch result success
+      if (slice.actions.newWatchResultSuccess.match(action)) {
+        const watchResult = action.payload;
 
-        // Hit max duration, use this result
-        if (timeSinceStart > config.geoLocation_watcher_maxWait) {
-          console.log("watcher - too long since start, setting location");
-          listenerApi.dispatch(slice.actions.setLocation(watchResult));
-          return;
-        }
+        // ** No location has been set yet **
+        // GPS accuracy seems to be worse after a cold start and seems to improve
+        // after the first several results...The following logic tries to wait for
+        // a period of time to allow accuracy to improve before sending the initial location.
+        // This is an attempt to prevent the initial map view or user experience
+        // like trying to interact from being inaccurate due to a bad initial location
+        if (orig.location == null) {
+          const timeSinceStart =
+            watchResult.timestamp -
+            (listenerApi.getState().geoLocation.startTime || 0);
 
-        // Try to wait for additional results
-        const improveAccuracyTask = await listenerApi.fork(async () => {
-          let finalResult = watchResult;
+          // Hit max duration, use this result
+          if (timeSinceStart > config.geoLocation_watcher_maxWait) {
+            console.log("watcher - too long since start, setting location");
+            listenerApi.dispatch(slice.actions.setLocation(watchResult));
+            return;
+          }
 
-          const nextResultPromise = listenerApi.take((action) => {
-            return slice.actions.newWatchResult.match(action);
-          }, config.geoLocation_watcher_maxTimeSinceLastWatchResult);
+          // Try to wait for additional results
+          const improveAccuracyTask = await listenerApi.fork(async () => {
+            let finalResult = watchResult;
 
-          // Stop criteria: nextResultPromise timed out or canceled, or we stop
-          // becasue we met accuracy threshold
-          let shouldContinue = true;
-          while (shouldContinue) {
-            // see if a new watch result comes through, i.e. this should be non-null if so
-            const nextResult = await nextResultPromise;
+            const nextResultPromise = listenerApi.take((action) => {
+              return slice.actions.newWatchResultSuccess.match(action);
+            }, config.geoLocation_watcher_maxTimeSinceLastWatchResult);
 
-            if (!nextResult) {
-              console.log(
-                "watcher - too long since last watch result, setting location"
-              );
-              shouldContinue = false;
-            } else {
-              const [action] = nextResult;
-              if (
-                slice.actions.newWatchResult.match(action) &&
-                action.payload instanceof GeolocationPosition
-              ) {
-                const payload = action.payload;
-                finalResult = payload;
+            // Stop criteria: nextResultPromise timed out or canceled, or we stop
+            // becasue we met accuracy threshold
+            let shouldContinue = true;
+            while (shouldContinue) {
+              // see if a new watch result comes through, i.e. this should be non-null if so
+              const nextResult = await nextResultPromise;
 
-                // stopping threshold
-                // TODO - needs work
-                if (payload.coords.accuracy < 5) {
-                  shouldContinue = false;
+              if (!nextResult) {
+                console.log(
+                  "watcher - too long since last watch result, setting location"
+                );
+                shouldContinue = false;
+              } else {
+                const [action] = nextResult;
+                if (
+                  slice.actions.newWatchResultSuccess.match(action) &&
+                  action.payload instanceof GeolocationPosition
+                ) {
+                  const payload = action.payload;
+                  finalResult = payload;
+
+                  // stopping threshold
+                  // TODO - needs work
+                  if (payload.coords.accuracy < 5) {
+                    shouldContinue = false;
+                  }
                 }
               }
             }
+            return finalResult;
+          });
+
+          const result = await improveAccuracyTask.result;
+
+          if (result.status === "ok") {
+            listenerApi.dispatch(slice.actions.setLocation(result.value));
           }
-          return finalResult;
-        });
-
-        const result = await improveAccuracyTask.result;
-
-        if (result.status === "ok") {
-          listenerApi.dispatch(slice.actions.setLocation(result.value));
         }
       }
     },
