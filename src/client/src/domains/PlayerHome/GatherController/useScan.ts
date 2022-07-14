@@ -8,7 +8,7 @@ import { useAppDispatch, useAppSelector } from "../../../global/state/store";
 import { UserPosition, ScanStatus, APITypes } from "../../../types";
 
 type UseScanReturn = {
-  scan: () => void;
+  scan: (position?: UserPosition) => void;
   scannedLocation: UserPosition | null;
   scanStatus: ScanStatus;
   scanResult: APITypes.ScanResult | undefined;
@@ -28,59 +28,64 @@ export const useScan = () => {
 
   const [scanRequest, { data: scanResult }] = useScanMutation();
 
-  const scan = React.useCallback(() => {
-    scanStartTime.current = new Date().getTime();
-    setScanStatus(null);
+  const scan = React.useCallback(
+    (position?: UserPosition) => {
+      scanStartTime.current = new Date().getTime();
+      setScanStatus(null);
 
-    if (!isWatching) {
-      console.log("Scan aborted, awaiting GPS location.");
-      setScanStatus("AWAITING_GPS");
-      dispatch(startWatcher());
-      return;
-    }
+      let scanPosition: UserPosition;
+      // If a position is passed a parameter, use it to scan instead of GPS
+      if (!position) {
+        if (!isWatching) {
+          console.log("Scan aborted, awaiting GPS location.");
+          setScanStatus("AWAITING_GPS");
+          dispatch(startWatcher());
+          return;
+        }
 
-    if (!location) {
-      console.error("Did not have GPS location to scan");
-      setScanStatus("ERRORED");
-      return;
-    }
+        if (!location) {
+          console.error("Did not have GPS location to scan");
+          setScanStatus("ERRORED");
+          return;
+        }
+        scanPosition = [location.coords.latitude, location.coords.longitude];
+      } else {
+        scanPosition = position;
+      }
 
-    setScanStatus("STARTED");
+      setScanStatus("STARTED");
 
-    const userPosition: UserPosition = [
-      location.coords.latitude,
-      location.coords.longitude,
-    ];
+      scanCount.current = scanCount.current + 1;
+      setScannedLocation(scanPosition);
 
-    scanCount.current = scanCount.current + 1;
-    setScannedLocation(userPosition);
+      dispatch(refreshWatcher()); // resets the geolocation watcher duration
 
-    dispatch(refreshWatcher()); // resets the geolocation watcher duration
+      // RTK query
+      // Perform the scan query then use unwrap() to get the promised result
+      scanRequest({ body: { userPosition: scanPosition } })
+        .unwrap()
+        .then(() => {
+          // Calculate remaining animation time
+          const elapsedScanTime =
+            new Date().getTime() - (scanStartTime.current as number);
+          const remainingAnimationTime = 1500 - elapsedScanTime;
 
-    // RTK query
-    // Perform the scan query then use unwrap() to get the promised result
-    scanRequest({ body: { userPosition } })
-      .unwrap()
-      .then(() => {
-        // Calculate remaining animation time
-        const elapsedScanTime =
-          new Date().getTime() - (scanStartTime.current as number);
-        const remainingAnimationTime = 1500 - elapsedScanTime;
-
-        scanAnimationTimer.current = setTimeout(
-          () => {
-            setScanStatus("COMPLETED");
-            scanStartTime.current = null;
-            console.log("Scan completed.");
-          },
-          remainingAnimationTime > 0 ? remainingAnimationTime : 0
-        );
-      })
-      .catch((error) => {
-        setScanStatus("ERRORED");
-        console.error(error);
-      });
-  }, [scanRequest, isWatching, dispatch, location]);
+          scanAnimationTimer.current = setTimeout(
+            () => {
+              setScanStatus("COMPLETED");
+              scanStartTime.current = null;
+              console.log("Scan completed.");
+            },
+            remainingAnimationTime > 0 ? remainingAnimationTime : 0
+          );
+        })
+        .catch((error) => {
+          setScanStatus("ERRORED");
+          console.error(error);
+        });
+    },
+    [scanRequest, isWatching, dispatch, location]
+  );
 
   // This watches for new locations while we are in the "awaiting" state
   // E.g. the user clicked scan but no watcher session active, so we waited for a new one to boot up and give us a location

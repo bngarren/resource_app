@@ -30,4 +30,9 @@ export default {
    * Actual scan could take longer, depending on network
    */
   scanAnimationTime: 1500, // 1.5 seconds
+
+  /**
+   * Whether to run app in debug mode, which provides additional UI and custom controls
+   */
+  debugMode: true,
 };
