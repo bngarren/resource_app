@@ -24,6 +24,25 @@ type GeoLocationState = {
    * The initial/first location of the watcher
    */
   initialLocation: GeolocationPosition | null;
+
+  /**
+   * Stores the last 3 errors
+   */
+  error: GeoLocationError[];
+};
+
+type GeoLocationError = {
+  code?: number;
+  message: string;
+};
+
+const initialState: GeoLocationState = {
+  watchId: null,
+  startTime: null,
+  isWatching: false,
+  location: null,
+  initialLocation: null,
+  error: [],
 };
 
 const _startedWatcher: CaseReducer<
@@ -43,14 +62,26 @@ const _endedWatcher: CaseReducer<GeoLocationState> = (state) => {
 
 const _newWatchResult: CaseReducer<
   GeoLocationState,
-  PayloadAction<GeolocationPosition | GeolocationPositionError>
+  PayloadAction<GeolocationPosition | GeoLocationError>
 > = (state) => state;
+
+const _addError: CaseReducer<
+  GeoLocationState,
+  PayloadAction<GeoLocationError>
+> = (state, { payload }) => {
+  state.error.push(payload);
+  if (state.error.length > 3) {
+    state.error.shift();
+  }
+};
+
+const _clearError: CaseReducer<GeoLocationState> = (state) => {
+  state.error = [];
+};
 
 const slice = createSlice({
   name: "geoLocation",
-  initialState: {
-    watchId: null,
-  } as GeoLocationState,
+  initialState: initialState,
   reducers: {
     /**
      * Starts a new GeoLocation.watchPosition session, or if one is
@@ -85,6 +116,8 @@ const slice = createSlice({
         `watcher - Location: ${JSON.stringify(action.payload?.coords)}`
       );
     },
+    addError: _addError,
+    clearError: _clearError,
   },
 });
 
@@ -109,6 +142,19 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
         return;
       }
 
+      // Make sure that GeoLocation is supported by the browser
+      if (!navigator.geolocation) {
+        console.log(
+          "watcher - could not start, not supported/allowed by browser"
+        );
+        listenerApi.dispatch(
+          slice.actions.addError({
+            message: "Could not use GPS, not permitted by client.",
+          })
+        );
+        return;
+      }
+
       // Start new Watcher, i.e., watchPosition
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
@@ -128,7 +174,12 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
           listenerApi.dispatch(slice.actions.newWatchResult(p));
         },
         (positionError) => {
-          listenerApi.dispatch(slice.actions.newWatchResult(positionError));
+          listenerApi.dispatch(
+            slice.actions.newWatchResult({
+              code: positionError.code,
+              message: positionError.message,
+            })
+          );
         },
         { enableHighAccuracy: true }
       );
@@ -145,10 +196,19 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
       const keepAliveTask = listenerApi.fork(async () => {
         let keepAlive = true;
         while (keepAlive) {
-          const didRefresh = await listenerApi.take((action) => {
-            return slice.actions.refreshWatcher.match(action);
+          // We wait for a refresh action or an endWatcher action, or the watcher duration times out
+          const sawAction = await listenerApi.take((action) => {
+            return (
+              slice.actions.refreshWatcher.match(action) ||
+              slice.actions.endWatcher.match(action)
+            );
           }, config.geoLocation_watcher_duration);
-          keepAlive = didRefresh != null;
+
+          // Keep alive when we saw an action that wasn't an endWatcher (i.e. must have been a refreshWatcher action)
+          keepAlive =
+            sawAction != null
+              ? !slice.actions.endWatcher.match(sawAction[0])
+              : false;
         }
         return true;
       });
@@ -167,8 +227,16 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
       const { geoLocation: orig } = listenerApi.getOriginalState();
       const watchResult = action.payload;
 
-      if (watchResult instanceof GeolocationPositionError) {
-        console.error(watchResult.message);
+      // Watch result errored
+      // !DEBUG this typeguard isn't working...
+      if (!(watchResult instanceof GeolocationPosition)) {
+        console.error(watchResult);
+        listenerApi.dispatch(slice.actions.addError(watchResult));
+
+        // If permission denied, end the watcher
+        if (watchResult.code == GeolocationPositionError.PERMISSION_DENIED) {
+          listenerApi.dispatch(slice.actions.endWatcher());
+        }
         return;
       }
 
@@ -214,7 +282,7 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
               const [action] = nextResult;
               if (
                 slice.actions.newWatchResult.match(action) &&
-                !(action.payload instanceof GeolocationPositionError)
+                action.payload instanceof GeolocationPosition
               ) {
                 const payload = action.payload;
                 finalResult = payload;
@@ -249,7 +317,9 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
         navigator.geolocation.clearWatch(watchId);
         console.log(`endWatcher watchId: ${watchId}`);
       }
-      listenerApi.dispatch(slice.actions.setLocation(null));
+      if (listenerApi.getState().geoLocation.location) {
+        listenerApi.dispatch(slice.actions.setLocation(null));
+      }
       listenerApi.dispatch(slice.actions.endedWatcher());
     },
   });

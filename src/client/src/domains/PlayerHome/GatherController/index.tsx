@@ -5,6 +5,7 @@ import {
   Button,
   Stack,
   TextField,
+  Typography,
 } from "@mui/material";
 import GpsFixedIcon from "@mui/icons-material/GpsFixed";
 import GpsOffIcon from "@mui/icons-material/GpsOff";
@@ -31,6 +32,11 @@ const isDebug = config.debugMode === true;
 const GatherController = () => {
   const dispatch = useAppDispatch();
   const isWatching = useAppSelector((state) => state.geoLocation.isWatching);
+  const geoError = useAppSelector((state) => state.geoLocation.error);
+
+  const geoDeniedError = geoError.find(
+    (e) => e.code === GeolocationPositionError.PERMISSION_DENIED
+  );
 
   // Get the initial GPS location to initialize the MapWrapper
   const initialLocation = useAppSelector((state) =>
@@ -89,6 +95,12 @@ const GatherController = () => {
         initialLocation={initialLocation}
         userPosition={scannedLocation}
         scanStatus={scanStatus}
+        message={
+          geoDeniedError && {
+            content: "GPS location denied. Please change browser settings.",
+            type: "error",
+          }
+        }
         resources={scanResult?.interactables.scannedResources}
       />
       <Box>

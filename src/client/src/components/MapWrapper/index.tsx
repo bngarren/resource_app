@@ -34,24 +34,43 @@ const MapPlaceHolder = () => {
   return <>MAP PLACEHOLDER</>;
 };
 
+type OverlayMessage = {
+  content: string;
+  type: "info" | "error";
+};
+
 /**
  * Used for the content of our Backdrop that displays over the Map
  * @returns JSX.Element
  */
-const LoadingOverlay = () => {
+const LoadingOverlay = ({
+  overlayMessage,
+  showProgress = true,
+}: {
+  overlayMessage: OverlayMessage;
+  showProgress?: boolean;
+}) => {
   return (
     <Stack direction="column" sx={{ width: "80%" }}>
-      <Typography variant="caption" sx={{ color: "white" }}>
-        Acquiring GPS position...
-      </Typography>
-      <LinearProgress
+      <Typography
+        variant="caption"
         sx={{
-          backgroundColor: "#D7F363",
-          "& .MuiLinearProgress-bar": {
-            backgroundColor: "white",
-          },
+          color: overlayMessage.type === "info" ? "white" : "#FFABAB",
+          fontSize: overlayMessage.type === "info" ? "1rem" : "1.2rem",
         }}
-      />
+      >
+        {overlayMessage.content}
+      </Typography>
+      {showProgress && (
+        <LinearProgress
+          sx={{
+            backgroundColor: "#D7F363",
+            "& .MuiLinearProgress-bar": {
+              backgroundColor: "white",
+            },
+          }}
+        />
+      )}
     </Stack>
   );
 };
@@ -217,6 +236,7 @@ type MapWrapperProps = {
   initialLocation?: LatLngTuple;
   userPosition?: UserPosition | null;
   scanStatus?: ScanStatus;
+  message?: OverlayMessage;
   resources?: APITypes.ScannedResource[];
 };
 
@@ -225,6 +245,7 @@ const MapWrapper = React.memo(
     initialLocation,
     userPosition,
     scanStatus,
+    message,
     resources,
   }: MapWrapperProps) => {
     const initMapCenter = React.useRef<LatLngTuple>();
@@ -246,14 +267,26 @@ const MapWrapper = React.memo(
         }}
       >
         <Backdrop
-          open={!initMapCenter.current || scanStatus === "AWAITING_GPS"}
+          open={
+            message != null ||
+            !initMapCenter.current ||
+            scanStatus === "AWAITING_GPS"
+          }
           sx={{
             position: "absolute",
             zIndex: 1000,
             opacity: 0.2,
           }}
         >
-          <LoadingOverlay />
+          <LoadingOverlay
+            overlayMessage={
+              message || {
+                content: "Acquiring GPS location...",
+                type: "info",
+              }
+            }
+            showProgress={message == null}
+          />
         </Backdrop>
 
         <MapContainer
