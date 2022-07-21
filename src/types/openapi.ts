@@ -54,25 +54,36 @@ export interface components {
         timestamp?: string;
       };
       interactables: {
-        scannedResources: components["schemas"]["ScannedResource"][];
+        resources: components["schemas"]["ScannedResource"][];
       };
+      /** @description The properties (categories) of canInteractWith must match the properties (categories) of the interactables object returned in ScanResult */
       canInteractWith: {
         /** @description An array of Resource id's that satisfy the userCanInteract boolean, i.e. the user is close enough */
-        scannedResources?: number[];
+        resources?: number[];
       };
       scannedRegions: components["schemas"]["ScannedRegion"][];
     };
     /**
      * @description An Interactable represents an object in the environment which a user can interact.
      *
-     * This could include a resource or a machine, for instance.
+     * This could include a resource or equipment, for instance.
      *
      * An Interactable object describes:
+     *   - The type of interactable (category)
      *   - Where it is located (latitude, longitude)
      *   - How far it is from the user (scan location)
      *   - Whether the user can interact with it (i.e. is the user within range?)
      */
     Interactable: {
+      /**
+       * @description Category of the Interactable:
+       *   * `resources`
+       *   * `equipment`
+       * **These categories should be used to index a scan result's interactables object and canInteractWith object**
+       *
+       * @enum {string}
+       */
+      category: "resources" | "equipment";
       position: components["schemas"]["Coordinate"];
       distanceFromUser: number;
       userCanInteract: boolean;

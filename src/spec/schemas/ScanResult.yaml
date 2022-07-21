@@ -15,16 +15,18 @@ properties:
   interactables:
     type: object
     required: 
-      - scannedResources
+      - resources
     properties:
-      scannedResources:
+      resources:
         type: array
         items:
           $ref: "./ScannedResource.yaml"
   canInteractWith:
     type: object
+    description: |
+      The properties (categories) of canInteractWith must match the properties (categories) of the interactables object returned in ScanResult
     properties:
-      scannedResources:
+      resources:
         description: "An array of Resource id's that satisfy the userCanInteract boolean, i.e. the user is close enough"
         type: array
         items:

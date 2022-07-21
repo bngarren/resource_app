@@ -56,6 +56,7 @@ const getResourceDataFromScannedRegions = async (
     const dist = h3.pointDist(userPosition, position, "m");
 
     const interactable: Interactable = {
+      category: "resources",
       position: position as [number, number],
       distanceFromUser: dist,
       userCanInteract: dist <= USER_AREA_OF_EFFECT,
@@ -167,10 +168,10 @@ export const handleScan = async (
     },
     scannedRegions: [],
     interactables: {
-      scannedResources: resourceData,
+      resources: resourceData,
     },
     canInteractWith: {
-      scannedResources: interactableResources,
+      resources: interactableResources,
     },
   };
 

@@ -3,6 +3,9 @@ import {
   AlertColor,
   Box,
   Button,
+  Container,
+  List,
+  ListItem,
   Stack,
   TextField,
   Typography,
@@ -13,11 +16,13 @@ import * as React from "react";
 import MapWrapper from "../../../components/MapWrapper";
 import { useAppSelector, useAppDispatch } from "../../../global/state/store";
 import { startWatcher } from "../../../global/state/geoLocationSlice";
-import { geoCoordinatesToLatLngTuple } from "../../../util";
+import { geoCoordinatesToLatLngTuple, getInteractables } from "../../../util";
 import { useScan } from "./useScan";
 import { InteractionModal } from "./InteractionModal";
 import config from "../../../config";
 import { h3ToGeo } from "h3-js";
+import { AnyInteractable, APITypes } from "../../../types";
+import InteractablesDisplay from "./InteractablesDisplay";
 
 const isDebug = config.debugMode === true;
 
@@ -52,8 +57,17 @@ const GatherController = () => {
   // The user scan operation
   const { scan, scannedLocation, scanStatus, scanResult } = useScan();
 
+  let interactables: Partial<APITypes.ScanResult["interactables"]> = {};
+  if (scanResult) {
+    interactables = getInteractables(scanResult);
+    console.log(interactables);
+  }
+
   // InteractionModal
   const [modalOpen, setModalOpen] = React.useState(false);
+
+  const [selectedInteractable, setSelectedInteractable] =
+    React.useState<AnyInteractable | null>(null);
 
   // DEBUG mode
   // Allows scanning from a given h3 Index
@@ -62,6 +76,7 @@ const GatherController = () => {
   const handleCloseModal = React.useCallback(
     (reason?: "backdropClick" | "escapeKeyDown") => {
       setModalOpen(false);
+      setSelectedInteractable(null);
     },
     []
   );
@@ -82,6 +97,23 @@ const GatherController = () => {
     }
   }, [scan, h3Input]);
 
+  /**
+   * This callback will handle the selection of an interactable that the user can interact with and display the interaction modal.
+   * For example, this callback is passed to InteractablesDisplay to be fired when an interactable is clicked on
+   */
+  const handleSelectInteractable = React.useCallback(
+    (category: APITypes.Interactable["category"], id: number) => {
+      const selected = interactables[
+        category as keyof APITypes.ScanResult["interactables"]
+      ]?.find((i) => i.id === id);
+      if (selected) {
+        setSelectedInteractable(selected as AnyInteractable);
+      }
+      setModalOpen(true);
+    },
+    [interactables]
+  );
+
   const alertSeverity = {
     COMPLETED: "success",
     AWAITING_GPS: "info",
@@ -101,10 +133,9 @@ const GatherController = () => {
             type: "error",
           }
         }
-        resources={scanResult?.interactables.scannedResources}
+        resources={scanResult?.interactables.resources}
       />
       <Box>
-        <InteractionModal open={modalOpen} handleClose={handleCloseModal} />
         {isDebug && scanStatus && (
           <Alert severity={alertSeverity[scanStatus] as AlertColor}>
             {scanStatus}
@@ -117,11 +148,6 @@ const GatherController = () => {
           alignItems="center"
           justifyContent="center"
         >
-          {isWatching ? (
-            <GpsFixedIcon sx={{ color: "darkgreen" }} />
-          ) : (
-            <GpsOffIcon />
-          )}
           {isDebug && (
             <TextField
               value={h3Input}
@@ -139,6 +165,19 @@ const GatherController = () => {
             Scan
           </Button>
         </Stack>
+        {scanStatus === "COMPLETED" && (
+          <Container>
+            <InteractablesDisplay
+              interactables={interactables}
+              onSelect={handleSelectInteractable}
+            />
+          </Container>
+        )}
+        <InteractionModal
+          open={modalOpen}
+          handleClose={handleCloseModal}
+          interactable={selectedInteractable}
+        />
         <Button onClick={() => setModalOpen(true)}>Open</Button>
       </Box>
     </>

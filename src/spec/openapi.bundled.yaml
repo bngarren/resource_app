@@ -259,16 +259,18 @@ components:
         interactables:
           type: object
           required:
-            - scannedResources
+            - resources
           properties:
-            scannedResources:
+            resources:
               type: array
               items:
                 $ref: '#/components/schemas/ScannedResource'
         canInteractWith:
           type: object
+          description: |
+            The properties (categories) of canInteractWith must match the properties (categories) of the interactables object returned in ScanResult
           properties:
-            scannedResources:
+            resources:
               description: 'An array of Resource id''s that satisfy the userCanInteract boolean, i.e. the user is close enough'
               type: array
               items:
@@ -282,17 +284,29 @@ components:
       description: |
         An Interactable represents an object in the environment which a user can interact. 
 
-        This could include a resource or a machine, for instance.
+        This could include a resource or equipment, for instance.
 
         An Interactable object describes:
+          - The type of interactable (category)
           - Where it is located (latitude, longitude)
           - How far it is from the user (scan location)
           - Whether the user can interact with it (i.e. is the user within range?)
       required:
+        - category
         - position
         - distanceFromUser
         - userCanInteract
       properties:
+        category:
+          type: string
+          description: |
+            Category of the Interactable:
+              * `resources`
+              * `equipment`
+            **These categories should be used to index a scan result's interactables object and canInteractWith object**
+          enum:
+            - resources
+            - equipment
         position:
           $ref: '#/components/schemas/Coordinate'
         distanceFromUser:
