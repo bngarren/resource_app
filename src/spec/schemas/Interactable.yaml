@@ -16,13 +16,7 @@ required:
   - userCanInteract
 properties:
   category:
-    type: string
-    description: |
-      Category of the Interactable:
-        * `resources`
-        * `equipment`
-      **These categories should be used to index a scan result's interactables object and canInteractWith object**
-    enum: ["resources", "equipment"]
+    $ref: "./InteractableCategory.yaml"
   position:
     $ref: "./Coordinate.yaml"
   distanceFromUser:
@@ -30,3 +24,7 @@ properties:
     minimum: 0
   userCanInteract: 
     type: boolean
+discriminator:
+  propertyName: category
+  mapping:
+    resources: "./ScannedResource.yaml"

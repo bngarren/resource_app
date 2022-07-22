@@ -53,13 +53,14 @@ export interface components {
         scannedLocation?: components["schemas"]["Coordinate"];
         timestamp?: string;
       };
+      /** @description Each property of the interactables object should be a category (InteractableCategory) */
       interactables: {
         resources: components["schemas"]["ScannedResource"][];
       };
       /** @description The properties (categories) of canInteractWith must match the properties (categories) of the interactables object returned in ScanResult */
       canInteractWith: {
         /** @description An array of Resource id's that satisfy the userCanInteract boolean, i.e. the user is close enough */
-        resources?: number[];
+        resources: number[];
       };
       scannedRegions: components["schemas"]["ScannedRegion"][];
     };
@@ -75,23 +76,23 @@ export interface components {
      *   - Whether the user can interact with it (i.e. is the user within range?)
      */
     Interactable: {
-      /**
-       * @description Category of the Interactable:
-       *   * `resources`
-       *   * `equipment`
-       * **These categories should be used to index a scan result's interactables object and canInteractWith object**
-       *
-       * @enum {string}
-       */
-      category: "resources" | "equipment";
+      category: components["schemas"]["InteractableCategory"];
       position: components["schemas"]["Coordinate"];
       distanceFromUser: number;
       userCanInteract: boolean;
     };
     /**
+     * @description Category of the Interactable:
+     *   * `resources`
+     *   * `equipment`
+     * **These categories should be used to index a scan result's interactables object and canInteractWith object**
+     *
+     * @enum {string}
+     */
+    InteractableCategory: "resources" | "equipment";
+    /**
      * @description An array of ScannedResources is returned to the client after a successful scan operation.
-     * This object includes the properties of a Resource and additional information, e.g.,
-     * the vertices of the hexagon for drawing.
+     * This object includes the properties of a Resource and additional information, e.g., the vertices of the hexagon for drawing.
      */
     ScannedResource: components["schemas"]["Interactable"] &
       components["schemas"]["Resource"] & {

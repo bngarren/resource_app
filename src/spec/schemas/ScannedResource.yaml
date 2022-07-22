@@ -1,7 +1,6 @@
 description: |
   An array of ScannedResources is returned to the client after a successful scan operation.
-  This object includes the properties of a Resource and additional information, e.g.,
-  the vertices of the hexagon for drawing.
+  This object includes the properties of a Resource and additional information, e.g., the vertices of the hexagon for drawing.
 allOf:
   - $ref: "./Interactable.yaml"
   - $ref: "./Resource.yaml"

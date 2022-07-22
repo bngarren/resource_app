@@ -14,6 +14,8 @@ properties:
         type: string
   interactables:
     type: object
+    description: |
+      Each property of the interactables object should be a category (InteractableCategory)
     required: 
       - resources
     properties:
@@ -25,6 +27,8 @@ properties:
     type: object
     description: |
       The properties (categories) of canInteractWith must match the properties (categories) of the interactables object returned in ScanResult
+    required:
+      - resources
     properties:
       resources:
         description: "An array of Resource id's that satisfy the userCanInteract boolean, i.e. the user is close enough"

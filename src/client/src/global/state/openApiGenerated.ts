@@ -76,8 +76,9 @@ export type GetUserInventoryArg = {
   uuid: string;
 };
 export type Coordinate = number[];
+export type InteractableCategory = "resources" | "equipment";
 export type Interactable = {
-  category: "resources" | "equipment";
+  category: InteractableCategory;
   position: Coordinate;
   distanceFromUser: number;
   userCanInteract: boolean;
@@ -107,7 +108,7 @@ export type ScanResult = {
     resources: ScannedResource[];
   };
   canInteractWith: {
-    resources?: number[];
+    resources: number[];
   };
   scannedRegions: ScannedRegion[];
 };

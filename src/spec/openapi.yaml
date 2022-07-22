@@ -37,6 +37,8 @@ components:
       $ref: "./schemas/ScanResult.yaml"
     Interactable:
       $ref: "./schemas/Interactable.yaml"
+    InteractableCategory:
+      $ref: "./schemas/InteractableCategory.yaml"
     ScannedResource:
       $ref: "./schemas/ScannedResource.yaml"
     ScannedRegion:

@@ -108,8 +108,8 @@ const GatherController = () => {
       ]?.find((i) => i.id === id);
       if (selected) {
         setSelectedInteractable(selected as AnyInteractable);
+        setModalOpen(true);
       }
-      setModalOpen(true);
     },
     [interactables]
   );
@@ -178,7 +178,6 @@ const GatherController = () => {
           handleClose={handleCloseModal}
           interactable={selectedInteractable}
         />
-        <Button onClick={() => setModalOpen(true)}>Open</Button>
       </Box>
     </>
   );

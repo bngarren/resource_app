@@ -3,6 +3,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { grey } from "@mui/material/colors";
 import * as React from "react";
 import { AnyInteractable, APITypes } from "../../../types";
+import { latLngTupleToString } from "../../../util";
 
 type InteractionModalProps = {
   open: boolean;
@@ -50,7 +51,9 @@ export const InteractionModal = ({
               </IconButton>
             </Box>
             <Box sx={{ padding: 1 }}>
-              <Typography>Interaction Modal!</Typography>
+              <Typography variant="body1">
+                {latLngTupleToString(interactable.position)}
+              </Typography>
             </Box>
           </>
         )}

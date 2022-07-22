@@ -258,6 +258,8 @@ components:
               type: string
         interactables:
           type: object
+          description: |
+            Each property of the interactables object should be a category (InteractableCategory)
           required:
             - resources
           properties:
@@ -269,6 +271,8 @@ components:
           type: object
           description: |
             The properties (categories) of canInteractWith must match the properties (categories) of the interactables object returned in ScanResult
+          required:
+            - resources
           properties:
             resources:
               description: 'An array of Resource id''s that satisfy the userCanInteract boolean, i.e. the user is close enough'
@@ -298,15 +302,7 @@ components:
         - userCanInteract
       properties:
         category:
-          type: string
-          description: |
-            Category of the Interactable:
-              * `resources`
-              * `equipment`
-            **These categories should be used to index a scan result's interactables object and canInteractWith object**
-          enum:
-            - resources
-            - equipment
+          $ref: '#/components/schemas/InteractableCategory'
         position:
           $ref: '#/components/schemas/Coordinate'
         distanceFromUser:
@@ -314,11 +310,24 @@ components:
           minimum: 0
         userCanInteract:
           type: boolean
+      discriminator:
+        propertyName: category
+        mapping:
+          resources: ./ScannedResource.yaml
+    InteractableCategory:
+      type: string
+      description: |
+        Category of the Interactable:
+          * `resources`
+          * `equipment`
+        **These categories should be used to index a scan result's interactables object and canInteractWith object**
+      enum:
+        - resources
+        - equipment
     ScannedResource:
       description: |
         An array of ScannedResources is returned to the client after a successful scan operation.
-        This object includes the properties of a Resource and additional information, e.g.,
-        the vertices of the hexagon for drawing.
+        This object includes the properties of a Resource and additional information, e.g., the vertices of the hexagon for drawing.
       allOf:
         - $ref: '#/components/schemas/Interactable'
         - $ref: '#/components/schemas/Resource'

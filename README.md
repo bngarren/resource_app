@@ -173,5 +173,4 @@ try {
 
 
 # WIP 
-> 2022-07-15
-- Working on GatherController getting a list of current interactables. This requires mapping the canInteractWith array of the scanResult with the interactables object. 
+

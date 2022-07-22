@@ -1,0 +1,7 @@
+type: string
+description: |
+  Category of the Interactable:
+    * `resources`
+    * `equipment`
+  **These categories should be used to index a scan result's interactables object and canInteractWith object**
+enum: ["resources", "equipment"]
