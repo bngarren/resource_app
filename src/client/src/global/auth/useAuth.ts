@@ -1,9 +1,12 @@
-import * as React from "react";
-import { AuthContext } from "./AuthProvider";
+import { useAppSelector } from "../state/store";
 
+/**
+ * Helper hook that selects the auth state from our store
+ * @returns The auth state from our store
+ */
 const useAuth = () => {
-  const context = React.useContext(AuthContext);
-  return context;
-};
+  const auth = useAppSelector((state) => state.auth);
 
+  return auth;
+};
 export default useAuth;

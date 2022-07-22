@@ -12,7 +12,7 @@ import { UserIcon } from "./userIcon";
 import { RadarIcon } from "./radarIcon";
 import { MapContainer, ZoomControl } from "react-leaflet";
 import { SCAN_DISTANCE_METERS } from "@backend/constants";
-import { Resource, ScanStatus, UserPosition } from "../../types";
+import { APITypes, ScanStatus, UserPosition } from "../../types";
 import {
   Backdrop,
   Box,
@@ -34,24 +34,43 @@ const MapPlaceHolder = () => {
   return <>MAP PLACEHOLDER</>;
 };
 
+type OverlayMessage = {
+  content: string;
+  type: "info" | "error";
+};
+
 /**
  * Used for the content of our Backdrop that displays over the Map
  * @returns JSX.Element
  */
-const LoadingOverlay = () => {
+const LoadingOverlay = ({
+  overlayMessage,
+  showProgress = true,
+}: {
+  overlayMessage: OverlayMessage;
+  showProgress?: boolean;
+}) => {
   return (
     <Stack direction="column" sx={{ width: "80%" }}>
-      <Typography variant="caption" sx={{ color: "white" }}>
-        Acquiring GPS position...
-      </Typography>
-      <LinearProgress
+      <Typography
+        variant="caption"
         sx={{
-          backgroundColor: "#D7F363",
-          "& .MuiLinearProgress-bar": {
-            backgroundColor: "white",
-          },
+          color: overlayMessage.type === "info" ? "white" : "#FFABAB",
+          fontSize: overlayMessage.type === "info" ? "1rem" : "1.2rem",
         }}
-      />
+      >
+        {overlayMessage.content}
+      </Typography>
+      {showProgress && (
+        <LinearProgress
+          sx={{
+            backgroundColor: "#D7F363",
+            "& .MuiLinearProgress-bar": {
+              backgroundColor: "white",
+            },
+          }}
+        />
+      )}
     </Stack>
   );
 };
@@ -124,7 +143,7 @@ const MapInitialization = ({ position }: MapInitializationProps) => {
 };
 
 type UserMarkerProps = {
-  position: LatLngExpression | null;
+  position: LatLngTuple | null;
   isScanning: boolean;
 };
 
@@ -172,8 +191,6 @@ const RadarMarker = React.memo(({ position, visible }: RadarMarkerProps) => {
     );
     const zoomedIn = !map.getBounds().contains(l2);
 
-    console.log("map size", map.getSize());
-
     return (
       <>
         <Marker
@@ -188,7 +205,7 @@ const RadarMarker = React.memo(({ position, visible }: RadarMarkerProps) => {
 RadarMarker.displayName = "RadarMarker";
 
 type ScanAreaProps = {
-  position: LatLngExpression | null;
+  position: LatLngTuple | null;
 };
 
 /**
@@ -216,18 +233,31 @@ const ScanArea = ({ position }: ScanAreaProps) => {
 };
 
 type MapWrapperProps = {
-  initLocation?: GeolocationCoordinates | null;
-  userPosition?: UserPosition;
+  initialLocation?: LatLngTuple;
+  userPosition?: UserPosition | null;
   scanStatus?: ScanStatus;
-  resources?: Resource[];
+  message?: OverlayMessage;
+  resources?: APITypes.ScannedResource[];
 };
 
 const MapWrapper = React.memo(
-  ({ initLocation, userPosition, scanStatus, resources }: MapWrapperProps) => {
-    const initLatLng = initLocation
-      ? ([initLocation.latitude, initLocation.longitude] as LatLngTuple)
-      : null;
-    const isScanning = scanStatus === "scanning" || scanStatus === "awaiting";
+  ({
+    initialLocation,
+    userPosition,
+    scanStatus,
+    message,
+    resources,
+  }: MapWrapperProps) => {
+    const initMapCenter = React.useRef<LatLngTuple>();
+
+    // Set the location for initializing the map center once.
+    // Any future changes in map view are due to userPosition
+    if (initialLocation && !initMapCenter.current) {
+      initMapCenter.current = initialLocation;
+    }
+
+    const isScanning =
+      scanStatus === "STARTED" || scanStatus === "AWAITING_GPS";
 
     return (
       <Box
@@ -237,14 +267,26 @@ const MapWrapper = React.memo(
         }}
       >
         <Backdrop
-          open={!initLocation || scanStatus === "awaiting"}
+          open={
+            message != null ||
+            !initMapCenter.current ||
+            scanStatus === "AWAITING_GPS"
+          }
           sx={{
             position: "absolute",
             zIndex: 1000,
             opacity: 0.2,
           }}
         >
-          <LoadingOverlay />
+          <LoadingOverlay
+            overlayMessage={
+              message || {
+                content: "Acquiring GPS location...",
+                type: "info",
+              }
+            }
+            showProgress={message == null}
+          />
         </Backdrop>
 
         <MapContainer
@@ -260,21 +302,21 @@ const MapWrapper = React.memo(
           />
           {!isScanning && <ZoomControl position={"bottomleft"} />}
 
-          {initLatLng && !userPosition && (
-            <MapInitialization position={initLatLng} />
+          {initMapCenter.current && !userPosition && (
+            <MapInitialization position={initMapCenter.current} />
           )}
 
           <UserMarker
-            position={userPosition || initLatLng || null}
+            position={userPosition || initMapCenter.current || null}
             isScanning={isScanning}
           />
 
           <RadarMarker
-            position={userPosition || initLatLng || null}
-            visible={scanStatus === "scanning"}
+            position={userPosition || initMapCenter.current || null}
+            visible={scanStatus === "STARTED"}
           />
 
-          {scanStatus === "complete" && (
+          {scanStatus === "COMPLETED" && (
             <LayerGroup>
               <ScanArea position={userPosition || null} />
 
@@ -282,7 +324,7 @@ const MapWrapper = React.memo(
                 resources.map((r) => {
                   return (
                     <Polygon
-                      positions={r.vertices}
+                      positions={r.vertices as [number, number][]}
                       pathOptions={{
                         color: r.userCanInteract ? "#2AFB09" : "purple",
                       }}

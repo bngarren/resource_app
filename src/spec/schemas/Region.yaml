@@ -1,0 +1,16 @@
+type: object
+description: |
+  A Region representation for server/client. It may mirror the RegionModel and json schema used
+  in the data access layer/ORM, but is separately defined here for the API.
+required:
+  - id
+  - h3Index
+  - reset_date
+properties:
+  id:
+    type: integer
+    readOnly: true
+  h3Index:
+    type: string
+  reset_date:
+    type: string

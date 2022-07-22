@@ -10,6 +10,8 @@ import {
   Toolbar,
   Tooltip,
   Typography,
+  styled,
+  keyframes,
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import HexagonIcon from "@mui/icons-material/Hexagon";
@@ -17,9 +19,35 @@ import AdbIcon from "@mui/icons-material/Adb";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useAuth } from "../../global/auth";
+import { signOut } from "../../global/auth/firebase";
+import { useAppSelector } from "../../global/state/store";
+
+const hexagonAnimation = keyframes`
+  from {
+
+    transform: rotate(0deg);
+  }
+  to {
+
+    transform: rotate(360deg);
+  }
+`;
+
+const AnimatedHexagon = styled(HexagonIcon, {
+  name: "Header",
+  slot: "hexagon",
+  shouldForwardProp: (prop) => prop !== "gpsIsActive",
+})<{ gpsIsActive: boolean }>(({ theme, gpsIsActive }) => ({
+  color: "#D7F363",
+  ...(gpsIsActive && {
+    filter: "drop-shadow(0px 0px 6px rgb(255 255 0 / 0.4))",
+    animation: `${hexagonAnimation} 5000ms linear infinite`,
+  }),
+}));
 
 const Header = () => {
-  const { user, signOut } = useAuth();
+  const gpsIsActive = useAppSelector((state) => state.geoLocation.isWatching);
+  const { user } = useAuth();
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
     null
   );
@@ -50,7 +78,7 @@ const Header = () => {
           </Typography>
           <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
             <IconButton component={Link} to="/home" size="large">
-              <HexagonIcon sx={{ color: "#D7F363" }} />
+              <AnimatedHexagon gpsIsActive={gpsIsActive} />
             </IconButton>
 
             <Typography variant="overline">{user?.email}</Typography>
@@ -103,9 +131,9 @@ const Header = () => {
             <Divider />
             <MenuItem>
               <IconButton
-                onClick={() => {
-                  signOut();
+                onClick={async () => {
                   handleCloseNavMenu();
+                  await signOut();
                 }}
               >
                 <LogoutIcon />

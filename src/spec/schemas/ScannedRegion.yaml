@@ -1,0 +1,5 @@
+description: |
+  An array of ScannedRegions is returned to the client after a successful scan operation.
+  The ScannedRegion object contains properties of the Region in the scan area
+allOf:
+  - $ref: "./Region.yaml"

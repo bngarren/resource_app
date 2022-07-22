@@ -1,0 +1,54 @@
+post:
+  summary: Performs the scan action for a user
+  description: |
+    A user (at a GPS location) scans and receives data about nearby resources and interactables
+  tags:
+    - Scan
+  operationId: scan
+  requestBody:
+    required: true
+    description: | 
+      A user position (latitude/longitude coordinates) is required to perform the scan.
+      This should be in the form of a tuple: [latitude, longitude]
+      
+      A user property with user data is optional (a scan doesn't have to be performed by an app user per se)
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - userPosition
+          properties:
+            user:
+              type: object
+              required:
+                - uuid
+              properties:
+                uuid: 
+                  type: string
+            userPosition:
+              $ref: "../schemas/Coordinate.yaml"
+  responses:
+    '200':
+      description: |
+        A successful scan returns metadata and interactables.
+        
+        Metadata includes where the scan location occurred, timestamp, etc.
+        
+        Interactables can include resources, machines, etc. Each of which is an object
+        that provides info on the position, distance from user, and whether the user can
+        interact with it (i.e. is close enough to it)
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/ScanResult.yaml"
+    "400": 
+      $ref: "../openapi.yaml#/components/responses/400BadRequest"
+    "401":
+      $ref: "../openapi.yaml#/components/responses/401NotAuthorized"
+    default:
+      description: Unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

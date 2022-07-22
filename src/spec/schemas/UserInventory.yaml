@@ -1,0 +1,28 @@
+type: object
+description: |
+  A user inventory consists of items and metadata
+required:
+  - metadata
+  - items
+properties:
+  metadata: 
+    type: object
+    required:
+      - updated_at
+    properties: 
+      updated_at:
+        type: string
+  items:
+    type: object
+    required:
+      - byId
+      - allIds
+    properties:
+      byId:
+        type: array
+        items:
+          $ref: "./InventoryItem.yaml"
+      allIds:
+        type: array
+        items:
+          type: integer

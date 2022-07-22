@@ -1,0 +1,80 @@
+openapi: 3.0.3
+info:
+  description: |
+    This is for the Resource App server
+  version: 1.0.1
+  title: Resource App
+  termsOfService: http://swagger.io/terms/
+tags:
+  - name: Scan
+    description: Scanning for resources and interactables
+  - name: Resources
+    description: Access to Resources
+  - name: Users
+    description: Operations for users
+paths:
+  /scan:
+    $ref: "./paths/scan.yaml"
+  /users/add:
+    $ref: "./paths/usersAdd.yaml"
+  /users/{uuid}:
+    $ref: "./paths/user.yaml"
+  /users/{uuid}/inventory:
+    $ref: "./paths/userInventory.yaml"
+servers:
+  - url: https://virtserver.swaggerhub.com/BNGARREN_1/resource-app/1.0.1
+components:
+  schemas:
+    User:
+      $ref: "./schemas/User.yaml"
+    Coordinate:
+      $ref: "./schemas/Coordinate.yaml"
+    Region:
+      $ref: "./schemas/Region.yaml"
+    Resource:
+      $ref: "./schemas/Resource.yaml"
+    ScanResult:
+      $ref: "./schemas/ScanResult.yaml"
+    Interactable:
+      $ref: "./schemas/Interactable.yaml"
+    InteractableCategory:
+      $ref: "./schemas/InteractableCategory.yaml"
+    ScannedResource:
+      $ref: "./schemas/ScannedResource.yaml"
+    ScannedRegion:
+      $ref: "./schemas/ScannedRegion.yaml"
+    UserInventory:
+      $ref: "./schemas/UserInventory.yaml"
+    InventoryItem:
+      $ref: "./schemas/InventoryItem.yaml"
+    # Schema for error response body
+    ErrorResponse:
+      $ref: "./schemas/ErrorResponse.yaml"
+  responses:
+    400BadRequest:
+      description: "The request was invalid"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    401NotAuthorized:
+      description: "Not authorized"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    404NotFound:
+      description: "Resource not found"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    422UnprocessableEntity:
+      description: |
+        The server understands the content type of the request entity, and
+        the syntax of the request entity is correct, but it was unable to
+        process the contained instructions.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

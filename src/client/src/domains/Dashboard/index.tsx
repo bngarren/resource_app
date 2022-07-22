@@ -1,43 +1,49 @@
 import * as React from "react";
 import MapWrapper from "../../components/MapWrapper";
+import GpsFixedIcon from "@mui/icons-material/GpsFixed";
+import GpsOffIcon from "@mui/icons-material/GpsOff";
 import config from "../../config";
 import { UserPosition } from "../../types";
 import { h3ToGeo } from "h3-js";
-import { MapContainer } from "react-leaflet";
+import { useAppDispatch, useAppSelector } from "../../global/state/store";
+import { geoCoordinatesToLatLngTuple } from "../../util";
+import { useScan } from "../PlayerHome/GatherController/useScan";
+import { startWatcher } from "../../global/state/geoLocationSlice";
 
 const Dashboard = () => {
-  const [position, setPosition] = React.useState<UserPosition>();
+  const dispatch = useAppDispatch();
+  const isWatching = useAppSelector((state) => state.geoLocation.isWatching);
+
+  // Get the initial GPS location to initialize the MapWrapper
+  const initialLocation = useAppSelector((state) =>
+    state.geoLocation.initialLocation
+      ? geoCoordinatesToLatLngTuple(state.geoLocation.initialLocation.coords)
+      : undefined
+  );
+
+  // This component will initialize a watcher session on mount if
+  // one isn't already running
+  const hasInitiatedWatcher = React.useRef(false);
+
+  // The user scan operation
+  const { scan, scannedLocation, scanStatus, scanResult } = useScan();
+
   const [positionInput, setPositionInput] = React.useState("");
-  const [scanResult, setScanResult] = React.useState<any>();
-  const [scanStatus, setScanStatus] = React.useState<string | null>(null);
 
-  const scan = async (userPosition: [number, number]) => {
-    try {
-      const res = await fetch(`${config.api_url}/scan`, {
-        method: "POST",
-        body: JSON.stringify({
-          userPosition,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (!res.ok) {
-        setScanStatus("error");
-        throw new Error(`Error with scan. ${res.status}`);
-      }
-      const data = await res.json();
-      setScanResult(data);
-      setScanStatus(null);
-    } catch (error) {
-      console.log(error);
+  React.useEffect(() => {
+    if (!hasInitiatedWatcher.current) {
+      dispatch(startWatcher);
+      hasInitiatedWatcher.current = true;
     }
-  };
+  }, [dispatch]);
 
-  const handleNewPosition = async () => {
-    const coords = h3ToGeo(positionInput) as [number, number];
-    setPosition(coords);
-    await scan(coords);
+  const handleScan = async () => {
+    if (positionInput) {
+      const coords = h3ToGeo(positionInput) as [number, number];
+      scan(coords);
+    } else {
+      scan();
+    }
   };
 
   return (
@@ -45,7 +51,19 @@ const Dashboard = () => {
       <div
         id="mapContainer"
         style={{ width: "100%", height: "400px", marginBottom: "1rem" }}
-      ></div>
+      >
+        <MapWrapper
+          initialLocation={initialLocation}
+          userPosition={scannedLocation}
+          scanStatus={scanStatus}
+          resources={scanResult?.interactables.scannedResources}
+        />
+      </div>
+      {isWatching ? (
+        <GpsFixedIcon sx={{ color: "darkgreen" }} />
+      ) : (
+        <GpsOffIcon />
+      )}
       <div style={{ padding: "0 2rem" }}>
         h3 index:
         <input
@@ -58,7 +76,7 @@ const Dashboard = () => {
             padding: "0.2rem",
           }}
         />
-        <button onClick={handleNewPosition}>Scan</button>
+        <button onClick={handleScan}>Scan</button>
       </div>
     </>
   );

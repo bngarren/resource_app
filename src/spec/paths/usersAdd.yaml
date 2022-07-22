@@ -1,0 +1,46 @@
+post:
+  summary: Adds a new user
+  description: |
+    Given a uuid from authentication service, adds a new user (player) to the app and database
+  tags:
+    - Users
+  operationId: addUser
+  requestBody:
+    description: |
+      A user uuid is required to create a new user. This is obtained via the authentication service (Firebase auth). Thus, this part must be complete prior to hitting this endpoint.
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - uuid
+          properties:
+            uuid:
+              type: string
+  responses:
+    "201":
+      description: |
+        The user was sucessfully created
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: string
+    "400": 
+      $ref: "../openapi.yaml#/components/responses/400BadRequest"
+    "401":
+      $ref: "../openapi.yaml#/components/responses/401NotAuthorized"
+    "422":
+      $ref: "../openapi.yaml#/components/responses/422UnprocessableEntity"
+    default:
+      description: Unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'    
+        

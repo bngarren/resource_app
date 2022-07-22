@@ -1,0 +1,41 @@
+type: object
+required:
+  - metadata
+  - interactables
+  - canInteractWith
+  - scannedRegions
+properties:
+  metadata:
+    type: object
+    properties:
+      scannedLocation:
+        $ref: "./Coordinate.yaml"
+      timestamp:
+        type: string
+  interactables:
+    type: object
+    description: |
+      Each property of the interactables object should be a category (InteractableCategory)
+    required: 
+      - resources
+    properties:
+      resources:
+        type: array
+        items:
+          $ref: "./ScannedResource.yaml"
+  canInteractWith:
+    type: object
+    description: |
+      The properties (categories) of canInteractWith must match the properties (categories) of the interactables object returned in ScanResult
+    required:
+      - resources
+    properties:
+      resources:
+        description: "An array of Resource id's that satisfy the userCanInteract boolean, i.e. the user is close enough"
+        type: array
+        items:
+          type: number
+  scannedRegions:
+    type: array
+    items:
+      $ref: "./ScannedRegion.yaml"

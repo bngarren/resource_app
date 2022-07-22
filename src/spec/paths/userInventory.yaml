@@ -1,0 +1,34 @@
+get:
+  summary: Gets the user's inventory
+  description: |
+    Retrieves the user's inventory from the database
+  tags:
+    - Users
+  operationId: getUserInventory
+  parameters:
+    - in: path
+      name: uuid
+      description: Uuid string of the user
+      schema:
+        type: string
+      required: true
+  responses:
+    "200":
+      description: |
+        Successful retrieval of user inventory.
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/UserInventory.yaml"
+    "400": 
+      $ref: "../openapi.yaml#/components/responses/400BadRequest"
+    "401":
+      $ref: "../openapi.yaml#/components/responses/401NotAuthorized"
+    "404":
+      $ref: "../openapi.yaml#/components/responses/404NotFound"
+    default:
+      description: Unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

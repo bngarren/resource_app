@@ -16,7 +16,7 @@ export default {
   /**
    * How long the watchPosition session will run before ending itself
    */
-  geoLocation_watcher_duration: 120000, // 2 minutes
+  geoLocation_watcher_duration: 10000, // 2 minutes
   /**
    * How long useGeoLocation will wait to improve accuracy before releasing its most recent location
    */
@@ -30,4 +30,9 @@ export default {
    * Actual scan could take longer, depending on network
    */
   scanAnimationTime: 1500, // 1.5 seconds
+
+  /**
+   * Whether to run app in debug mode, which provides additional UI and custom controls
+   */
+  debugMode: true,
 };
