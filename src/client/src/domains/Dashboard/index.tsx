@@ -56,7 +56,7 @@ const Dashboard = () => {
           initialLocation={initialLocation}
           userPosition={scannedLocation}
           scanStatus={scanStatus}
-          resources={scanResult?.interactables.scannedResources}
+          resources={scanResult?.interactables.resources}
         />
       </div>
       {isWatching ? (

@@ -165,6 +165,16 @@ try {
   };
 ```
 
+# Resolved problems
+## Corrupted Knex migrations directory
+- Try to rollback all completed migrations with `knex migrate:rollback --all`
+- If that doesn't work, delete the knex_migrations table and other tables
+- Run `knex migrate:latest`
+
+## Jest running tests twice
+- Had this problem because Jest was also running tests found in /dist directory. Somehow some .ts tests had been transpiled to .js files in the /dist directory, although we shouldn't do this based on the tsconfig.build.json
+- Either way, I have now added a `testPathIgnorePatterns: [".d.ts", ".js"]` line to the jest.config.ts file which now ignores any .js files (we only test .ts files in our app currently)
+
 # App Health Checklist
 > 2022-07-10
 - Verify that the OpenAPI spec and the generated types from it are congruent with the backend model/types. Similarly, client/frontend types should derive from RTK query (the only way we should be interfacing with our API), which derives from our OpenAPI spec.

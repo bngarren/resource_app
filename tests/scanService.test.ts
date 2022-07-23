@@ -141,10 +141,10 @@ describe("handleScan()", () => {
         const scanResult_far = await handleScan(MOCK_DATA.userPosition, 1);
         // the user scans and is within the resource
         const scanResult_close = await handleScan(userPosition, 1);
-        expect(scanResult_close.canInteractWith.scannedResources).toEqual(
+        expect(scanResult_close.canInteractWith.resources).toEqual(
           expect.arrayContaining([resource.id])
         );
-        expect(scanResult_far.canInteractWith.scannedResources).not.toEqual(
+        expect(scanResult_far.canInteractWith.resources).not.toEqual(
           expect.arrayContaining([resource.id])
         );
       } catch (err) {

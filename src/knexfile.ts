@@ -1,3 +1,4 @@
+import { logger } from "./logger/index";
 import type { Knex } from "knex";
 import * as pg from "pg";
 import config from "./config";
@@ -5,10 +6,19 @@ import config from "./config";
 if (process.env.DATABASE_URL) {
   pg.defaults.ssl = { rejectUnauthorized: false };
 }
+// https://github.com/knex/knex/issues/3849
+const extension =
+  config.node_env === "development" || config.node_env === "test" ? "ts" : "js";
+logger.debug(`Knexfile migrations extension: .${extension}`);
 
 const sharedConfig = {
   client: "pg",
-  migrations: { directory: __dirname + "/data/migrations" },
+  migrations: {
+    directory: __dirname + "/data/migrations",
+    extension: extension,
+    loadExtensions: [`.${extension}`],
+    disableMigrationsListValidation: true,
+  },
   seeds: { directory: __dirname + "/data/seeds" },
 };
 

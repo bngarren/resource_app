@@ -8,5 +8,6 @@ const config: InitialOptionsTsJest = {
   transform: {
     "^.+\\.ts?$": "ts-jest",
   },
+  testPathIgnorePatterns: [".d.ts", ".js"],
 };
 export default config;
