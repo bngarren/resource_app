@@ -9,4 +9,10 @@ export default defineConfig({
   esbuild: {
     logOverride: { "this-is-undefined-in-esm": "silent" },
   },
+  server: {
+    host: true,
+  },
+  build: {
+    sourcemap: "inline",
+  },
 });
