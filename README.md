@@ -1,8 +1,9 @@
 # Project root
 
 ## npm scripts
-- `"dev": "clear && npm run migrate-latest && ts-node-dev --respawn --ignore-watch ./src/client --transpile-only ./src/main.ts | npx pino-pretty"`
+- `"dev": "clear && npm run migrate-latest && npm run seed && ts-node-dev --respawn --ignore-watch ./src/client --transpile-only ./src/main.ts | npx pino-pretty"`
    - First runs the knex migration to get the database schema up to date. If this errors, may need to rollback and then try to migrate up again
+   - Also runs knex seed files (notably, this seeds our 'users' table with testuser@gmail.com)
    - Restarts target process (main.ts) each time it sees file changes and uses ts-node to compile to Typescript between each run. Similar to running nodemon with ts-node
    - `--ignore-watch ./src/client` tells it not to watch/restart on changes within client directory
 - `"test": "LOGGER_LEVEL=fatal jest --runInBand"`
@@ -21,8 +22,8 @@
    - We accomplish database migrations in the release phase (see Procfile)
 - `"deploy": "git push heroku master"`
    - Our custom deploy script just pushes our master branch to the heroku remote which triggers a new deploy/build
-- `"start": "npm run migrate-latest && npm run build && node dist/main.js | npx pino-pretty"`
-   - To start a local server we migrate the database, and then run "build" to perform the TS transpilation. We pipe the output of the node process to pino-pretty which prettifies the pino logging to the console
+- `"start": "npm run migrate-latest && npm run seed && npm run build && node dist/main.js | npx pino-pretty"`
+   - To start a local server we migrate the database, seed it, and then run "build" to perform the TS transpilation. We pipe the output of the node process to pino-pretty which prettifies the pino logging to the console
 - `"migrate-latest": "knex migrate:latest --knexfile src/knexfile.ts"`
    - Runs any new (unrun) up migrations
 - `"migrate-rollback": "knex migrate:rollback --all --knexfile src/knexfile.ts"`
@@ -121,6 +122,11 @@
 - There is a client firebase implementation (for the user to sign up/login/sign out) with the Firebase server and receive ID tokens back to signify the authentication
 - There is a server firebase implementation (Admin SDK) which we use to verify the ID token sent within an HTTP request to one of the endpoints. This ensures that we know/trust/allow the client to access our endpoint
 - We are using a custom middleware `firebaseAuthentication.ts` that reads each request coming in to see if it contains an Authorization header in the "Bearer" pattern, meaning an authenticated request should have a valid JWT token in the header. Our backend uses firebase admin sdk to verify this token and allow the request to proceed to the handlers.
+
+## Managing firebase users in development
+> 2022-07-23
+- It is easy for our Firebase auth users to get out of sync with our app's database (i.e. 'users' table). This is because we regularly rollback and redo migrations during development which deletes the users from our database, but they would still exist in firebase. Can't just sign up again because they already exist. 
+   - **Current solution**: Always use the "testuser@gmail.com" user when developing. This user should remain in firebase. And we can re-seed this user in our database by running `npx knex seed:run`, which includes a 'seed_users.ts' seed. We should automatically reseed with the npm run dev command for local development and in the heroku procfile for production.
 
 ## JWT
 - Prounounced "jot"
