@@ -36,7 +36,6 @@ const isDebug = config.debugMode === true;
  */
 const GatherController = () => {
   const dispatch = useAppDispatch();
-  const isWatching = useAppSelector((state) => state.geoLocation.isWatching);
   const geoError = useAppSelector((state) => state.geoLocation.error);
 
   const geoDeniedError = geoError.find(

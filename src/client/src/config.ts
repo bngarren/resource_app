@@ -25,6 +25,13 @@ export default {
    * The max amount of time useGeoLocation will wait for another watchResult to come through before deciding to release its most recent location
    */
   geoLocation_watcher_maxTimeSinceLastWatchResult: 1500, // 1.5 seconds
+
+  /**
+   * The max amount of time the watcher has to return a position before a timeout error is thrown.
+   * Don't necessarily have to do anything with error; maybe debug or report to the client
+   */
+  geoLocation_watcher_timeout: 10000,
+
   /**
    * Minimum time for a scan animation
    * Actual scan could take longer, depending on network

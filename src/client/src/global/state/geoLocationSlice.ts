@@ -202,7 +202,10 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
             })
           );
         },
-        { enableHighAccuracy: true }
+        {
+          enableHighAccuracy: true,
+          timeout: config.geoLocation_watcher_timeout,
+        }
       );
       console.log(`startWatcher started watchId: ${watchId}`);
       listenerApi.dispatch(
@@ -258,18 +261,18 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
         console.error(watchResultError);
         listenerApi.dispatch(slice.actions.addError(watchResultError));
 
-        // If permission denied, end the watcher
-        if (
-          watchResultError.code == GeolocationPositionError.PERMISSION_DENIED
-        ) {
-          listenerApi.dispatch(slice.actions.endWatcher());
+        switch (watchResultError.code) {
+          // If permission denied, end the watcher
+          case GeolocationPositionError.PERMISSION_DENIED:
+            listenerApi.dispatch(slice.actions.endWatcher());
+            return;
         }
-        return;
       }
 
       // Watch result success
       if (slice.actions.newWatchResultSuccess.match(action)) {
         const watchResult = action.payload;
+        console.log("watcher - new watch result position", watchResult);
 
         // ** No location has been set yet **
         // GPS accuracy seems to be worse after a cold start and seems to improve
@@ -278,6 +281,8 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
         // This is an attempt to prevent the initial map view or user experience
         // like trying to interact from being inaccurate due to a bad initial location
         if (orig.location == null) {
+          listenerApi.unsubscribe();
+
           const timeSinceStart =
             watchResult.timestamp -
             (listenerApi.getState().geoLocation.startTime || 0);
@@ -298,7 +303,7 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
             }, config.geoLocation_watcher_maxTimeSinceLastWatchResult);
 
             // Stop criteria: nextResultPromise timed out or canceled, or we stop
-            // becasue we met accuracy threshold
+            // because we met accuracy threshold
             let shouldContinue = true;
             while (shouldContinue) {
               // see if a new watch result comes through, i.e. this should be non-null if so
@@ -330,9 +335,14 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
           });
 
           const result = await improveAccuracyTask.result;
+          listenerApi.subscribe();
 
           if (result.status === "ok") {
             listenerApi.dispatch(slice.actions.setLocation(result.value));
+          } else {
+            console.error(
+              "geoLocationSlice - improveAccuracyTask rejected or canceled"
+            );
           }
         }
       }
