@@ -9,10 +9,30 @@ import { useAppDispatch, useAppSelector } from "../../global/state/store";
 import { geoCoordinatesToLatLngTuple } from "../../util";
 import { useScan } from "../PlayerHome/GatherController/useScan";
 import { startWatcher } from "../../global/state/geoLocationSlice";
+import {
+  Box,
+  Button,
+  Container,
+  Stack,
+  styled,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useAddUserMutation } from "../../global/state/apiSlice";
+import { useToasty } from "../../components/Toasty";
+
+const StyledBox = styled(Box, {
+  name: "Dashboard",
+  slot: "section",
+})(({ theme }) => ({
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+  alignItems: "center",
+}));
 
 const Dashboard = () => {
   const dispatch = useAppDispatch();
-  const isWatching = useAppSelector((state) => state.geoLocation.isWatching);
 
   // Get the initial GPS location to initialize the MapWrapper
   const initialLocation = useAppSelector((state) =>
@@ -27,6 +47,12 @@ const Dashboard = () => {
 
   // The user scan operation
   const { scan, scannedLocation, scanStatus, scanResult } = useScan();
+
+  // Add user
+  const [addUser] = useAddUserMutation();
+
+  // Toasty
+  const { openToasty } = useToasty();
 
   const [positionInput, setPositionInput] = React.useState("");
 
@@ -46,6 +72,30 @@ const Dashboard = () => {
     }
   };
 
+  const handleAddUser = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    const uuid = formData.get("uuid") as string;
+
+    const newUserJSON = {
+      uuid,
+    };
+
+    try {
+      const addUserPromise = await addUser({ body: newUserJSON }).unwrap();
+
+      openToasty("New user successfully added to the database.", "success");
+      console.log("FROM SERVER:", addUserPromise.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        //! Toasting the errors for debug purposes...
+        openToasty(error.message, "error");
+      }
+      console.error(error);
+    }
+  };
+
   return (
     <>
       <div
@@ -59,25 +109,48 @@ const Dashboard = () => {
           resources={scanResult?.interactables.resources}
         />
       </div>
-      {isWatching ? (
-        <GpsFixedIcon sx={{ color: "darkgreen" }} />
-      ) : (
-        <GpsOffIcon />
-      )}
-      <div style={{ padding: "0 2rem" }}>
-        h3 index:
-        <input
-          type="text"
-          value={positionInput}
-          onChange={(e) => setPositionInput(e.target.value)}
-          style={{
-            border: "1px solid black",
-            margin: "0 1rem",
-            padding: "0.2rem",
-          }}
-        />
-        <button onClick={handleScan}>Scan</button>
-      </div>
+      <Container>
+        <Stack direction="column" spacing={4}>
+          <StyledBox>
+            <Typography variant="h6">Scan from</Typography>
+            <Stack direction="row" spacing={2}>
+              <TextField
+                value={positionInput}
+                onChange={(e) => setPositionInput(e.target.value)}
+                label="h3 index"
+              />
+              <Button variant="contained" onClick={handleScan}>
+                Scan
+              </Button>
+            </Stack>
+          </StyledBox>
+          <StyledBox>
+            <Typography variant="h6">Add user</Typography>
+            <Box
+              component="form"
+              onSubmit={handleAddUser}
+              sx={{
+                "& .MuiFormControl-root": {
+                  margin: 0,
+                },
+              }}
+            >
+              <Stack direction="row" spacing={2}>
+                <TextField
+                  margin="normal"
+                  required
+                  id="uuid"
+                  label="UUID"
+                  name="uuid"
+                />
+                <Button type="submit" variant="contained">
+                  Add User
+                </Button>
+              </Stack>
+            </Box>
+          </StyledBox>
+        </Stack>
+      </Container>
     </>
   );
 };
