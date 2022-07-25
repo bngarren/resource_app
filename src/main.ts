@@ -1,3 +1,5 @@
+import https from "https";
+import fs from "fs";
 import { logger } from "./logger";
 import app from "./server";
 import config from "./config";
@@ -36,17 +38,35 @@ const message = `
 const start = async (p: number) => {
   const startTime = new Date();
 
-  app
-    .listen(p, () => {
+  // HTTPS server
+  // To use https, set .env port to 443, and set config.use_https to true
+  if (config.node_env === "development" && config.use_https) {
+    const httpsOptions = {
+      key: fs.readFileSync(__dirname + "/server.key"),
+      cert: fs.readFileSync(__dirname + "/server.cert"),
+    };
+
+    https.createServer(httpsOptions, app).listen(port, () => {
       logger.info(message);
+      logger.info(`Started HTTPS server`);
       logger.info(
         `Server start: ${startTime.toLocaleDateString()} at ${startTime.toLocaleTimeString()}`
       );
-    })
-    .on("error", (err) => {
-      logger.error(err);
-      process.exit(1);
     });
+  } else {
+    // Regular HTTP server
+    app
+      .listen(p, () => {
+        logger.info(message);
+        logger.info(
+          `Server start: ${startTime.toLocaleDateString()} at ${startTime.toLocaleTimeString()}`
+        );
+      })
+      .on("error", (err) => {
+        logger.error(err);
+        process.exit(1);
+      });
+  }
 };
 
 setupDB(config.node_env || "development");

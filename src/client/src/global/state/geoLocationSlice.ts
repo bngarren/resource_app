@@ -21,6 +21,12 @@ type GeoLocationState = {
    * Whether the watcher is active, should coincide with a non-null watchId
    */
   isWatching: boolean;
+
+  /**
+   * Use to flag that we are currently running this task within a listener instance. If already true, we skip creating another task.
+   */
+  pendingAccuracyTask: boolean;
+
   /**
    * The most recent location
    */
@@ -45,6 +51,7 @@ const initialState: GeoLocationState = {
   watchId: null,
   startTime: null,
   isWatching: false,
+  pendingAccuracyTask: false,
   location: null,
   initialLocation: null,
   error: [],
@@ -124,6 +131,9 @@ const slice = createSlice({
     setWatchId: (state, action: PayloadAction<number | null>) => {
       state.watchId = action.payload;
     },
+    setPendingAccuracyTask: (state, action: PayloadAction<boolean>) => {
+      state.pendingAccuracyTask = action.payload;
+    },
     setLocation: (state, action: PayloadAction<GeolocationPosition | null>) => {
       state.location = action.payload;
       if (!state.initialLocation) {
@@ -176,6 +186,10 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
         return;
       }
 
+      listenerApi.dispatch(
+        slice.actions.startedWatcher({ startTime: new Date().getTime() })
+      );
+
       // Start new Watcher, i.e., watchPosition
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
@@ -208,9 +222,6 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
         }
       );
       console.log(`startWatcher started watchId: ${watchId}`);
-      listenerApi.dispatch(
-        slice.actions.startedWatcher({ startTime: new Date().getTime() })
-      );
       listenerApi.dispatch(slice.actions.setWatchId(watchId));
 
       // We want to TURN OFF the Watcher after a predetermined duration
@@ -282,8 +293,7 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
         // like trying to interact from being inaccurate due to a bad initial location
         if (orig.location == null) {
           const timeSinceStart =
-            watchResult.timestamp -
-            (listenerApi.getState().geoLocation.startTime || 0);
+            Date.now() - (listenerApi.getState().geoLocation.startTime || 0);
 
           // Hit max duration, use this result
           if (timeSinceStart > config.geoLocation_watcher_maxWait) {
@@ -293,21 +303,26 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
             return;
           }
 
+          if (listenerApi.getState().geoLocation.pendingAccuracyTask === true) {
+            return;
+          }
+
           // Try to wait for additional results
           const improveAccuracyTask = await listenerApi.fork(async () => {
-            listenerApi.unsubscribe();
-            let finalResult = watchResult;
+            listenerApi.dispatch(slice.actions.setPendingAccuracyTask(true));
 
-            const nextResultPromise = listenerApi.take((action) => {
-              return slice.actions.newWatchResultSuccess.match(action);
-            }, config.geoLocation_watcher_maxTimeSinceLastWatchResult);
+            let finalResult = watchResult;
 
             // Stop criteria: nextResultPromise timed out or canceled, or we stop
             // because we met accuracy threshold
             let shouldContinue = true;
             while (shouldContinue) {
               // see if a new watch result comes through, i.e. this should be non-null if so
-              const nextResult = await nextResultPromise;
+              console.log("watcher - awaiting nextResult");
+              const nextResult = await listenerApi.take((action) => {
+                return slice.actions.newWatchResultSuccess.match(action);
+              }, config.geoLocation_watcher_maxTimeSinceLastWatchResult);
+              console.log("watcher - nextResult", nextResult);
 
               if (!nextResult) {
                 console.log(
@@ -316,26 +331,24 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
                 shouldContinue = false;
               } else {
                 const [action] = nextResult;
-                if (
-                  slice.actions.newWatchResultSuccess.match(action) &&
-                  action.payload instanceof GeolocationPosition
-                ) {
+                if (slice.actions.newWatchResultSuccess.match(action)) {
                   const payload = action.payload;
                   finalResult = payload;
 
                   // stopping threshold
                   // TODO - needs work
                   if (payload.coords.accuracy < 5) {
+                    console.log("watcher - accuracy < 5, setting location");
                     shouldContinue = false;
                   }
                 }
               }
             }
-            listenerApi.subscribe();
             return finalResult;
           });
 
           const result = await improveAccuracyTask.result;
+          listenerApi.dispatch(slice.actions.setPendingAccuracyTask(false));
 
           if (result.status === "ok") {
             listenerApi.dispatch(slice.actions.setLocation(result.value));

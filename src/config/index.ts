@@ -11,9 +11,11 @@ type NodeEnvironment = "development" | "test" | "production";
 
 export default {
   cors_allowed_origins: [
-    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://192.168.68.52:5173",
     "https://resource-app-client.netlify.app",
   ],
+  use_https: false,
   port: parseInt(process.env.PORT as string, 10),
   node_env: process.env.NODE_ENV as NodeEnvironment,
   db_user: process.env.DB_USER,
