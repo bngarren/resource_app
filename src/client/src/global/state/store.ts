@@ -1,26 +1,36 @@
 import { listenerMiddleware } from "./listenerMiddleware";
-import { configureStore } from "@reduxjs/toolkit";
+import {
+  combineReducers,
+  configureStore,
+  PreloadedState,
+} from "@reduxjs/toolkit";
 import { useDispatch, useSelector, TypedUseSelectorHook } from "react-redux";
 import { api } from "./apiSlice";
 import authReducer from "./authSlice";
 import appReducer from "./appSlice";
 import geoLocationReducer from "./geoLocationSlice";
 
-export const store = configureStore({
-  reducer: {
-    [api.reducerPath]: api.reducer,
-    auth: authReducer,
-    app: appReducer,
-    geoLocation: geoLocationReducer,
-  },
-  devTools: process.env.NODE_ENV !== "production",
-  // Adding the api middleware enables caching, invalidation, polling,
-  // and other useful features of `rtk-query`.
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware()
-      .prepend(listenerMiddleware.middleware)
-      .concat(api.middleware),
+// Create the root reducer separately so we can extract the RootState type
+const rootReducer = combineReducers({
+  [api.reducerPath]: api.reducer,
+  auth: authReducer,
+  app: appReducer,
+  geoLocation: geoLocationReducer,
 });
+
+export const setupStore = (preloadedState?: PreloadedState<RootState>) => {
+  return configureStore({
+    reducer: rootReducer,
+    preloadedState,
+    devTools: process.env.NODE_ENV !== "production",
+    // Adding the api middleware enables caching, invalidation, polling,
+    // and other useful features of `rtk-query`.
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware()
+        .prepend(listenerMiddleware.middleware)
+        .concat(api.middleware),
+  });
+};
 
 // TODO
 // optional, but required for refetchOnFocus/refetchOnReconnect behaviors
@@ -29,8 +39,9 @@ export const store = configureStore({
 // setupListeners(store.dispatch)
 
 // Export our store's state and dispatch types
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+export type RootState = ReturnType<typeof rootReducer>;
+export type AppStore = ReturnType<typeof setupStore>;
+export type AppDispatch = AppStore["dispatch"];
 
 // Export our custom selector and dispatch hooks that are pre-typed
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

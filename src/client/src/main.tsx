@@ -10,7 +10,7 @@ import ToastyProvider from "./components/Toasty";
 
 // Redux
 import { Provider } from "react-redux";
-import { store } from "./global/state/store";
+import { setupStore } from "./global/state/store";
 
 // Fonts (installed via npm)
 import "@fontsource/roboto/300.css";
@@ -18,6 +18,7 @@ import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 
+const store = setupStore();
 const container = document.getElementById("root") as HTMLElement;
 const root = createRoot(container);
 root.render(

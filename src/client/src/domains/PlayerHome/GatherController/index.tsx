@@ -56,11 +56,14 @@ const GatherController = () => {
   // The user scan operation
   const { scan, scannedLocation, scanStatus, scanResult } = useScan();
 
-  let interactables: Partial<APITypes.ScanResult["interactables"]> = {};
-  if (scanResult) {
-    interactables = getInteractables(scanResult);
-    console.log(interactables);
-  }
+  const interactables:
+    | Partial<APITypes.ScanResult["interactables"]>
+    | undefined = React.useMemo(() => {
+    if (scanResult) {
+      return getInteractables(scanResult);
+      console.log(interactables);
+    }
+  }, [scanResult]);
 
   // InteractionModal
   const [modalOpen, setModalOpen] = React.useState(false);
@@ -102,6 +105,10 @@ const GatherController = () => {
    */
   const handleSelectInteractable = React.useCallback(
     (category: APITypes.Interactable["category"], id: number) => {
+      if (interactables == null) {
+        return;
+      }
+
       const selected = interactables[
         category as keyof APITypes.ScanResult["interactables"]
       ]?.find((i) => i.id === id);
@@ -166,10 +173,12 @@ const GatherController = () => {
         </Stack>
         {scanStatus === "COMPLETED" && (
           <Container>
-            <InteractablesDisplay
-              interactables={interactables}
-              onSelect={handleSelectInteractable}
-            />
+            {interactables && (
+              <InteractablesDisplay
+                interactables={interactables}
+                onSelect={handleSelectInteractable}
+              />
+            )}
           </Container>
         )}
         <InteractionModal

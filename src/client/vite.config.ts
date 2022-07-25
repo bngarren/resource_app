@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -14,5 +15,12 @@ export default defineConfig({
   },
   build: {
     sourcemap: "inline",
+  },
+  test: {
+    environment: "jsdom",
+    root: "./src",
+    reporters: "verbose",
+    setupFiles: "./src/util/setupTest.ts",
+    globals: true,
   },
 });

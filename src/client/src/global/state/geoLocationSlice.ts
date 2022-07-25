@@ -281,8 +281,6 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
         // This is an attempt to prevent the initial map view or user experience
         // like trying to interact from being inaccurate due to a bad initial location
         if (orig.location == null) {
-          listenerApi.unsubscribe();
-
           const timeSinceStart =
             watchResult.timestamp -
             (listenerApi.getState().geoLocation.startTime || 0);
@@ -291,11 +289,13 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
           if (timeSinceStart > config.geoLocation_watcher_maxWait) {
             console.log("watcher - too long since start, setting location");
             listenerApi.dispatch(slice.actions.setLocation(watchResult));
+            listenerApi.cancelActiveListeners();
             return;
           }
 
           // Try to wait for additional results
           const improveAccuracyTask = await listenerApi.fork(async () => {
+            listenerApi.unsubscribe();
             let finalResult = watchResult;
 
             const nextResultPromise = listenerApi.take((action) => {
@@ -331,11 +331,11 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
                 }
               }
             }
+            listenerApi.subscribe();
             return finalResult;
           });
 
           const result = await improveAccuracyTask.result;
-          listenerApi.subscribe();
 
           if (result.status === "ok") {
             listenerApi.dispatch(slice.actions.setLocation(result.value));
