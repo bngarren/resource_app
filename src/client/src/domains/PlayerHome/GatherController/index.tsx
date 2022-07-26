@@ -23,6 +23,8 @@ import config from "../../../config";
 import { h3ToGeo } from "h3-js";
 import { AnyInteractable, APITypes } from "../../../types";
 import InteractablesDisplay from "./InteractablesDisplay";
+import Logger from "../../../global/logger";
+import { useLogger } from "../../../global/logger/useLogger";
 
 const isDebug = config.debugMode === true;
 
@@ -56,6 +58,9 @@ const GatherController = () => {
   // The user scan operation
   const { scan, scannedLocation, scanStatus, scanResult } = useScan();
 
+  // Logger
+  const { logger } = useLogger();
+
   const interactables:
     | Partial<APITypes.ScanResult["interactables"]>
     | undefined = React.useMemo(() => {
@@ -85,10 +90,11 @@ const GatherController = () => {
 
   React.useEffect(() => {
     if (!hasInitiatedWatcher.current) {
+      logger("GatherController - startWatcher dispatched");
       dispatch(startWatcher);
       hasInitiatedWatcher.current = true;
     }
-  }, [dispatch]);
+  }, [dispatch, logger]);
 
   const handleScan = React.useCallback(async () => {
     if (isDebug && h3Input) {

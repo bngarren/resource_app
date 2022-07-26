@@ -6,6 +6,7 @@ import {
   PayloadAction,
 } from "@reduxjs/toolkit";
 import config from "../../config";
+import { log } from "./loggerSlice";
 
 type GeoLocationState = {
   /**
@@ -169,16 +170,21 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
 
       // If startWatcher is called when a watcher is already running, ignore...
       if (orig.watchId != null) {
-        console.log(
-          `startWatcher called, already in progress, continuing watchId ${orig.watchId}`
+        listenerApi.dispatch(
+          log({
+            message: `watcher - startWatcher called, already in progress, continuing watchId ${orig.watchId}`,
+          })
         );
         return;
       }
 
       // Make sure that GeoLocation is supported by the browser
       if (!navigator.geolocation) {
-        console.log(
-          "watcher - could not start, not supported/allowed by browser"
+        listenerApi.dispatch(
+          log({
+            message: `watcher - could not start, not supported/allowed by browser`,
+            type: "error",
+          })
         );
         listenerApi.dispatch(
           slice.actions.addError({
@@ -223,7 +229,12 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
           timeout: config.geoLocation_watcher_timeout,
         }
       );
-      console.log(`startWatcher started watchId: ${watchId}`);
+      listenerApi.dispatch(
+        log({
+          message: `watcher - startWatcher started watchId: ${watchId}`,
+          type: "info",
+        })
+      );
       listenerApi.dispatch(slice.actions.setWatchId(watchId));
 
       // We want to TURN OFF the Watcher after a predetermined duration
@@ -271,7 +282,13 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
       // Watch result errored
       if (slice.actions.newWatchResultError.match(action)) {
         const watchResultError = action.payload;
-        console.error(watchResultError);
+
+        listenerApi.dispatch(
+          log({
+            message: `watcher - watchResult error: ${watchResultError.message}`,
+            type: "error",
+          })
+        );
         listenerApi.dispatch(slice.actions.addError(watchResultError));
 
         switch (watchResultError.code) {
@@ -285,7 +302,11 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
       // Watch result success
       if (slice.actions.newWatchResultSuccess.match(action)) {
         const watchResult = action.payload;
-        console.log("watcher - new watch result position", watchResult);
+        listenerApi.dispatch(
+          log({
+            message: `watcher - new watchResult success`,
+          })
+        );
 
         // ** No location has been set yet **
         // GPS accuracy seems to be worse after a cold start and seems to improve
@@ -299,7 +320,11 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
 
           // Hit max duration, use this result
           if (timeSinceStart > config.geoLocation_watcher_maxWait) {
-            console.log("watcher - too long since start, setting location");
+            listenerApi.dispatch(
+              log({
+                message: `watcher - max duration exceeded, setting location`,
+              })
+            );
             listenerApi.dispatch(slice.actions.setLocation(watchResult));
             listenerApi.cancelActiveListeners();
             return;
@@ -313,6 +338,12 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
           const improveAccuracyTask = await listenerApi.fork(async () => {
             listenerApi.dispatch(slice.actions.setPendingAccuracyTask(true));
 
+            listenerApi.dispatch(
+              log({
+                message: `watcher - (within improveAccuracyTask)`,
+              })
+            );
+
             let finalResult = watchResult;
 
             // Stop criteria: nextResultPromise timed out or canceled, or we stop
@@ -320,29 +351,52 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
             let shouldContinue = true;
             while (shouldContinue) {
               // see if a new watch result comes through, i.e. this should be non-null if so
-              console.log("watcher - awaiting nextResult");
+              listenerApi.dispatch(
+                log({
+                  message: `watcher - (begin improveAccuracyTask) - awaiting next watchResult`,
+                })
+              );
               const nextResult = await listenerApi.take((action) => {
                 return slice.actions.newWatchResultSuccess.match(action);
               }, config.geoLocation_watcher_maxTimeSinceLastWatchResult);
-              console.log("watcher - nextResult", nextResult);
 
               if (!nextResult) {
-                console.log(
-                  "watcher - too long since last watch result, setting location"
+                listenerApi.dispatch(
+                  log({
+                    message: `watcher - (within improveAccuracyTask) - too long since last watchResult, setting location`,
+                  })
                 );
                 shouldContinue = false;
               } else {
                 const [action] = nextResult;
+
                 if (slice.actions.newWatchResultSuccess.match(action)) {
                   const payload = action.payload;
                   finalResult = payload;
 
+                  listenerApi.dispatch(
+                    log({
+                      message: `watcher - (within improveAccuracyTask) - new watchResult received`,
+                    })
+                  );
+
                   // stopping threshold
                   // TODO - needs work
                   if (payload.coords.accuracy < 5) {
-                    console.log("watcher - accuracy < 5, setting location");
+                    listenerApi.dispatch(
+                      log({
+                        message: `watcher - (within improveAccuracyTask) - accuracy < 5, setting location`,
+                      })
+                    );
                     shouldContinue = false;
                   }
+                } else {
+                  listenerApi.dispatch(
+                    log({
+                      message: `watcher - (within improveAccuracyTask) - received watchResult error`,
+                      type: "error",
+                    })
+                  );
                 }
               }
             }
@@ -355,8 +409,11 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
           if (result.status === "ok") {
             listenerApi.dispatch(slice.actions.setLocation(result.value));
           } else {
-            console.error(
-              "geoLocationSlice - improveAccuracyTask rejected or canceled"
+            listenerApi.dispatch(
+              log({
+                message: `watcher - improveAccuracyTask rejected or canceled`,
+                type: "error",
+              })
             );
           }
         }
@@ -372,7 +429,12 @@ export const addGeoLocationListeners = (startListening: AppStartListening) => {
       const watchId = listenerApi.getState().geoLocation.watchId;
       if (watchId != null) {
         navigator.geolocation.clearWatch(watchId);
-        console.log(`endWatcher watchId: ${watchId}`);
+        listenerApi.dispatch(
+          log({
+            message: `watcher - endWatcher: ${watchId}`,
+            type: "info",
+          })
+        );
       }
       if (listenerApi.getState().geoLocation.location) {
         listenerApi.dispatch(slice.actions.setLocation(null));

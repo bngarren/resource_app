@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 import { useAddUserMutation } from "../../global/state/apiSlice";
 import { useToasty } from "../../components/Toasty";
+import Logger from "../../global/logger";
 
 const StyledBox = styled(Box, {
   name: "Dashboard",
@@ -56,12 +57,12 @@ const Dashboard = () => {
 
   const [positionInput, setPositionInput] = React.useState("");
 
-  React.useEffect(() => {
+  /*   React.useEffect(() => {
     if (!hasInitiatedWatcher.current) {
       dispatch(startWatcher);
       hasInitiatedWatcher.current = true;
     }
-  }, [dispatch]);
+  }, [dispatch]); */
 
   const handleScan = async () => {
     if (positionInput) {
@@ -148,6 +149,10 @@ const Dashboard = () => {
                 </Button>
               </Stack>
             </Box>
+          </StyledBox>
+          <StyledBox sx={{ width: "100%" }}>
+            <Typography variant="h6">Log</Typography>
+            <Logger />
           </StyledBox>
         </Stack>
       </Container>

@@ -10,6 +10,7 @@ import authReducer from "./authSlice";
 import appReducer from "./appSlice";
 import geoLocationReducer from "./geoLocationSlice";
 import { geoLocationActions } from "./geoLocationSlice";
+import loggerReducer from "./loggerSlice";
 
 // Create the root reducer separately so we can extract the RootState type
 const rootReducer = combineReducers({
@@ -17,6 +18,7 @@ const rootReducer = combineReducers({
   auth: authReducer,
   app: appReducer,
   geoLocation: geoLocationReducer,
+  logger: loggerReducer,
 });
 
 export const setupStore = (preloadedState?: PreloadedState<RootState>) => {
