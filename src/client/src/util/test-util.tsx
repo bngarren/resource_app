@@ -1,7 +1,14 @@
-import type { PreloadedState } from "@reduxjs/toolkit";
+import type {
+  PreloadedState,
+  Middleware,
+  EnhancedStore,
+  Store,
+  AnyAction,
+} from "@reduxjs/toolkit";
 import { render } from "@testing-library/react";
 import type { RenderOptions } from "@testing-library/react";
 import { PropsWithChildren } from "react";
+import type { Reducer } from "react";
 import { setupStore } from "../global/state/store";
 import type { RootState, AppStore } from "../global/state/store";
 import { Provider } from "react-redux";

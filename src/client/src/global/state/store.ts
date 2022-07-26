@@ -9,6 +9,7 @@ import { api } from "./apiSlice";
 import authReducer from "./authSlice";
 import appReducer from "./appSlice";
 import geoLocationReducer from "./geoLocationSlice";
+import { geoLocationActions } from "./geoLocationSlice";
 
 // Create the root reducer separately so we can extract the RootState type
 const rootReducer = combineReducers({
@@ -22,7 +23,9 @@ export const setupStore = (preloadedState?: PreloadedState<RootState>) => {
   return configureStore({
     reducer: rootReducer,
     preloadedState,
-    devTools: process.env.NODE_ENV !== "production",
+    devTools: process.env.NODE_ENV !== "production" && {
+      actionCreators: geoLocationActions,
+    },
     // Adding the api middleware enables caching, invalidation, polling,
     // and other useful features of `rtk-query`.
     middleware: (getDefaultMiddleware) =>

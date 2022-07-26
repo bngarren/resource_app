@@ -150,6 +150,8 @@ const slice = createSlice({
 
 export const { startWatcher, setWatchId, refreshWatcher } = slice.actions;
 
+export const geoLocationActions = slice.actions;
+
 export default slice.reducer;
 
 /**
