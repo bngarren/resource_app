@@ -17,25 +17,3 @@ const watchResultSuccess = {
     speed: null,
   },
 };
-
-let store: AppStore;
-beforeAll(() => {
-  store = setupStore();
-});
-
-afterAll(() => {
-  vi.clearAllMocks();
-});
-
-it("test listener", async () => {
-  watchPositionMock.mockReturnValueOnce(1);
-  watchPositionMock.mockImplementationOnce((success, error) => {
-    setTimeout(() => {
-      success(watchResultSuccess);
-    }, 1000);
-  });
-
-  store.dispatch(startWatcher());
-
-  expect(watchPositionMock).toHaveBeenCalledTimes(1);
-});
