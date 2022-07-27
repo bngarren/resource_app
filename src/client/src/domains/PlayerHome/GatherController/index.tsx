@@ -4,14 +4,9 @@ import {
   Box,
   Button,
   Container,
-  List,
-  ListItem,
   Stack,
   TextField,
-  Typography,
 } from "@mui/material";
-import GpsFixedIcon from "@mui/icons-material/GpsFixed";
-import GpsOffIcon from "@mui/icons-material/GpsOff";
 import * as React from "react";
 import MapWrapper from "../../../components/MapWrapper";
 import { useAppSelector, useAppDispatch } from "../../../global/state/store";
@@ -23,7 +18,6 @@ import config from "../../../config";
 import { h3ToGeo } from "h3-js";
 import { AnyInteractable, APITypes } from "../../../types";
 import InteractablesDisplay from "./InteractablesDisplay";
-import Logger from "../../../global/logger";
 import { useLogger } from "../../../global/logger/useLogger";
 
 const isDebug = config.debugMode === true;
@@ -37,13 +31,17 @@ const isDebug = config.debugMode === true;
  *
  */
 const GatherController = () => {
+  // Logger
+  const { logger } = useLogger({
+    prepend: "GatherController",
+    category: "domain",
+  });
+  // Redux
   const dispatch = useAppDispatch();
   const geoError = useAppSelector((state) => state.geoLocation.error);
-
   const geoDeniedError = geoError.find(
     (e) => e.code === GeolocationPositionError.PERMISSION_DENIED
   );
-
   // Get the initial GPS location to initialize the MapWrapper
   const initialLocation = useAppSelector((state) =>
     state.geoLocation.initialLocation
@@ -51,24 +49,21 @@ const GatherController = () => {
       : undefined
   );
 
-  // This component will initialize a watcher session on mount if
-  // one isn't already running
+  /**
+   * This component will initialize a watcher session on mount if
+   * one isn't already running
+   */
   const hasInitiatedWatcher = React.useRef(false);
 
   // The user scan operation
   const { scan, scannedLocation, scanStatus, scanResult } = useScan();
 
-  // Logger
-  const { logger } = useLogger();
-
-  const interactables:
-    | Partial<APITypes.ScanResult["interactables"]>
-    | undefined = React.useMemo(() => {
-    if (scanResult) {
-      return getInteractables(scanResult);
-      console.log(interactables);
-    }
-  }, [scanResult]);
+  const interactables: Partial<APITypes.ScanResult["interactables"]> | null =
+    React.useMemo(() => {
+      if (scanResult) {
+        return getInteractables(scanResult);
+      } else return null;
+    }, [scanResult]);
 
   // InteractionModal
   const [modalOpen, setModalOpen] = React.useState(false);
@@ -88,22 +83,42 @@ const GatherController = () => {
     []
   );
 
+  /**
+   * Initate a geoLocation watcher session on mount, if not already initiated
+   */
   React.useEffect(() => {
     if (!hasInitiatedWatcher.current) {
-      logger("GatherController - startWatcher dispatched");
+      logger("startWatcher dispatched", "domain", "debug");
       dispatch(startWatcher);
       hasInitiatedWatcher.current = true;
     }
   }, [dispatch, logger]);
 
+  // Log interactables
+  React.useEffect(() => {
+    if (interactables)
+      logger(
+        `user can interact with: ${JSON.stringify(
+          Object.values(interactables).flatMap((cat) =>
+            cat.map((i) => ({
+              id: i.id,
+              category: i.category,
+              name: i.name,
+            }))
+          )
+        )}`
+      );
+  }, [interactables, logger]);
+
   const handleScan = React.useCallback(async () => {
+    logger(`user started scan`, "domain", "info");
     if (isDebug && h3Input) {
       const coords = h3ToGeo(h3Input) as [number, number];
       scan(coords);
     } else {
       scan();
     }
-  }, [scan, h3Input]);
+  }, [scan, h3Input, logger]);
 
   /**
    * This callback will handle the selection of an interactable that the user can interact with and display the interaction modal.

@@ -1,5 +1,5 @@
 import React from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Layout from "./components/Layout";
 import { firebase } from "./global/auth";
 import {
@@ -9,9 +9,12 @@ import {
 import { setIsAuthenticationLoaded } from "./global/state/appSlice";
 import { useAppDispatch } from "./global/state/store";
 import "./styles/App.css";
+import { useLogger } from "./global/logger/useLogger";
 
 function App() {
   const dispatch = useAppDispatch();
+  const location = useLocation();
+  const { logger } = useLogger();
 
   // Subscribe to firebase's auth changes so that we can keep our redux state updated
   React.useEffect(() => {
@@ -48,6 +51,11 @@ function App() {
       unsubscribe2();
     };
   }, [dispatch]);
+
+  // Logging Router location changes
+  React.useEffect(() => {
+    logger(`location changed to ${location.pathname}`, "router", "info");
+  }, [location, logger]);
 
   return (
     <div className="App">

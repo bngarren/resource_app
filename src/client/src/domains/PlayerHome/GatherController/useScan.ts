@@ -1,4 +1,6 @@
+import { AbcRounded } from "@mui/icons-material";
 import * as React from "react";
+import { useLogger } from "../../../global/logger/useLogger";
 import { useScanMutation } from "../../../global/state/apiSlice";
 import {
   refreshWatcher,
@@ -14,7 +16,16 @@ type UseScanReturn = {
   scanResult: APITypes.ScanResult | undefined;
 };
 
+/**
+ * ### useScan
+ * ---
+ *
+ * Custom hook that wraps the implementation of a RTKQ request to "/scan" API endpoint
+ *
+ * `scanStatus` reflects the hook's internal lifecycle (scan started, awaiting GPS, etc.), not the status of the RTK query
+ */
 export const useScan = () => {
+  const { logger } = useLogger();
   const dispatch = useAppDispatch();
   const isWatching = useAppSelector((state) => state.geoLocation.isWatching);
   const location = useAppSelector((state) => state.geoLocation.location);
@@ -37,14 +48,18 @@ export const useScan = () => {
       // If a position is passed a parameter, use it to scan instead of GPS
       if (!position) {
         if (!isWatching) {
-          console.log("Scan aborted, awaiting GPS location.");
+          logger(`useScan - aborted, awaiting GPS location`, "domain");
           setScanStatus("AWAITING_GPS");
           dispatch(startWatcher());
           return;
         }
 
         if (!location) {
-          console.error("Did not have GPS location to scan");
+          logger(
+            `useScan - Did not have GPS location to scan`,
+            "domain",
+            "error"
+          );
           setScanStatus("ERRORED");
           return;
         }
@@ -70,31 +85,33 @@ export const useScan = () => {
             new Date().getTime() - (scanStartTime.current as number);
           const remainingAnimationTime = 1500 - elapsedScanTime;
 
+          logger(`useScan - scan request success`, "domain", "info");
+
           scanAnimationTimer.current = setTimeout(
             () => {
               setScanStatus("COMPLETED");
               scanStartTime.current = null;
-              console.log("Scan completed.");
+              logger(`useScan - scan animation complete`, "domain");
             },
             remainingAnimationTime > 0 ? remainingAnimationTime : 0
           );
         })
         .catch((error) => {
           setScanStatus("ERRORED");
-          console.error(error);
+          logger(`useScan - RTKQ error: ${error}`, "domain", "error");
         });
     },
-    [scanRequest, isWatching, dispatch, location]
+    [scanRequest, isWatching, dispatch, location, logger]
   );
 
   // This watches for new locations while we are in the "awaiting" state
   // E.g. the user clicked scan but no watcher session active, so we waited for a new one to boot up and give us a location
   React.useEffect(() => {
     if (scanStatus === "AWAITING_GPS" && location) {
-      console.log("Restarting scan with new location");
+      logger(`useScan - restarting scan with new GPS location`, "domain");
       scan();
     }
-  }, [scanStatus, location, scan]);
+  }, [scanStatus, location, scan, logger]);
 
   // Clean up
   React.useEffect(() => {

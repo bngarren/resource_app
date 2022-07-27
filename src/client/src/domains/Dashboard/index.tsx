@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 import { useAddUserMutation } from "../../global/state/apiSlice";
 import { useToasty } from "../../components/Toasty";
-import Logger from "../../global/logger";
+import { Outlet } from "react-router-dom";
 
 const StyledBox = styled(Box, {
   name: "Dashboard",
@@ -149,10 +149,6 @@ const Dashboard = () => {
                 </Button>
               </Stack>
             </Box>
-          </StyledBox>
-          <StyledBox sx={{ width: "100%" }}>
-            <Typography variant="h6">Log</Typography>
-            <Logger />
           </StyledBox>
         </Stack>
       </Container>

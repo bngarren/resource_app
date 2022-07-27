@@ -1,10 +1,12 @@
 import { CaseReducer, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuid } from "uuid";
 
+export type LogCategory = "app" | "router" | "redux" | "domain";
 export type LogType = "debug" | "info" | "warn" | "error";
 
 type LogItem = {
   id: string;
+  category: LogCategory;
   type: LogType;
   message: string;
   time: string;
@@ -21,19 +23,27 @@ const initialState: LoggerState = {
 const _log: CaseReducer<
   LoggerState,
   PayloadAction<{
+    category?: LogCategory;
     message: string;
     type?: LogType;
-    skipConsole?: boolean;
+    toConsole?: boolean;
   }>
 > = (state, { payload }) => {
+  const category = payload.category || "app";
+  const type = payload.type || "debug";
+  const toConsole = payload.toConsole != null ? payload.toConsole : false;
+
   state.data.push({
     id: uuid(),
-    type: payload.type || "debug",
+    category: category,
+    type: type,
     message: payload.message,
     time: new Date().toISOString(),
   });
-  if (payload.skipConsole) return;
-  console[payload.type || "info"](payload.message);
+  // Errors are always logged to console
+  if (toConsole === true || type === "error") {
+    console[type](`[${category}] ${payload.message}`);
+  }
 };
 
 const slice = createSlice({
