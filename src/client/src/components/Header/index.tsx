@@ -16,6 +16,7 @@ import {
 import { Link } from "react-router-dom";
 import HexagonIcon from "@mui/icons-material/Hexagon";
 import AdbIcon from "@mui/icons-material/Adb";
+import LogoDevIcon from "@mui/icons-material/LogoDev";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useAuth } from "../../global/auth";
@@ -126,6 +127,16 @@ const Header = () => {
               >
                 <AdbIcon sx={{ color: "#888" }} />
                 <Typography variant="button">Dashboard</Typography>
+              </IconButton>
+            </MenuItem>
+            <MenuItem>
+              <IconButton
+                component={Link}
+                to="/log"
+                onClick={handleCloseNavMenu}
+              >
+                <LogoDevIcon sx={{ color: "#888" }} />
+                <Typography variant="button">Log</Typography>
               </IconButton>
             </MenuItem>
             <Divider />

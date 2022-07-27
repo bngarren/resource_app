@@ -1,7 +1,7 @@
 import { CaseReducer, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuid } from "uuid";
 
-export type LogCategory = "app" | "redux" | "domain";
+export type LogCategory = "app" | "router" | "redux" | "domain";
 export type LogType = "debug" | "info" | "warn" | "error";
 
 type LogItem = {

@@ -16,6 +16,14 @@ type UseScanReturn = {
   scanResult: APITypes.ScanResult | undefined;
 };
 
+/**
+ * ### useScan
+ * ---
+ *
+ * Custom hook that wraps the implementation of a RTKQ request to "/scan" API endpoint
+ *
+ * `scanStatus` reflects the hook's internal lifecycle (scan started, awaiting GPS, etc.), not the status of the RTK query
+ */
 export const useScan = () => {
   const { logger } = useLogger();
   const dispatch = useAppDispatch();

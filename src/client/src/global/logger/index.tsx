@@ -59,7 +59,7 @@ const Logger = () => {
   };
 
   return (
-    <Box sx={{ width: "100%" }}>
+    <Box sx={{ width: "100%", height: "80vh", overflowY: "auto" }}>
       <Button onClick={() => dispatch(reset())}>Clear</Button>
       <TableContainer component={Paper}>
         <Table size="small">

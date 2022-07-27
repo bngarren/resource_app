@@ -16,6 +16,7 @@ import GatherController from "./domains/PlayerHome/GatherController";
 import PublicLanding from "./domains/PublicLanding";
 import { useAuth } from "./global/auth";
 import { useAppSelector } from "./global/state/store";
+import LogController from "./domains/Dashboard/LogController";
 
 const Routes = () => {
   return (
@@ -47,6 +48,15 @@ const Routes = () => {
           element={
             <RequireAuth>
               <Dashboard />
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/log"
+          element={
+            <RequireAuth>
+              <LogController />
             </RequireAuth>
           }
         />

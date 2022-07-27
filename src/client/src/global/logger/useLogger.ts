@@ -4,6 +4,7 @@ import { useAppDispatch } from "./../state/store";
 
 type UseLoggerOptions = {
   prepend?: string;
+  category?: LogCategory;
 };
 
 /**
@@ -11,10 +12,18 @@ type UseLoggerOptions = {
  * ---
  * Custom hook for logging to redux store (loggerSlice)
  *
+ * @example
+ * ```javascript
+ *  const { logger } = useLogger(options)
+ * // ...
+ *  logger("This is a log", "domain", "warn", true)
+ * ```
+ * ---
  * @param options
  * ```javascript
  *  {
- *    prepend: "ComponentName"
+ *    prepend: "ComponentName" // add this before every message
+ *    category: "redux" // category defalut
  *  }
  * ```
  * @returns `logger` function
@@ -25,7 +34,7 @@ export const useLogger = (options: UseLoggerOptions = {}) => {
   const logger = useCallback(
     (
       message: string,
-      category: LogCategory = "app",
+      category: LogCategory = options.category || "app",
       type: LogType = "debug",
       toConsole?: boolean
     ) => {
@@ -43,7 +52,7 @@ export const useLogger = (options: UseLoggerOptions = {}) => {
         })
       );
     },
-    [dispatch, options.prepend]
+    [dispatch, options.prepend, options.category]
   );
 
   return useMemo(() => ({ logger }), [logger]);
