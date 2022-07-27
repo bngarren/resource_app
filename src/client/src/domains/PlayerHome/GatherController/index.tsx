@@ -23,7 +23,6 @@ import config from "../../../config";
 import { h3ToGeo } from "h3-js";
 import { AnyInteractable, APITypes } from "../../../types";
 import InteractablesDisplay from "./InteractablesDisplay";
-import Logger from "../../../global/logger";
 import { useLogger } from "../../../global/logger/useLogger";
 
 const isDebug = config.debugMode === true;
@@ -59,7 +58,7 @@ const GatherController = () => {
   const { scan, scannedLocation, scanStatus, scanResult } = useScan();
 
   // Logger
-  const { logger } = useLogger();
+  const { logger } = useLogger({ prepend: "GatherController" });
 
   const interactables:
     | Partial<APITypes.ScanResult["interactables"]>
@@ -90,20 +89,21 @@ const GatherController = () => {
 
   React.useEffect(() => {
     if (!hasInitiatedWatcher.current) {
-      logger("GatherController - startWatcher dispatched");
+      logger("startWatcher dispatched", "domain", "debug");
       dispatch(startWatcher);
       hasInitiatedWatcher.current = true;
     }
   }, [dispatch, logger]);
 
   const handleScan = React.useCallback(async () => {
+    logger(`user started scan`, "domain", "info");
     if (isDebug && h3Input) {
       const coords = h3ToGeo(h3Input) as [number, number];
       scan(coords);
     } else {
       scan();
     }
-  }, [scan, h3Input]);
+  }, [scan, h3Input, logger]);
 
   /**
    * This callback will handle the selection of an interactable that the user can interact with and display the interaction modal.
